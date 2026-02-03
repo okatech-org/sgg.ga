@@ -8,10 +8,48 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Search, Shield, Users, Building2 } from "lucide-react";
+import { Loader2, Search, Shield, Users, Building2, ChevronLeft, ChevronRight } from "lucide-react";
+
+const GABONESE_MINISTRIES = [
+  "Présidence de la République",
+  "Primature",
+  "Secrétariat Général du Gouvernement",
+  "Ministère des Affaires Étrangères",
+  "Ministère de la Défense Nationale",
+  "Ministère de l'Intérieur et de la Sécurité",
+  "Ministère de la Justice",
+  "Ministère de l'Économie et des Finances",
+  "Ministère du Budget et des Comptes Publics",
+  "Ministère de l'Éducation Nationale",
+  "Ministère de l'Enseignement Supérieur",
+  "Ministère de la Santé",
+  "Ministère du Travail et de l'Emploi",
+  "Ministère de l'Agriculture",
+  "Ministère des Eaux et Forêts",
+  "Ministère des Mines et de l'Énergie",
+  "Ministère du Pétrole et du Gaz",
+  "Ministère des Transports",
+  "Ministère des Travaux Publics",
+  "Ministère de l'Habitat et de l'Urbanisme",
+  "Ministère du Commerce et des PME",
+  "Ministère de l'Industrie",
+  "Ministère du Tourisme",
+  "Ministère de la Culture et des Arts",
+  "Ministère des Sports",
+  "Ministère de la Jeunesse",
+  "Ministère de la Communication",
+  "Ministère de la Fonction Publique",
+  "Ministère des Affaires Sociales",
+  "Ministère de la Promotion de la Femme",
+  "Ministère de l'Environnement",
+  "Ministère de la Transition Numérique",
+  "Ministère de la Planification",
+] as const;
+
+const ITEMS_PER_PAGE = 10;
 
 interface UserWithRole {
   user_id: string;
@@ -149,11 +187,25 @@ export default function AdminUsers() {
     }
   };
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+
   const filteredUsers = users.filter(
     (user) =>
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.institution?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   if (!isAdmin) {
     return (
@@ -209,75 +261,109 @@ export default function AdminUsers() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Institution</TableHead>
-                    <TableHead>Rôle actuel</TableHead>
-                    <TableHead>Modifier le rôle</TableHead>
-                    <TableHead>Inscrit le</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.user_id}>
-                      <TableCell className="font-medium">
-                        {user.full_name || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="flex items-center gap-2 text-left"
-                          onClick={() => handleOpenInstitutionDialog(user)}
-                        >
-                          <Building2 className="h-4 w-4" />
-                          {user.institution || "Assigner..."}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={roleBadgeColors[user.role]}>
-                          {roleLabels[user.role]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={user.role}
-                          onValueChange={(value) =>
-                            updateUserRole(user.user_id, value as AppRole)
-                          }
-                          disabled={updating === user.user_id}
-                        >
-                          <SelectTrigger className="w-40">
-                            {updating === user.user_id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <SelectValue />
-                            )}
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin_sgg">Admin SGG</SelectItem>
-                            <SelectItem value="sg_ministere">SG Ministère</SelectItem>
-                            <SelectItem value="sgpr">SGPR</SelectItem>
-                            <SelectItem value="citoyen">Citoyen</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(user.created_at).toLocaleDateString("fr-FR")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filteredUsers.length === 0 && (
+              <>
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        Aucun utilisateur trouvé
-                      </TableCell>
+                      <TableHead>Nom</TableHead>
+                      <TableHead>Institution</TableHead>
+                      <TableHead>Rôle actuel</TableHead>
+                      <TableHead>Modifier le rôle</TableHead>
+                      <TableHead>Inscrit le</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedUsers.map((user) => (
+                      <TableRow key={user.user_id}>
+                        <TableCell className="font-medium">
+                          {user.full_name || "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex items-center gap-2 text-left"
+                            onClick={() => handleOpenInstitutionDialog(user)}
+                          >
+                            <Building2 className="h-4 w-4" />
+                            {user.institution || "Assigner..."}
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={roleBadgeColors[user.role]}>
+                            {roleLabels[user.role]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={user.role}
+                            onValueChange={(value) =>
+                              updateUserRole(user.user_id, value as AppRole)
+                            }
+                            disabled={updating === user.user_id}
+                          >
+                            <SelectTrigger className="w-40">
+                              {updating === user.user_id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <SelectValue />
+                              )}
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin_sgg">Admin SGG</SelectItem>
+                              <SelectItem value="sg_ministere">SG Ministère</SelectItem>
+                              <SelectItem value="sgpr">SGPR</SelectItem>
+                              <SelectItem value="citoyen">Citoyen</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(user.created_at).toLocaleDateString("fr-FR")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {paginatedUsers.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          Aucun utilisateur trouvé
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Affichage {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)} sur {filteredUsers.length} utilisateurs
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Précédent
+                      </Button>
+                      <span className="text-sm text-muted-foreground px-2">
+                        Page {currentPage} / {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Suivant
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -291,11 +377,21 @@ export default function AdminUsers() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Institution</Label>
-                <Input
+                <Select
                   value={institutionValue}
-                  onChange={(e) => setInstitutionValue(e.target.value)}
-                  placeholder="Ex: Ministère de la Santé"
-                />
+                  onValueChange={setInstitutionValue}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une institution..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GABONESE_MINISTRIES.map((ministry) => (
+                      <SelectItem key={ministry} value={ministry}>
+                        {ministry}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button
                 onClick={handleSaveInstitution}

@@ -42,28 +42,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Fetch user profile and role
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string): Promise<void> => {
     try {
-      // Fetch profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+      // Fetch profile and role in parallel
+      const [profileResult, roleResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", userId)
+          .single(),
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .single(),
+      ]);
 
-      if (profileData) {
-        setProfile(profileData as Profile);
+      if (profileResult.data) {
+        setProfile(profileResult.data as Profile);
       }
 
-      // Fetch role
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .single();
-
-      if (roleData) {
-        setRole(roleData.role as AppRole);
+      if (roleResult.data) {
+        setRole(roleResult.data.role as AppRole);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -71,22 +71,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Helper to load user data and set loading to false
+    const loadUserData = async (userId: string) => {
+      await fetchUserData(userId);
+      if (isMounted) {
+        setLoading(false);
+      }
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Defer Supabase calls with setTimeout to prevent deadlock
         if (session?.user) {
+          // Use setTimeout to avoid deadlock in Supabase callback
           setTimeout(() => {
-            fetchUserData(session.user.id);
+            loadUserData(session.user.id);
           }, 0);
         } else {
           setProfile(null);
           setRole(null);
+          if (isMounted) {
+            setLoading(false);
+          }
         }
-        setLoading(false);
       }
     );
 
@@ -95,12 +107,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserData(session.user.id);
+        loadUserData(session.user.id);
+      } else if (isMounted) {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {

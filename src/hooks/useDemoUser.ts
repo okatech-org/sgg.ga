@@ -9,7 +9,15 @@ export interface DemoUser {
 }
 
 export function useDemoUser() {
-  const [demoUser, setDemoUser] = useState<DemoUser | null>(null);
+  // Initialize state from sessionStorage synchronously to avoid flash
+  const [demoUser, setDemoUser] = useState<DemoUser | null>(() => {
+    try {
+      const stored = sessionStorage.getItem("demoUser");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     const stored = sessionStorage.getItem("demoUser");

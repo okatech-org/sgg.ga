@@ -11,49 +11,77 @@ import {
   ClipboardCheck,
   FolderOpen,
   Globe,
+  LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useDemoUser } from "@/hooks/useDemoUser";
 
 interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
 }
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  moduleKey: string;
+  badge?: number;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const navigation: NavSection[] = [
   {
     title: "Tableau de Bord",
     items: [
-      { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Suivi GAR", href: "/dashboard/gar", icon: BarChart3 },
+      { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard, moduleKey: "dashboard" },
+      { name: "Suivi GAR", href: "/dashboard/gar", icon: BarChart3, moduleKey: "gar" },
     ],
   },
   {
     title: "Modules",
     items: [
-      { name: "Nominations", href: "/nominations", icon: Users },
-      { name: "e-Gop", href: "/egop", icon: FolderOpen },
-      { name: "Journal Officiel", href: "/journal-officiel", icon: BookOpen },
+      { name: "Nominations", href: "/nominations", icon: Users, moduleKey: "nominations", badge: 5 },
+      { name: "e-Gop", href: "/egop", icon: FolderOpen, moduleKey: "egop" },
+      { name: "Journal Officiel", href: "/journal-officiel", icon: BookOpen, moduleKey: "journalOfficiel" },
     ],
   },
   {
     title: "Gestion",
     items: [
-      { name: "Documents", href: "/documents", icon: FileText },
-      { name: "Rapports", href: "/rapports", icon: ClipboardCheck },
-      { name: "Formation", href: "/formation", icon: GraduationCap },
+      { name: "Documents", href: "/documents", icon: FileText, moduleKey: "documents" },
+      { name: "Rapports", href: "/rapports", icon: ClipboardCheck, moduleKey: "rapports" },
+      { name: "Formation", href: "/formation", icon: GraduationCap, moduleKey: "formation" },
     ],
   },
   {
     title: "Système",
     items: [
-      { name: "Paramètres", href: "/parametres", icon: Settings },
+      { name: "Paramètres", href: "/parametres", icon: Settings, moduleKey: "parametres" },
     ],
   },
 ];
 
 export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const location = useLocation();
+  const { demoUser, getModuleAccess } = useDemoUser();
+  const moduleAccess = getModuleAccess();
+
+  // Filter navigation based on user access
+  const filteredNavigation = navigation
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => {
+        const key = item.moduleKey as keyof typeof moduleAccess;
+        return moduleAccess[key] !== false;
+      }),
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <>
@@ -93,9 +121,23 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
           </Button>
         </div>
 
+        {/* Demo User Badge */}
+        {demoUser && (
+          <div className="px-3 py-2 border-b border-sidebar-border">
+            <div className="rounded-lg bg-government-gold/20 px-3 py-2">
+              <p className="text-[10px] font-semibold text-government-gold uppercase tracking-wider">
+                Mode Démo
+              </p>
+              <p className="text-xs text-sidebar-foreground/80 truncate">
+                {demoUser.role}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {navigation.map((section) => (
+          {filteredNavigation.map((section) => (
             <div key={section.title} className="mb-6">
               <h3 className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
                 {section.title}
@@ -118,9 +160,9 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
                       >
                         <item.icon className="h-4 w-4 flex-shrink-0" />
                         <span>{item.name}</span>
-                        {item.name === "Nominations" && (
+                        {item.badge && (
                           <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-status-warning text-[10px] font-bold text-white">
-                            5
+                            {item.badge}
                           </span>
                         )}
                       </NavLink>

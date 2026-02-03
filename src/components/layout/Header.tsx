@@ -1,4 +1,5 @@
-import { Bell, Search, User, Menu } from "lucide-react";
+import { Bell, Search, User, Menu, LogOut, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,12 +11,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useDemoUser } from "@/hooks/useDemoUser";
 
 interface HeaderProps {
   onMenuToggle?: () => void;
 }
 
 export function Header({ onMenuToggle }: HeaderProps) {
+  const navigate = useNavigate();
+  const { demoUser, clearDemoUser } = useDemoUser();
+
+  const handleLogout = () => {
+    clearDemoUser();
+    navigate("/");
+  };
+
+  const handleSwitchAccount = () => {
+    clearDemoUser();
+    navigate("/demo");
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
@@ -40,8 +55,20 @@ export function Header({ onMenuToggle }: HeaderProps) {
           </div>
         </div>
 
-        {/* Right side - Notifications and User */}
+        {/* Right side - Demo Badge, Notifications and User */}
         <div className="flex items-center gap-2">
+          {/* Demo Mode Badge */}
+          {demoUser && (
+            <Badge 
+              variant="outline" 
+              className="hidden sm:flex border-government-gold text-government-gold gap-1 cursor-pointer hover:bg-government-gold/10"
+              onClick={handleSwitchAccount}
+            >
+              <span className="text-[10px]">DÉMO</span>
+              <ChevronDown className="h-3 w-3" />
+            </Badge>
+          )}
+
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -78,18 +105,42 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   <User className="h-4 w-4 text-white" />
                 </div>
                 <div className="hidden md:flex flex-col items-start">
-                  <span className="text-sm font-medium">Administrateur</span>
-                  <span className="text-xs text-muted-foreground">SGG</span>
+                  <span className="text-sm font-medium">
+                    {demoUser ? demoUser.title : "Administrateur"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {demoUser ? demoUser.institution : "SGG"}
+                  </span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Mon Compte</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {demoUser ? (
+                  <div className="flex flex-col">
+                    <span>{demoUser.title}</span>
+                    <span className="text-xs font-normal text-muted-foreground">{demoUser.role}</span>
+                  </div>
+                ) : (
+                  "Mon Compte"
+                )}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {demoUser && (
+                <>
+                  <DropdownMenuItem onClick={handleSwitchAccount}>
+                    Changer de compte démo
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem>Profil</DropdownMenuItem>
               <DropdownMenuItem>Paramètres</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">Déconnexion</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Déconnexion
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

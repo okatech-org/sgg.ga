@@ -2,14 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* SGG Gabon - Government Digital Platform Design System
-   Colors inspired by Gabonese flag: Green, Gold, Blue
-   All colors in HSL format */
+/* Charte Graphique Institutionnelle
+   Couleurs AN (Assemblée Nationale) - Bleu institutionnel
+   Toutes les couleurs en format HSL */
 
 @layer base {
   :root {
-    /* Core Government Colors */
-    --background: 210 20% 98%;
+    /* Couleur principale AN (Bleu) */
+    --color-an: 217 98% 60%;
+    --color-an-dark: 217 98% 45%;
+    --color-an-light: 217 98% 75%;
+
+    /* Couleurs de base */
+    --background: 210 40% 98%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -18,19 +23,19 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary: Deep Navy Blue (Official Government) */
-    --primary: 222 47% 18%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary: Bleu institutionnel */
+    --primary: 222 47% 20%;
+    --primary-foreground: 210 40% 98%;
 
-    /* Secondary: Gabonese Gold */
-    --secondary: 45 93% 47%;
-    --secondary-foreground: 222 47% 11%;
+    /* Secondary: Bleu AN */
+    --secondary: 217 98% 60%;
+    --secondary-foreground: 0 0% 100%;
 
-    /* Accent: Forest Green (Gabonese Flag) */
-    --accent: 145 63% 32%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent */
+    --accent: 217 98% 75%;
+    --accent-foreground: 222 47% 11%;
 
-    --muted: 210 20% 96%;
+    --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
 
     --destructive: 0 84% 60%;
@@ -38,48 +43,56 @@
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 222 47% 18%;
+    --ring: 217 98% 60%;
 
     --radius: 0.5rem;
 
-    /* Status Colors for Dashboard */
-    --status-success: 145 63% 42%;
+    /* Couleurs fonctionnelles */
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --info: 199 89% 48%;
+
+    /* Status Colors */
+    --status-success: 142 76% 36%;
     --status-warning: 38 92% 50%;
     --status-danger: 0 84% 60%;
-    --status-info: 210 100% 50%;
+    --status-info: 199 89% 48%;
 
-    /* Custom Government Tokens */
-    --government-navy: 222 47% 18%;
-    --government-navy-light: 222 40% 28%;
-    --government-gold: 45 93% 47%;
-    --government-gold-light: 45 93% 60%;
-    --government-green: 145 63% 32%;
-    --government-green-light: 145 55% 45%;
+    /* Neumorphism shadows */
+    --shadow-dark: 214 32% 85%;
+    --shadow-light: 0 0% 100%;
 
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(222 47% 18%) 0%, hsl(222 40% 28%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(45 93% 55%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
+    /* Custom Tokens */
+    --an-blue: 217 98% 60%;
+    --an-blue-dark: 217 98% 45%;
+    --an-blue-light: 217 98% 75%;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1), 0 2px 4px -2px hsl(222 47% 11% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
-    --shadow-xl: 0 20px 25px -5px hsl(222 47% 11% / 0.1), 0 8px 10px -6px hsl(222 47% 11% / 0.1);
+    /* Legacy government tokens (remappés vers AN) */
+    --government-navy: 222 47% 20%;
+    --government-navy-light: 217 98% 45%;
+    --government-gold: 217 98% 60%;
+    --government-gold-light: 217 98% 75%;
+    --government-green: 142 76% 36%;
+    --government-green-light: 142 70% 50%;
 
     /* Sidebar */
-    --sidebar-background: 222 47% 18%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 45 93% 47%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 40% 25%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 40% 25%;
-    --sidebar-ring: 45 93% 47%;
+    --sidebar-background: 222 47% 15%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 98% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 50% 25%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 50% 25%;
+    --sidebar-ring: 217 98% 60%;
   }
 
   .dark {
-    --background: 222 47% 8%;
+    /* Couleur principale AN (Bleu) - Mode sombre */
+    --color-an: 217 85% 65%;
+    --color-an-dark: 217 85% 55%;
+    --color-an-light: 217 85% 80%;
+
+    --background: 222 47% 7%;
     --foreground: 210 40% 98%;
 
     --card: 222 47% 11%;
@@ -88,33 +101,51 @@
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 45 93% 47%;
+    --primary: 210 40% 70%;
     --primary-foreground: 222 47% 11%;
 
-    --secondary: 222 40% 20%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 217 85% 65%;
+    --secondary-foreground: 222 47% 11%;
 
-    --accent: 145 55% 40%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 217 85% 80%;
+    --accent-foreground: 222 47% 11%;
 
-    --muted: 222 40% 15%;
+    --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 63% 45%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 222 40% 20%;
-    --input: 222 40% 20%;
-    --ring: 45 93% 47%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 217 85% 65%;
 
-    --sidebar-background: 222 47% 8%;
+    /* Neumorphism shadows - dark mode */
+    --shadow-dark: 222 47% 5%;
+    --shadow-light: 222 47% 15%;
+
+    /* AN tokens dark */
+    --an-blue: 217 85% 65%;
+    --an-blue-dark: 217 85% 55%;
+    --an-blue-light: 217 85% 80%;
+
+    /* Legacy government tokens (remappés) */
+    --government-navy: 222 47% 15%;
+    --government-navy-light: 217 85% 55%;
+    --government-gold: 217 85% 65%;
+    --government-gold-light: 217 85% 80%;
+    --government-green: 142 70% 45%;
+    --government-green-light: 142 65% 55%;
+
+    /* Sidebar dark */
+    --sidebar-background: 222 47% 7%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 45 93% 47%;
+    --sidebar-primary: 217 85% 65%;
     --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 40% 15%;
+    --sidebar-accent: 217 33% 17%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 40% 15%;
-    --sidebar-ring: 45 93% 47%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 217 85% 65%;
   }
 }
 
@@ -128,7 +159,12 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Custom scrollbar for government aesthetic */
+  /* Typography - Titres en serif */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+
+  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -149,62 +185,124 @@
 }
 
 @layer components {
-  /* Government Badge Styles */
+  /* Neumorphism Card */
+  .neu-card {
+    box-shadow: 
+      8px 8px 16px hsl(var(--shadow-dark)),
+      -8px -8px 16px hsl(var(--shadow-light));
+    @apply rounded-xl bg-card transition-all duration-300;
+  }
+
+  .neu-card:hover {
+    box-shadow: 
+      12px 12px 24px hsl(var(--shadow-dark)),
+      -12px -12px 24px hsl(var(--shadow-light));
+  }
+
+  /* Neumorphism pressed/inset */
+  .neu-inset {
+    box-shadow: 
+      inset 4px 4px 8px hsl(var(--shadow-dark)),
+      inset -4px -4px 8px hsl(var(--shadow-light));
+    @apply rounded-lg;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    backdrop-filter: blur(12px);
+    background: hsl(var(--background) / 0.7);
+    @apply border border-white/20;
+  }
+
+  .glass-dark {
+    backdrop-filter: blur(12px);
+    background: hsl(var(--card) / 0.8);
+    @apply border border-white/10;
+  }
+
+  /* Badge Styles */
   .badge-success {
-    @apply bg-[hsl(var(--status-success))] text-white;
+    @apply bg-[hsl(var(--success))] text-white;
   }
 
   .badge-warning {
-    @apply bg-[hsl(var(--status-warning))] text-white;
+    @apply bg-[hsl(var(--warning))] text-white;
   }
 
   .badge-danger {
-    @apply bg-[hsl(var(--status-danger))] text-white;
+    @apply bg-[hsl(var(--destructive))] text-white;
   }
 
-  /* Stat Card Glow Effect */
+  .badge-info {
+    @apply bg-[hsl(var(--info))] text-white;
+  }
+
+  /* Stat Card with subtle glow */
   .stat-card {
-    @apply relative overflow-hidden;
+    @apply relative overflow-hidden neu-card;
   }
 
   .stat-card::before {
     content: '';
     @apply absolute inset-0 opacity-0 transition-opacity duration-300;
-    background: linear-gradient(135deg, hsl(var(--secondary) / 0.1) 0%, transparent 50%);
+    background: linear-gradient(135deg, hsl(var(--color-an) / 0.1) 0%, transparent 50%);
   }
 
   .stat-card:hover::before {
     @apply opacity-100;
   }
 
-  /* Government Header Bar */
-  .gov-header {
-    background: var(--gradient-hero);
+  /* AN Header Bar */
+  .an-header {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--color-an-dark)) 100%);
+  }
+
+  /* Elegant shadow */
+  .shadow-elegant {
+    box-shadow: 
+      0 4px 6px -1px hsl(var(--foreground) / 0.05),
+      0 2px 4px -2px hsl(var(--foreground) / 0.05),
+      0 0 0 1px hsl(var(--border) / 0.5);
   }
 
   /* Data Table Striped Rows */
   .table-striped tr:nth-child(even) {
     @apply bg-muted/50;
   }
+
+  /* AN Button glow */
+  .an-glow {
+    box-shadow: 0 0 20px hsl(var(--color-an) / 0.3);
+  }
+
+  .an-glow:hover {
+    box-shadow: 0 0 30px hsl(var(--color-an) / 0.5);
+  }
 }
 
 @layer utilities {
   /* Animation utilities */
   .animate-fade-in {
-    animation: fadeIn 0.5s ease-out;
+    animation: fadeIn 0.5s ease-out forwards;
   }
 
   .animate-slide-up {
-    animation: slideUp 0.5s ease-out;
+    animation: slideUp 0.5s ease-out forwards;
   }
 
   .animate-scale-in {
-    animation: scaleIn 0.3s ease-out;
+    animation: scaleIn 0.3s ease-out forwards;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { 
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   @keyframes slideUp {

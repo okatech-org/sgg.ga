@@ -1,4 +1,4 @@
-import { Bell, Search, User, Menu, LogOut, ChevronDown } from "lucide-react";
+import { Bell, Search, User, Menu, LogOut, ChevronDown, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useDemoUser } from "@/hooks/useDemoUser";
 import { useAuth } from "@/contexts/AuthContext";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -74,8 +75,24 @@ export function Header({ onMenuToggle }: HeaderProps) {
           </div>
         </div>
 
-        {/* Right side - Demo Badge, Notifications and User */}
+        {/* Right side - Demo Badge, Theme Toggle, Notifications and User */}
         <div className="flex items-center gap-2">
+          {/* Demo Mode - Exit Button */}
+          {demoUser && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                clearDemoUser();
+                navigate("/");
+              }}
+              className="hidden sm:flex gap-2 border-government-gold text-government-gold hover:bg-government-gold/10"
+            >
+              <Home className="h-4 w-4" />
+              Quitter Démo
+            </Button>
+          )}
+
           {/* Demo Mode Badge */}
           {demoUser && (
             <Badge 
@@ -97,6 +114,9 @@ export function Header({ onMenuToggle }: HeaderProps) {
               <span className="text-[10px]">{roleLabels[role]?.toUpperCase()}</span>
             </Badge>
           )}
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
           {/* Notifications */}
           <DropdownMenu>

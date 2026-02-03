@@ -4,10 +4,9 @@ import {
   CheckCircle2, 
   ArrowRight, 
   BarChart3,
-  Shield,
-  Zap,
-  Globe
+  Shield
 } from "lucide-react";
+import { AnimatedSection } from "./AnimatedSection";
 
 const showcaseItems = [
   {
@@ -21,7 +20,7 @@ const showcaseItems = [
       "Rapports consolidés par ministère",
       "Historique et tendances"
     ],
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Gabon_government_building.jpg/1280px-Gabon_government_building.jpg",
     href: "/dashboard",
     stats: [
       { value: "35", label: "Ministères" },
@@ -40,7 +39,7 @@ const showcaseItems = [
       "Logs d'audit conservés 5 ans",
       "Conformité RGPD"
     ],
-    image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Flag_of_Gabon.svg/1280px-Flag_of_Gabon.svg.png",
     href: "/auth",
     stats: [
       { value: "99.9%", label: "Disponibilité" },
@@ -52,81 +51,82 @@ const showcaseItems = [
 
 export default function ProductShowcaseSection() {
   return (
-    <section className="py-16 md:py-24 bg-muted/30">
+    <section className="py-16 md:py-24 bg-muted/30 dark:bg-muted/10">
       <div className="container mx-auto px-4 space-y-20 md:space-y-32">
         {showcaseItems.map((item, index) => (
-          <div 
-            key={index}
-            className={`grid lg:grid-cols-2 gap-8 lg:gap-16 items-center ${item.reverse ? 'lg:flex-row-reverse' : ''}`}
-          >
-            {/* Content Column */}
-            <div className={`${item.reverse ? 'lg:order-2' : ''}`}>
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full bg-government-gold/10 border border-government-gold/20 px-4 py-2 mb-6">
-                <item.badgeIcon className="h-4 w-4 text-government-gold" />
-                <span className="text-sm font-medium text-government-gold">
-                  {item.badge}
-                </span>
-              </div>
-              
-              {/* Title & Description */}
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4">
-                {item.title}
-              </h2>
-              <p className="text-lg text-muted-foreground mb-6">
-                {item.description}
-              </p>
-              
-              {/* Features List */}
-              <ul className="space-y-3 mb-8">
-                {item.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center gap-3">
-                    <div className="h-6 w-6 rounded-full bg-government-green/10 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle2 className="h-4 w-4 text-government-green" />
-                    </div>
-                    <span className="text-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              {/* CTA Button */}
-              <Link to={item.href}>
-                <Button variant="government" size="lg" className="group">
-                  En savoir plus
-                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-            </div>
-            
-            {/* Visual Column */}
-            <div className={`relative ${item.reverse ? 'lg:order-1' : ''}`}>
-              {/* Main Image */}
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <img 
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-64 md:h-80 lg:h-96 object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-tr from-government-navy/20 to-transparent" />
-              </div>
-              
-              {/* Floating Stats Cards */}
-              <div className="absolute -bottom-6 -left-4 md:-left-8 bg-card rounded-xl shadow-gov-xl border p-4 animate-fade-in">
-                <div className="flex items-center gap-4">
-                  {item.stats.map((stat, idx) => (
-                    <div key={idx} className={idx > 0 ? "border-l pl-4" : ""}>
-                      <p className="text-2xl font-bold text-government-gold">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground">{stat.label}</p>
-                    </div>
-                  ))}
+          <AnimatedSection key={index} delay={index * 200}>
+            <div 
+              className={`grid lg:grid-cols-2 gap-8 lg:gap-16 items-center ${item.reverse ? 'lg:flex-row-reverse' : ''}`}
+            >
+              {/* Content Column */}
+              <div className={`${item.reverse ? 'lg:order-2' : ''}`}>
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 rounded-full bg-government-gold/10 border border-government-gold/20 px-4 py-2 mb-6">
+                  <item.badgeIcon className="h-4 w-4 text-government-gold" />
+                  <span className="text-sm font-medium text-government-gold">
+                    {item.badge}
+                  </span>
                 </div>
+                
+                {/* Title & Description */}
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4">
+                  {item.title}
+                </h2>
+                <p className="text-lg text-muted-foreground mb-6">
+                  {item.description}
+                </p>
+                
+                {/* Features List */}
+                <ul className="space-y-3 mb-8">
+                  {item.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-3">
+                      <div className="h-6 w-6 rounded-full bg-government-green/10 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 className="h-4 w-4 text-government-green" />
+                      </div>
+                      <span className="text-foreground">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                {/* CTA Button */}
+                <Link to={item.href}>
+                  <Button variant="government" size="lg" className="group">
+                    En savoir plus
+                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
               </div>
               
-              {/* Decorative Elements */}
-              <div className="absolute -top-4 -right-4 h-24 w-24 bg-government-gold/10 rounded-full blur-2xl" />
-              <div className="absolute -bottom-8 -right-8 h-32 w-32 bg-government-navy/10 rounded-full blur-3xl" />
+              {/* Visual Column */}
+              <div className={`relative ${item.reverse ? 'lg:order-1' : ''}`}>
+                {/* Main Image */}
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                  <img 
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-64 md:h-80 lg:h-96 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-government-navy/20 to-transparent" />
+                </div>
+                
+                {/* Floating Stats Cards */}
+                <div className="absolute -bottom-6 -left-4 md:-left-8 bg-card rounded-xl shadow-gov-xl border p-4 animate-fade-in">
+                  <div className="flex items-center gap-4">
+                    {item.stats.map((stat, idx) => (
+                      <div key={idx} className={idx > 0 ? "border-l pl-4" : ""}>
+                        <p className="text-2xl font-bold text-government-gold">{stat.value}</p>
+                        <p className="text-xs text-muted-foreground">{stat.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Decorative Elements */}
+                <div className="absolute -top-4 -right-4 h-24 w-24 bg-government-gold/10 rounded-full blur-2xl" />
+                <div className="absolute -bottom-8 -right-8 h-32 w-32 bg-government-navy/10 rounded-full blur-3xl" />
+              </div>
             </div>
-          </div>
+          </AnimatedSection>
         ))}
       </div>
     </section>

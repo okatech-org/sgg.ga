@@ -57,17 +57,17 @@ export default function HeroSection() {
       ref={heroRef}
       className="relative min-h-[85vh] overflow-hidden flex items-center"
     >
-      {/* Background Image with Parallax */}
+      {/* Background Image with Parallax - Libreville cityscape */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
+          backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Libreville_Downtown.jpg/1920px-Libreville_Downtown.jpg')`,
           transform: `translateY(${scrollY * 0.3}px)`,
         }}
       />
       
       {/* Gradient Overlay - Light mode */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-900/40 dark:from-black/85 dark:via-black/70 dark:to-black/50" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/85 via-slate-900/70 to-slate-900/50 dark:from-black/90 dark:via-black/75 dark:to-black/60" />
       
       {/* Decorative Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptMCAwdi02aC02djZoNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-50" />

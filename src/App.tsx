@@ -7,6 +7,10 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Demo from "./pages/Demo";
 import Nominations from "./pages/Nominations";
+import CycleLegislatif from "./pages/CycleLegislatif";
+import EGop from "./pages/EGop";
+import Institutions from "./pages/Institutions";
+import JournalOfficiel from "./pages/JournalOfficiel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +27,10 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/gar" element={<Dashboard />} />
           <Route path="/nominations" element={<Nominations />} />
+          <Route path="/cycle-legislatif" element={<CycleLegislatif />} />
+          <Route path="/egop" element={<EGop />} />
+          <Route path="/institutions" element={<Institutions />} />
+          <Route path="/journal-officiel" element={<JournalOfficiel />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

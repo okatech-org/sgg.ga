@@ -12,6 +12,10 @@ import {
   FolderOpen,
   Globe,
   LucideIcon,
+  Scale,
+  Building2,
+  Calendar,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -44,24 +48,31 @@ const navigation: NavSection[] = [
     ],
   },
   {
-    title: "Modules",
+    title: "Processus Normatif",
     items: [
+      { name: "Cycle Législatif", href: "/cycle-legislatif", icon: Scale, moduleKey: "gar" },
       { name: "Nominations", href: "/nominations", icon: Users, moduleKey: "nominations", badge: 5 },
-      { name: "e-Gop", href: "/egop", icon: FolderOpen, moduleKey: "egop" },
-      { name: "Journal Officiel", href: "/journal-officiel", icon: BookOpen, moduleKey: "journalOfficiel" },
     ],
   },
   {
-    title: "Gestion",
+    title: "Coordination",
     items: [
+      { name: "e-Gop", href: "/egop", icon: FolderOpen, moduleKey: "egop" },
+      { name: "Institutions", href: "/institutions", icon: Building2, moduleKey: "dashboard" },
+    ],
+  },
+  {
+    title: "Publications",
+    items: [
+      { name: "Journal Officiel", href: "/journal-officiel", icon: BookOpen, moduleKey: "journalOfficiel" },
       { name: "Documents", href: "/documents", icon: FileText, moduleKey: "documents" },
       { name: "Rapports", href: "/rapports", icon: ClipboardCheck, moduleKey: "rapports" },
-      { name: "Formation", href: "/formation", icon: GraduationCap, moduleKey: "formation" },
     ],
   },
   {
     title: "Système",
     items: [
+      { name: "Formation", href: "/formation", icon: GraduationCap, moduleKey: "formation" },
       { name: "Paramètres", href: "/parametres", icon: Settings, moduleKey: "parametres" },
     ],
   },

@@ -12,13 +12,17 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { FadeInView, StaggerView, StaggerItem, ScaleOnHover } from "@/components/ui/motion";
+import palaisImage from "@/assets/palais-gouvernement.jpg";
+import assembleeImage from "@/assets/assemblee-nationale.jpg";
+import senatImage from "@/assets/senat-gabon.jpg";
+import courImage from "@/assets/cour-constitutionnelle.jpg";
 
 const features = [
   {
     icon: BarChart3,
     title: "Tableau de Bord GAR",
     description: "Suivi en temps réel de l'exécution du Plan d'Action Gouvernemental avec indicateurs de performance et alertes automatiques.",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Palais_du_Bord_de_Mer.jpg/1280px-Palais_du_Bord_de_Mer.jpg",
+    image: palaisImage,
     href: "/dashboard",
     stats: "98% de précision"
   },
@@ -26,7 +30,7 @@ const features = [
     icon: Users,
     title: "Portail Nominations",
     description: "Dématérialisation complète du processus de contrôle des nominations aux hautes fonctions publiques.",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Assembl%C3%A9e_nationale_%28Libreville%29.jpg/1280px-Assembl%C3%A9e_nationale_%28Libreville%29.jpg",
+    image: assembleeImage,
     href: "/nominations",
     stats: "Délai réduit de 60%"
   },
@@ -34,7 +38,7 @@ const features = [
     icon: FileText,
     title: "Cycle Législatif",
     description: "Gestion des Conseils Interministériels, suivi des textes et coordination du travail gouvernemental.",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/S%C3%A9nat_du_Gabon.jpg/1280px-S%C3%A9nat_du_Gabon.jpg",
+    image: senatImage,
     href: "/cycle-legislatif",
     stats: "500+ textes/an"
   },
@@ -42,7 +46,7 @@ const features = [
     icon: BookOpen,
     title: "Journal Officiel",
     description: "Accès open data aux textes juridiques officiels de la République avec moteur de recherche avancé.",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Cour_constitutionnelle_du_Gabon.jpg/1280px-Cour_constitutionnelle_du_Gabon.jpg",
+    image: courImage,
     href: "/journal-officiel",
     stats: "Accès public 24/7"
   },

@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import heroImage from "@/assets/hero-libreville.jpg";
 
 const miniFeatures = [
   {
@@ -63,7 +64,7 @@ export default function HeroSection() {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Libreville_Downtown.jpg/1920px-Libreville_Downtown.jpg')`,
+          backgroundImage: `url(${heroImage})`,
           transform: `translateY(${scrollY * 0.3}px)`,
         }}
       />

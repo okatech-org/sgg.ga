@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { FadeInView } from "@/components/ui/motion";
+import dashboardImage from "@/assets/dashboard-gar.jpg";
+import palaisImage from "@/assets/palais-gouvernement.jpg";
 
 const showcaseItems = [
   {
@@ -21,7 +23,7 @@ const showcaseItems = [
       "Rapports consolidés par ministère",
       "Historique et tendances"
     ],
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Gabon_government_building.jpg/1280px-Gabon_government_building.jpg",
+    image: dashboardImage,
     href: "/dashboard",
     stats: [
       { value: "35", label: "Ministères" },
@@ -40,7 +42,7 @@ const showcaseItems = [
       "Logs d'audit conservés 5 ans",
       "Conformité RGPD"
     ],
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Flag_of_Gabon.svg/1280px-Flag_of_Gabon.svg.png",
+    image: palaisImage,
     href: "/auth",
     stats: [
       { value: "99.9%", label: "Disponibilité" },

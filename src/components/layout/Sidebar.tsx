@@ -76,6 +76,12 @@ const navigation: NavSection[] = [
       { name: "Paramètres", href: "/parametres", icon: Settings, moduleKey: "parametres" },
     ],
   },
+  {
+    title: "Administration",
+    items: [
+      { name: "Gestion Utilisateurs", href: "/admin/users", icon: Users, moduleKey: "adminUsers" },
+    ],
+  },
 ];
 
 export function Sidebar({ isOpen, onToggle }: SidebarProps) {

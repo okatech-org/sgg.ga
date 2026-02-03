@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Search, Shield, Users } from "lucide-react";
+import { Loader2, Search, Shield, Users, Building2 } from "lucide-react";
 
 interface UserWithRole {
   user_id: string;
@@ -39,6 +41,7 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingInstitution, setEditingInstitution] = useState<{ userId: string; institution: string } | null>(null);
 
   const isAdmin = hasRole("admin_sgg");
 
@@ -101,6 +104,30 @@ export default function AdminUsers() {
     } catch (error) {
       console.error("Error updating role:", error);
       toast.error("Erreur lors de la mise à jour du rôle");
+    } finally {
+    setUpdating(null);
+    }
+  };
+
+  const updateUserInstitution = async (userId: string, institution: string) => {
+    setUpdating(userId);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ institution })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      setUsers((prev) =>
+        prev.map((u) => (u.user_id === userId ? { ...u, institution } : u))
+      );
+
+      setEditingInstitution(null);
+      toast.success("Institution mise à jour");
+    } catch (error) {
+      console.error("Error updating institution:", error);
+      toast.error("Erreur lors de la mise à jour de l'institution");
     } finally {
       setUpdating(null);
     }
@@ -182,7 +209,55 @@ export default function AdminUsers() {
                       <TableCell className="font-medium">
                         {user.full_name || "—"}
                       </TableCell>
-                      <TableCell>{user.institution || "—"}</TableCell>
+                      <TableCell>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center gap-2 text-left"
+                              onClick={() => setEditingInstitution({ userId: user.user_id, institution: user.institution || "" })}
+                            >
+                              <Building2 className="h-4 w-4" />
+                              {user.institution || "Assigner..."}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Modifier l'institution</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label>Institution</Label>
+                                <Input
+                                  value={editingInstitution?.institution || ""}
+                                  onChange={(e) =>
+                                    setEditingInstitution((prev) =>
+                                      prev ? { ...prev, institution: e.target.value } : null
+                                    )
+                                  }
+                                  placeholder="Ex: Ministère de la Santé"
+                                />
+                              </div>
+                              <Button
+                                onClick={() => {
+                                  if (editingInstitution) {
+                                    updateUserInstitution(editingInstitution.userId, editingInstitution.institution);
+                                  }
+                                }}
+                                disabled={updating === user.user_id}
+                                className="w-full"
+                              >
+                                {updating === user.user_id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  "Enregistrer"
+                                )}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
                       <TableCell>
                         <Badge className={roleBadgeColors[user.role]}>
                           {roleLabels[user.role]}

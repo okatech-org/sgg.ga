@@ -14,6 +14,7 @@ import CycleLegislatif from "./pages/CycleLegislatif";
 import EGop from "./pages/EGop";
 import Institutions from "./pages/Institutions";
 import JournalOfficiel from "./pages/JournalOfficiel";
+import AdminUsers from "./pages/AdminUsers";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 
@@ -89,6 +90,16 @@ const App = () => (
               element={
                 <ProtectedRoute requiredModule="institutions">
                   <Institutions />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Admin routes */}
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute requiredRoles={["admin_sgg"]}>
+                  <AdminUsers />
                 </ProtectedRoute>
               }
             />

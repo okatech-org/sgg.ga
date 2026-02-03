@@ -59,6 +59,11 @@ export default function Landing() {
             </div>
           </div>
           <nav className="flex items-center gap-4">
+            <Link to="/demo">
+              <Button variant="outline" size="default">
+                Accès Démo
+              </Button>
+            </Link>
             <Link to="/dashboard">
               <Button variant="hero" size="default">
                 Accéder à la plateforme

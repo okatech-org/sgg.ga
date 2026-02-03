@@ -10,7 +10,8 @@ import {
   Clock,
   CheckCircle
 } from "lucide-react";
-import { AnimatedSection, FeatureCardSkeleton } from "./AnimatedSection";
+import { motion } from "framer-motion";
+import { FadeInView, StaggerView, StaggerItem, ScaleOnHover } from "@/components/ui/motion";
 
 const features = [
   {
@@ -52,96 +53,90 @@ export default function FeaturesSection() {
     <section className="py-16 md:py-24 bg-background">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <AnimatedSection delay={0}>
-          <div className="text-center mb-12 md:mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full bg-government-navy/10 dark:bg-government-gold/10 px-4 py-2 mb-4">
-              <TrendingUp className="h-4 w-4 text-government-navy dark:text-government-gold" />
-              <span className="text-sm font-medium text-government-navy dark:text-government-gold">
-                Modules de la Plateforme
-              </span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Une solution intégrée pour la{" "}
-              <span className="text-government-gold">transformation digitale</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Découvrez les outils qui modernisent le Secrétariat Général du Gouvernement
-            </p>
+        <FadeInView className="text-center mb-12 md:mb-16">
+          <div className="inline-flex items-center gap-2 rounded-full bg-an/10 px-4 py-2 mb-4">
+            <TrendingUp className="h-4 w-4 text-an" />
+            <span className="text-sm font-medium text-an">
+              Modules de la Plateforme
+            </span>
           </div>
-        </AnimatedSection>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-4">
+            Une solution intégrée pour la{" "}
+            <span className="text-an">transformation digitale</span>
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Découvrez les outils qui modernisent le Secrétariat Général du Gouvernement
+          </p>
+        </FadeInView>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+        <StaggerView className="grid md:grid-cols-2 gap-6 lg:gap-8">
           {features.map((feature, index) => (
-            <AnimatedSection 
-              key={index} 
-              delay={index * 150}
-              skeleton={<FeatureCardSkeleton />}
-            >
-              <div className="group relative bg-card border rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-gov-xl hover:border-government-gold/30">
-                {/* Image */}
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={feature.image} 
-                    alt={feature.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  
-                  {/* Icon Overlay */}
-                  <div className="absolute -bottom-6 left-6 z-10">
-                    <div className="h-14 w-14 rounded-xl bg-government-navy shadow-lg flex items-center justify-center border-4 border-card group-hover:bg-government-gold transition-colors duration-300">
-                      <feature.icon className="h-7 w-7 text-white group-hover:text-government-navy transition-colors" />
+            <StaggerItem key={index}>
+              <ScaleOnHover>
+                <div className="group relative neu-card overflow-hidden transition-all duration-300 hover:shadow-an-lg">
+                  {/* Image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={feature.image} 
+                      alt={feature.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    
+                    {/* Icon Overlay */}
+                    <div className="absolute -bottom-6 left-6 z-10">
+                      <div className="h-14 w-14 rounded-xl bg-primary shadow-lg flex items-center justify-center border-4 border-card group-hover:bg-an transition-colors duration-300">
+                        <feature.icon className="h-7 w-7 text-white" />
+                      </div>
+                    </div>
+                    
+                    {/* Stats Badge */}
+                    <div className="absolute top-4 right-4">
+                      <div className="glass rounded-full px-3 py-1 flex items-center gap-1.5">
+                        <CheckCircle className="h-3.5 w-3.5 text-success" />
+                        <span className="text-xs font-medium text-white">{feature.stats}</span>
+                      </div>
                     </div>
                   </div>
-                  
-                  {/* Stats Badge */}
-                  <div className="absolute top-4 right-4">
-                    <div className="bg-white/90 dark:bg-black/80 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5">
-                      <CheckCircle className="h-3.5 w-3.5 text-government-green" />
-                      <span className="text-xs font-medium text-government-navy dark:text-white">{feature.stats}</span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Content */}
-                <div className="p-6 pt-10">
-                  <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-government-gold transition-colors">
-                    {feature.title}
-                  </h3>
-                  <p className="text-muted-foreground mb-4 line-clamp-2">
-                    {feature.description}
-                  </p>
-                  
-                  {/* CTA - appears on hover */}
-                  <Link to={feature.href} className="inline-block">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 text-government-navy dark:text-government-gold hover:text-government-gold"
-                    >
-                      Découvrir
-                      <ArrowRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </Link>
+                  {/* Content */}
+                  <div className="p-6 pt-10">
+                    <h3 className="text-xl font-serif font-bold text-foreground mb-2 group-hover:text-an transition-colors">
+                      {feature.title}
+                    </h3>
+                    <p className="text-muted-foreground mb-4 line-clamp-2">
+                      {feature.description}
+                    </p>
+                    
+                    {/* CTA - appears on hover */}
+                    <Link to={feature.href} className="inline-block">
+                      <Button 
+                        variant="an-ghost" 
+                        size="sm" 
+                        className="opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
+                      >
+                        Découvrir
+                        <ArrowRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </AnimatedSection>
+              </ScaleOnHover>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerView>
 
         {/* View All Button */}
-        <AnimatedSection delay={600}>
-          <div className="text-center mt-12">
-            <Link to="/demo">
-              <Button variant="outline" size="lg" className="group">
-                <Clock className="h-4 w-4 mr-2" />
-                Explorer tous les modules
-                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-          </div>
-        </AnimatedSection>
+        <FadeInView delay={0.4} className="text-center mt-12">
+          <Link to="/demo">
+            <Button variant="an-outline" size="lg" className="group">
+              <Clock className="h-4 w-4 mr-2" />
+              Explorer tous les modules
+              <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+        </FadeInView>
       </div>
     </section>
   );

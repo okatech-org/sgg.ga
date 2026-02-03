@@ -9,17 +9,22 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-gov hover:shadow-gov-lg",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-elegant hover:shadow-an",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // Government specific variants
-        government: "bg-government-navy text-white hover:bg-government-navy-light shadow-gov hover:shadow-gov-lg",
-        gold: "bg-government-gold text-government-navy font-semibold hover:bg-government-gold-light shadow-gold-glow hover:shadow-gov-lg",
-        success: "bg-status-success text-white hover:bg-status-success/90",
-        hero: "bg-government-gold text-government-navy font-semibold text-base px-8 py-3 hover:bg-government-gold-light shadow-gold-glow hover:shadow-gov-xl transition-all duration-300 hover:scale-[1.02]",
+        // AN (Assemblée Nationale) specific variants
+        an: "bg-an text-white hover:bg-an-dark shadow-an hover:shadow-an-lg",
+        "an-outline": "border-2 border-an text-an hover:bg-an hover:text-white",
+        "an-ghost": "text-an hover:bg-an/10",
+        // Legacy government variants (remapped to AN style)
+        government: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-elegant hover:shadow-an",
+        gold: "bg-an text-white font-semibold hover:bg-an-dark shadow-an-glow hover:shadow-an-lg",
+        success: "bg-success text-white hover:bg-success/90",
+        // Hero variants
+        hero: "bg-an text-white font-semibold text-base px-8 py-3 hover:bg-an-dark shadow-an-glow hover:shadow-an-lg transition-all duration-300 hover:scale-[1.02]",
         "hero-outline": "border-2 border-white/30 text-white font-medium hover:bg-white/10 backdrop-blur-sm",
       },
       size: {

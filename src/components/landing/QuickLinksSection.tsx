@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { AnimatedSection, QuickLinkSkeleton } from "./AnimatedSection";
+import { motion } from "framer-motion";
+import { FadeInView, StaggerView, StaggerItem, ScaleOnHover } from "@/components/ui/motion";
 
 const quickLinks = [
   {
@@ -18,42 +19,42 @@ const quickLinks = [
     title: "Tableau de Bord GAR",
     description: "Suivi de l'exécution du PAG",
     href: "/dashboard",
-    color: "bg-government-gold",
+    color: "bg-an",
   },
   {
     icon: Users,
     title: "Portail Nominations",
     description: "Gestion des nominations",
     href: "/nominations",
-    color: "bg-government-green",
+    color: "bg-success",
   },
   {
     icon: FileText,
     title: "Cycle Législatif",
     description: "Textes en cours d'examen",
     href: "/cycle-legislatif",
-    color: "bg-status-info",
+    color: "bg-info",
   },
   {
     icon: Building2,
     title: "Institutions",
     description: "Annuaire des ministères",
     href: "/institutions",
-    color: "bg-government-navy",
+    color: "bg-primary",
   },
   {
     icon: ScrollText,
     title: "e-Gop",
     description: "Conseils Interministériels",
     href: "/egop",
-    color: "bg-accent",
+    color: "bg-an-dark",
   },
   {
     icon: BookOpen,
     title: "Journal Officiel",
     description: "Textes juridiques officiels",
     href: "/journal-officiel",
-    color: "bg-status-warning",
+    color: "bg-warning",
   },
 ];
 
@@ -62,18 +63,18 @@ export default function QuickLinksSection() {
   const isMobile = useIsMobile();
 
   return (
-    <section className="py-12 md:py-16 bg-muted/30 dark:bg-muted/10">
+    <section className="py-12 md:py-16 bg-muted/30">
       <div className="container mx-auto px-4">
-        <AnimatedSection delay={0}>
+        <FadeInView>
           <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-foreground mb-2">
               Accès Rapide
             </h2>
             <p className="text-muted-foreground">
               Naviguez directement vers les modules principaux
             </p>
           </div>
-        </AnimatedSection>
+        </FadeInView>
 
         {/* Mobile: Horizontal Scroll */}
         {isMobile ? (
@@ -88,13 +89,13 @@ export default function QuickLinksSection() {
                 to={link.href}
                 className="flex-shrink-0 w-[280px] snap-start"
               >
-                <div className="bg-card border rounded-xl p-5 h-full transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]">
+                <div className="neu-card p-5 h-full transition-all duration-300 hover:shadow-an active:scale-[0.98]">
                   <div className="flex items-center gap-4">
-                    <div className={`h-12 w-12 rounded-lg ${link.color} flex items-center justify-center flex-shrink-0`}>
+                    <div className={`h-12 w-12 rounded-lg ${link.color} flex items-center justify-center flex-shrink-0 shadow-elegant`}>
                       <link.icon className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">{link.title}</h3>
+                      <h3 className="font-serif font-semibold text-foreground truncate">{link.title}</h3>
                       <p className="text-sm text-muted-foreground truncate">{link.description}</p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
@@ -105,31 +106,34 @@ export default function QuickLinksSection() {
           </div>
         ) : (
           /* Desktop: Grid Layout */
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StaggerView className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {quickLinks.map((link, index) => (
-              <AnimatedSection key={index} delay={index * 100} skeleton={<QuickLinkSkeleton />}>
-                <Link 
-                  to={link.href}
-                  className="group block"
-                >
-                  <div className="bg-card border rounded-xl p-5 h-full transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-government-gold/30">
-                    <div className="flex items-center gap-4">
-                      <div className={`h-12 w-12 rounded-lg ${link.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
-                        <link.icon className="h-6 w-6 text-white" />
+              <StaggerItem key={index}>
+                <Link to={link.href} className="group block">
+                  <ScaleOnHover>
+                    <div className="neu-card p-5 h-full transition-all duration-300 hover:shadow-an-lg">
+                      <div className="flex items-center gap-4">
+                        <motion.div 
+                          className={`h-12 w-12 rounded-lg ${link.color} flex items-center justify-center shadow-elegant`}
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <link.icon className="h-6 w-6 text-white" />
+                        </motion.div>
+                        <div className="flex-1">
+                          <h3 className="font-serif font-semibold text-foreground group-hover:text-an transition-colors">
+                            {link.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">{link.description}</p>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-an group-hover:translate-x-1 transition-all" />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground group-hover:text-government-gold transition-colors">
-                          {link.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">{link.description}</p>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-government-gold group-hover:translate-x-1 transition-all" />
                     </div>
-                  </div>
+                  </ScaleOnHover>
                 </Link>
-              </AnimatedSection>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerView>
         )}
       </div>
     </section>

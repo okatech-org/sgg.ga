@@ -8,7 +8,8 @@ import {
   Linkedin,
   Youtube
 } from "lucide-react";
-import { AnimatedSection } from "./AnimatedSection";
+import { motion } from "framer-motion";
+import { FadeInView, StaggerView, StaggerItem, ScaleOnHover } from "@/components/ui/motion";
 
 const contactInfo = [
   {
@@ -46,46 +47,51 @@ const socialLinks = [
 
 export default function ContactPreFooter() {
   return (
-    <section className="py-12 bg-muted/50 dark:bg-muted/20 border-t">
+    <section className="py-12 bg-muted/50 border-t">
       <div className="container mx-auto px-4">
-        <AnimatedSection delay={0}>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {contactInfo.map((item, index) => (
+        <StaggerView className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {contactInfo.map((item, index) => (
+            <StaggerItem key={index}>
               <a 
-                key={index}
                 href={item.href}
-                className="flex items-center gap-4 p-4 rounded-xl bg-card border transition-all duration-300 hover:shadow-gov hover:border-government-gold/30 group"
+                className="block"
               >
-                <div className="h-12 w-12 rounded-lg bg-government-navy/10 dark:bg-government-gold/10 flex items-center justify-center flex-shrink-0 group-hover:bg-government-gold/10 transition-colors">
-                  <item.icon className="h-5 w-5 text-government-navy dark:text-government-gold group-hover:text-government-gold transition-colors" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{item.label}</p>
-                  <p className="font-medium text-foreground">{item.value}</p>
-                </div>
+                <ScaleOnHover>
+                  <div className="flex items-center gap-4 p-4 neu-card group">
+                    <div className="h-12 w-12 rounded-lg bg-an/10 flex items-center justify-center flex-shrink-0 group-hover:bg-an/20 transition-colors">
+                      <item.icon className="h-5 w-5 text-an" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">{item.label}</p>
+                      <p className="font-medium text-foreground">{item.value}</p>
+                    </div>
+                  </div>
+                </ScaleOnHover>
               </a>
-            ))}
-          </div>
-        </AnimatedSection>
+            </StaggerItem>
+          ))}
+        </StaggerView>
         
         {/* Social Links */}
-        <AnimatedSection delay={200}>
+        <FadeInView delay={0.4}>
           <div className="flex items-center justify-center gap-4">
             <span className="text-sm text-muted-foreground">Suivez-nous :</span>
             <div className="flex gap-2">
               {socialLinks.map((social, index) => (
-                <a
+                <motion.a
                   key={index}
                   href={social.href}
                   aria-label={social.label}
-                  className="h-10 w-10 rounded-full bg-card border flex items-center justify-center transition-all duration-300 hover:bg-government-navy hover:text-white hover:border-government-navy dark:hover:bg-government-gold dark:hover:text-government-navy"
+                  className="h-10 w-10 rounded-full neu-card flex items-center justify-center transition-all duration-300 hover:bg-an hover:text-white"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   <social.icon className="h-4 w-4" />
-                </a>
+                </motion.a>
               ))}
             </div>
           </div>
-        </AnimatedSection>
+        </FadeInView>
       </div>
     </section>
   );

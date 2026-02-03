@@ -48,6 +48,8 @@ export function useDemoUser() {
         rapports: true,
         formation: true,
         parametres: true,
+        institutions: true,
+        cycleLegislatif: true,
       };
     }
 

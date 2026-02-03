@@ -12,17 +12,31 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useDemoUser } from "@/hooks/useDemoUser";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HeaderProps {
   onMenuToggle?: () => void;
 }
 
+const roleLabels: Record<string, string> = {
+  admin_sgg: "Administrateur SGG",
+  sg_ministere: "SG Ministère",
+  sgpr: "SGPR",
+  citoyen: "Citoyen",
+};
+
 export function Header({ onMenuToggle }: HeaderProps) {
   const navigate = useNavigate();
   const { demoUser, clearDemoUser } = useDemoUser();
+  const { user, profile, role, signOut } = useAuth();
 
-  const handleLogout = () => {
-    clearDemoUser();
+  const handleLogout = async () => {
+    if (demoUser) {
+      clearDemoUser();
+    }
+    if (user) {
+      await signOut();
+    }
     navigate("/");
   };
 
@@ -30,6 +44,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
     clearDemoUser();
     navigate("/demo");
   };
+
+  // Determine display name and role
+  const displayName = demoUser?.title || profile?.full_name || user?.email || "Utilisateur";
+  const displayInstitution = demoUser?.institution || profile?.institution || (role ? roleLabels[role] : "SGG");
+  const displayRole = demoUser?.role || (role ? roleLabels[role] : "");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
@@ -69,6 +88,16 @@ export function Header({ onMenuToggle }: HeaderProps) {
             </Badge>
           )}
 
+          {/* Authenticated User Badge */}
+          {user && !demoUser && role && (
+            <Badge 
+              variant="outline" 
+              className="hidden sm:flex border-government-navy text-government-navy gap-1"
+            >
+              <span className="text-[10px]">{roleLabels[role]?.toUpperCase()}</span>
+            </Badge>
+          )}
+
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -105,25 +134,21 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   <User className="h-4 w-4 text-white" />
                 </div>
                 <div className="hidden md:flex flex-col items-start">
-                  <span className="text-sm font-medium">
-                    {demoUser ? demoUser.title : "Administrateur"}
+                  <span className="text-sm font-medium truncate max-w-[150px]">
+                    {displayName}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {demoUser ? demoUser.institution : "SGG"}
+                    {displayInstitution}
                   </span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
-                {demoUser ? (
-                  <div className="flex flex-col">
-                    <span>{demoUser.title}</span>
-                    <span className="text-xs font-normal text-muted-foreground">{demoUser.role}</span>
-                  </div>
-                ) : (
-                  "Mon Compte"
-                )}
+                <div className="flex flex-col">
+                  <span className="truncate">{displayName}</span>
+                  <span className="text-xs font-normal text-muted-foreground">{displayRole}</span>
+                </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {demoUser && (
@@ -134,8 +159,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   <DropdownMenuSeparator />
                 </>
               )}
-              <DropdownMenuItem>Profil</DropdownMenuItem>
-              <DropdownMenuItem>Paramètres</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/profil")}>Profil</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/parametres")}>Paramètres</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />

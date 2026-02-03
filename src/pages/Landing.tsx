@@ -64,9 +64,9 @@ export default function Landing() {
                 Accès Démo
               </Button>
             </Link>
-            <Link to="/dashboard">
+            <Link to="/auth">
               <Button variant="hero" size="default">
-                Accéder à la plateforme
+                Se connecter
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
@@ -95,15 +95,17 @@ export default function Landing() {
               le suivi de l'exécution du PAG 2026 et la modernisation de l'État.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/dashboard">
+              <Link to="/auth">
                 <Button variant="hero" size="xl">
-                  Accéder au Tableau de Bord
+                  Se connecter
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
               </Link>
-              <Button variant="hero-outline" size="xl">
-                Consulter le Journal Officiel
-              </Button>
+              <Link to="/journal-officiel">
+                <Button variant="hero-outline" size="xl">
+                  Consulter le Journal Officiel
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

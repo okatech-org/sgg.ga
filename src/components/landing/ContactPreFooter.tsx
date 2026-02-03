@@ -8,6 +8,7 @@ import {
   Linkedin,
   Youtube
 } from "lucide-react";
+import { AnimatedSection } from "./AnimatedSection";
 
 const contactInfo = [
   {
@@ -45,42 +46,46 @@ const socialLinks = [
 
 export default function ContactPreFooter() {
   return (
-    <section className="py-12 bg-muted/50 border-t">
+    <section className="py-12 bg-muted/50 dark:bg-muted/20 border-t">
       <div className="container mx-auto px-4">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {contactInfo.map((item, index) => (
-            <a 
-              key={index}
-              href={item.href}
-              className="flex items-center gap-4 p-4 rounded-xl bg-card border transition-all duration-300 hover:shadow-gov hover:border-government-gold/30 group"
-            >
-              <div className="h-12 w-12 rounded-lg bg-government-navy/10 flex items-center justify-center flex-shrink-0 group-hover:bg-government-gold/10 transition-colors">
-                <item.icon className="h-5 w-5 text-government-navy group-hover:text-government-gold transition-colors" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{item.label}</p>
-                <p className="font-medium text-foreground">{item.value}</p>
-              </div>
-            </a>
-          ))}
-        </div>
-        
-        {/* Social Links */}
-        <div className="flex items-center justify-center gap-4">
-          <span className="text-sm text-muted-foreground">Suivez-nous :</span>
-          <div className="flex gap-2">
-            {socialLinks.map((social, index) => (
-              <a
+        <AnimatedSection delay={0}>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {contactInfo.map((item, index) => (
+              <a 
                 key={index}
-                href={social.href}
-                aria-label={social.label}
-                className="h-10 w-10 rounded-full bg-card border flex items-center justify-center transition-all duration-300 hover:bg-government-navy hover:text-white hover:border-government-navy"
+                href={item.href}
+                className="flex items-center gap-4 p-4 rounded-xl bg-card border transition-all duration-300 hover:shadow-gov hover:border-government-gold/30 group"
               >
-                <social.icon className="h-4 w-4" />
+                <div className="h-12 w-12 rounded-lg bg-government-navy/10 dark:bg-government-gold/10 flex items-center justify-center flex-shrink-0 group-hover:bg-government-gold/10 transition-colors">
+                  <item.icon className="h-5 w-5 text-government-navy dark:text-government-gold group-hover:text-government-gold transition-colors" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{item.label}</p>
+                  <p className="font-medium text-foreground">{item.value}</p>
+                </div>
               </a>
             ))}
           </div>
-        </div>
+        </AnimatedSection>
+        
+        {/* Social Links */}
+        <AnimatedSection delay={200}>
+          <div className="flex items-center justify-center gap-4">
+            <span className="text-sm text-muted-foreground">Suivez-nous :</span>
+            <div className="flex gap-2">
+              {socialLinks.map((social, index) => (
+                <a
+                  key={index}
+                  href={social.href}
+                  aria-label={social.label}
+                  className="h-10 w-10 rounded-full bg-card border flex items-center justify-center transition-all duration-300 hover:bg-government-navy hover:text-white hover:border-government-navy dark:hover:bg-government-gold dark:hover:text-government-navy"
+                >
+                  <social.icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
+          </div>
+        </AnimatedSection>
       </div>
     </section>
   );

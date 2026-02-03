@@ -6,6 +6,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { AnimatedSection, TestimonialSkeleton } from "./AnimatedSection";
 
 const testimonials = [
   {
@@ -48,83 +49,95 @@ const partners = [
 
 export default function TestimonialsSection() {
   return (
-    <section className="py-16 md:py-24 bg-muted/30">
+    <section className="py-16 md:py-24 bg-muted/30 dark:bg-muted/10">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Ce qu'ils disent de <span className="text-government-gold">SGG Digital</span>
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Retours d'expérience des utilisateurs de la plateforme
-          </p>
-        </div>
+        <AnimatedSection delay={0}>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Ce qu'ils disent de <span className="text-government-gold">SGG Digital</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Retours d'expérience des utilisateurs de la plateforme
+            </p>
+          </div>
+        </AnimatedSection>
 
         {/* Testimonials Carousel */}
-        <div className="relative px-12 mb-16">
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-4">
-              {testimonials.map((testimonial, index) => (
-                <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                  <div className="h-full bg-card/80 backdrop-blur-sm border rounded-2xl p-6 flex flex-col transition-all duration-300 hover:shadow-gov-lg hover:bg-card">
-                    {/* Quote Icon */}
-                    <Quote className="h-8 w-8 text-government-gold/30 mb-4" />
-                    
-                    {/* Quote Text */}
-                    <p className="text-foreground mb-6 flex-1 italic">
-                      "{testimonial.quote}"
-                    </p>
-                    
-                    {/* Rating */}
-                    <div className="flex gap-1 mb-4">
-                      {Array.from({ length: testimonial.rating }).map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-government-gold text-government-gold" />
-                      ))}
-                    </div>
-                    
-                    {/* Author */}
-                    <div className="flex items-center gap-3">
-                      <img 
-                        src={testimonial.avatar}
-                        alt={testimonial.name}
-                        className="h-12 w-12 rounded-full object-cover border-2 border-government-gold/20"
-                      />
-                      <div>
-                        <p className="font-semibold text-foreground">{testimonial.name}</p>
-                        <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+        <AnimatedSection delay={200} skeleton={
+          <div className="grid md:grid-cols-3 gap-4 px-12">
+            <TestimonialSkeleton />
+            <TestimonialSkeleton />
+            <TestimonialSkeleton />
+          </div>
+        }>
+          <div className="relative px-12 mb-16">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {testimonials.map((testimonial, index) => (
+                  <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                    <div className="h-full bg-card/80 dark:bg-card/50 backdrop-blur-sm border rounded-2xl p-6 flex flex-col transition-all duration-300 hover:shadow-gov-lg hover:bg-card">
+                      {/* Quote Icon */}
+                      <Quote className="h-8 w-8 text-government-gold/30 mb-4" />
+                      
+                      {/* Quote Text */}
+                      <p className="text-foreground mb-6 flex-1 italic">
+                        "{testimonial.quote}"
+                      </p>
+                      
+                      {/* Rating */}
+                      <div className="flex gap-1 mb-4">
+                        {Array.from({ length: testimonial.rating }).map((_, i) => (
+                          <Star key={i} className="h-4 w-4 fill-government-gold text-government-gold" />
+                        ))}
+                      </div>
+                      
+                      {/* Author */}
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={testimonial.avatar}
+                          alt={testimonial.name}
+                          className="h-12 w-12 rounded-full object-cover border-2 border-government-gold/20"
+                        />
+                        <div>
+                          <p className="font-semibold text-foreground">{testimonial.name}</p>
+                          <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden md:flex" />
-            <CarouselNext className="hidden md:flex" />
-          </Carousel>
-        </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
+          </div>
+        </AnimatedSection>
 
         {/* Partners/Institutions */}
-        <div className="border-t pt-12">
-          <p className="text-center text-sm text-muted-foreground mb-6">
-            INSTITUTIONS CONNECTÉES
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
-            {partners.map((partner, index) => (
-              <div 
-                key={index}
-                className={`${partner.opacity} hover:opacity-100 transition-opacity duration-300 text-lg font-semibold text-foreground`}
-              >
-                {partner.name}
-              </div>
-            ))}
+        <AnimatedSection delay={400}>
+          <div className="border-t pt-12">
+            <p className="text-center text-sm text-muted-foreground mb-6">
+              INSTITUTIONS CONNECTÉES
+            </p>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+              {partners.map((partner, index) => (
+                <div 
+                  key={index}
+                  className={`${partner.opacity} hover:opacity-100 transition-opacity duration-300 text-lg font-semibold text-foreground`}
+                >
+                  {partner.name}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </AnimatedSection>
       </div>
     </section>
   );

@@ -6,6 +6,7 @@ import {
   Users,
   BarChart
 } from "lucide-react";
+import { AnimatedSection, BenefitCardSkeleton } from "./AnimatedSection";
 
 const benefits = [
   {
@@ -63,49 +64,55 @@ export default function BenefitsSection() {
     <section className="py-16 md:py-24 bg-background">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Pourquoi choisir <span className="text-government-gold">SGG Digital</span> ?
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Des avantages concrets pour la modernisation de l'administration gabonaise
-          </p>
-        </div>
+        <AnimatedSection delay={0}>
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Pourquoi choisir <span className="text-government-gold">SGG Digital</span> ?
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Des avantages concrets pour la modernisation de l'administration gabonaise
+            </p>
+          </div>
+        </AnimatedSection>
 
         {/* Benefits Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {benefits.map((benefit, index) => (
-            <div 
-              key={index}
-              className={`relative bg-gradient-to-br ${benefit.gradient} rounded-2xl p-6 border border-border/50 transition-all duration-300 hover:shadow-gov-lg hover:scale-[1.02] group`}
-              style={{ animationDelay: `${index * 0.1}s` }}
+            <AnimatedSection 
+              key={index} 
+              delay={index * 100}
+              skeleton={<BenefitCardSkeleton />}
             >
-              {/* Icon */}
-              <div className="h-14 w-14 rounded-xl bg-card shadow-gov flex items-center justify-center mb-4 group-hover:shadow-gov-lg transition-shadow">
-                <benefit.icon className="h-7 w-7 text-government-navy group-hover:text-government-gold transition-colors" />
+              <div 
+                className={`relative bg-gradient-to-br ${benefit.gradient} rounded-2xl p-6 border border-border/50 transition-all duration-300 hover:shadow-gov-lg hover:scale-[1.02] group h-full`}
+              >
+                {/* Icon */}
+                <div className="h-14 w-14 rounded-xl bg-card shadow-gov flex items-center justify-center mb-4 group-hover:shadow-gov-lg transition-shadow">
+                  <benefit.icon className="h-7 w-7 text-government-navy dark:text-government-gold group-hover:text-government-gold transition-colors" />
+                </div>
+                
+                {/* Content */}
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {benefit.title}
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  {benefit.description}
+                </p>
+                
+                {/* Stat */}
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold text-government-gold">
+                    {benefit.stat}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {benefit.statLabel}
+                  </span>
+                </div>
+                
+                {/* Decorative corner */}
+                <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-to-bl from-card/80 to-transparent rounded-tr-2xl" />
               </div>
-              
-              {/* Content */}
-              <h3 className="text-xl font-bold text-foreground mb-2">
-                {benefit.title}
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                {benefit.description}
-              </p>
-              
-              {/* Stat */}
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-bold text-government-gold">
-                  {benefit.stat}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {benefit.statLabel}
-                </span>
-              </div>
-              
-              {/* Decorative corner */}
-              <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-to-bl from-card/80 to-transparent rounded-tr-2xl" />
-            </div>
+            </AnimatedSection>
           ))}
         </div>
       </div>

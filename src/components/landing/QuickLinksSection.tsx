@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AnimatedSection, QuickLinkSkeleton } from "./AnimatedSection";
 
 const quickLinks = [
   {
@@ -61,16 +62,18 @@ export default function QuickLinksSection() {
   const isMobile = useIsMobile();
 
   return (
-    <section className="py-12 md:py-16 bg-muted/30">
+    <section className="py-12 md:py-16 bg-muted/30 dark:bg-muted/10">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            Accès Rapide
-          </h2>
-          <p className="text-muted-foreground">
-            Naviguez directement vers les modules principaux
-          </p>
-        </div>
+        <AnimatedSection delay={0}>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+              Accès Rapide
+            </h2>
+            <p className="text-muted-foreground">
+              Naviguez directement vers les modules principaux
+            </p>
+          </div>
+        </AnimatedSection>
 
         {/* Mobile: Horizontal Scroll */}
         {isMobile ? (
@@ -104,26 +107,27 @@ export default function QuickLinksSection() {
           /* Desktop: Grid Layout */
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {quickLinks.map((link, index) => (
-              <Link 
-                key={index} 
-                to={link.href}
-                className="group"
-              >
-                <div className="bg-card border rounded-xl p-5 h-full transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-government-gold/30">
-                  <div className="flex items-center gap-4">
-                    <div className={`h-12 w-12 rounded-lg ${link.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
-                      <link.icon className="h-6 w-6 text-white" />
+              <AnimatedSection key={index} delay={index * 100} skeleton={<QuickLinkSkeleton />}>
+                <Link 
+                  to={link.href}
+                  className="group block"
+                >
+                  <div className="bg-card border rounded-xl p-5 h-full transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-government-gold/30">
+                    <div className="flex items-center gap-4">
+                      <div className={`h-12 w-12 rounded-lg ${link.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
+                        <link.icon className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground group-hover:text-government-gold transition-colors">
+                          {link.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">{link.description}</p>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-government-gold group-hover:translate-x-1 transition-all" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground group-hover:text-government-gold transition-colors">
-                        {link.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">{link.description}</p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-government-gold group-hover:translate-x-1 transition-all" />
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </AnimatedSection>
             ))}
           </div>
         )}

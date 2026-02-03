@@ -16,6 +16,7 @@ export function ProtectedRoute({
   const { user, role, loading, canAccessModule } = useAuth();
   const location = useLocation();
 
+  // Wait for auth state and role to be loaded
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -29,8 +30,17 @@ export function ProtectedRoute({
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Wait for role to be loaded before checking permissions
+  if (role === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-government-navy" />
+      </div>
+    );
+  }
+
   // Check role requirements
-  if (requiredRoles && role && !requiredRoles.includes(role)) {
+  if (requiredRoles && !requiredRoles.includes(role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

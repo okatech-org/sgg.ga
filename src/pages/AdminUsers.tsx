@@ -41,7 +41,9 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingInstitution, setEditingInstitution] = useState<{ userId: string; institution: string } | null>(null);
+  const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
+  const [institutionValue, setInstitutionValue] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const isAdmin = hasRole("admin_sgg");
 
@@ -123,13 +125,27 @@ export default function AdminUsers() {
         prev.map((u) => (u.user_id === userId ? { ...u, institution } : u))
       );
 
-      setEditingInstitution(null);
+      setDialogOpen(false);
+      setEditingUser(null);
+      setInstitutionValue("");
       toast.success("Institution mise à jour");
     } catch (error) {
       console.error("Error updating institution:", error);
       toast.error("Erreur lors de la mise à jour de l'institution");
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handleOpenInstitutionDialog = (user: UserWithRole) => {
+    setEditingUser(user);
+    setInstitutionValue(user.institution || "");
+    setDialogOpen(true);
+  };
+
+  const handleSaveInstitution = () => {
+    if (editingUser) {
+      updateUserInstitution(editingUser.user_id, institutionValue);
     }
   };
 
@@ -210,53 +226,15 @@ export default function AdminUsers() {
                         {user.full_name || "—"}
                       </TableCell>
                       <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="flex items-center gap-2 text-left"
-                              onClick={() => setEditingInstitution({ userId: user.user_id, institution: user.institution || "" })}
-                            >
-                              <Building2 className="h-4 w-4" />
-                              {user.institution || "Assigner..."}
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Modifier l'institution</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label>Institution</Label>
-                                <Input
-                                  value={editingInstitution?.institution || ""}
-                                  onChange={(e) =>
-                                    setEditingInstitution((prev) =>
-                                      prev ? { ...prev, institution: e.target.value } : null
-                                    )
-                                  }
-                                  placeholder="Ex: Ministère de la Santé"
-                                />
-                              </div>
-                              <Button
-                                onClick={() => {
-                                  if (editingInstitution) {
-                                    updateUserInstitution(editingInstitution.userId, editingInstitution.institution);
-                                  }
-                                }}
-                                disabled={updating === user.user_id}
-                                className="w-full"
-                              >
-                                {updating === user.user_id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  "Enregistrer"
-                                )}
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex items-center gap-2 text-left"
+                          onClick={() => handleOpenInstitutionDialog(user)}
+                        >
+                          <Building2 className="h-4 w-4" />
+                          {user.institution || "Assigner..."}
+                        </Button>
                       </TableCell>
                       <TableCell>
                         <Badge className={roleBadgeColors[user.role]}>
@@ -303,6 +281,36 @@ export default function AdminUsers() {
             )}
           </CardContent>
         </Card>
+
+        {/* Institution Edit Dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifier l'institution</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Institution</Label>
+                <Input
+                  value={institutionValue}
+                  onChange={(e) => setInstitutionValue(e.target.value)}
+                  placeholder="Ex: Ministère de la Santé"
+                />
+              </div>
+              <Button
+                onClick={handleSaveInstitution}
+                disabled={updating === editingUser?.user_id}
+                className="w-full"
+              >
+                {updating === editingUser?.user_id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Enregistrer"
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

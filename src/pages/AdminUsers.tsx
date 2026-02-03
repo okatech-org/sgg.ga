@@ -79,6 +79,7 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<AppRole | "all">("all");
   const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
   const [institutionValue, setInstitutionValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -192,8 +193,9 @@ export default function AdminUsers() {
 
   const filteredUsers = users.filter(
     (user) =>
-      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.institution?.toLowerCase().includes(searchTerm.toLowerCase())
+      (roleFilter === "all" || user.role === roleFilter) &&
+      (user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       user.institution?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
@@ -202,10 +204,10 @@ export default function AdminUsers() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Reset to page 1 when search changes
+  // Reset to page 1 when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, roleFilter]);
 
   if (!isAdmin) {
     return (
@@ -244,8 +246,8 @@ export default function AdminUsers() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
-              <div className="relative">
+            <div className="mb-4 flex gap-4">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Rechercher par nom ou institution..."
@@ -254,6 +256,21 @@ export default function AdminUsers() {
                   className="pl-10"
                 />
               </div>
+              <Select
+                value={roleFilter}
+                onValueChange={(value) => setRoleFilter(value as AppRole | "all")}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filtrer par rôle" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les rôles</SelectItem>
+                  <SelectItem value="admin_sgg">Admin SGG</SelectItem>
+                  <SelectItem value="sg_ministere">SG Ministère</SelectItem>
+                  <SelectItem value="sgpr">SGPR</SelectItem>
+                  <SelectItem value="citoyen">Citoyen</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {loading ? (

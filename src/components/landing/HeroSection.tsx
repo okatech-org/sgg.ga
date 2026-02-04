@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import { Skeleton } from "@/components/ui/skeleton";
 import heroImage from "@/assets/hero-libreville.jpg";
 
 const miniFeatures = [
@@ -39,6 +40,7 @@ const miniFeatures = [
 
 export default function HeroSection() {
   const [scrollY, setScrollY] = useState(0);
+  const [bgLoaded, setBgLoaded] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -55,14 +57,26 @@ export default function HeroSection() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Preload hero background
+  useEffect(() => {
+    const img = new Image();
+    img.src = heroImage;
+    img.onload = () => setBgLoaded(true);
+  }, []);
+
   return (
     <section 
       ref={heroRef}
       className="relative min-h-[85vh] overflow-hidden flex items-center"
     >
+      {/* Skeleton while loading */}
+      {!bgLoaded && (
+        <Skeleton className="absolute inset-0 w-full h-full rounded-none" />
+      )}
+      
       {/* Background Image with Parallax - Libreville cityscape */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ${bgLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={{
           backgroundImage: `url(${heroImage})`,
           transform: `translateY(${scrollY * 0.3}px)`,

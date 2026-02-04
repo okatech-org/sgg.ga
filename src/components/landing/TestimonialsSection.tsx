@@ -8,6 +8,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { FadeInView, GlassCard } from "@/components/ui/motion";
+import { AvatarWithSkeleton } from "./ImageWithSkeleton";
 
 const testimonials = [
   {
@@ -98,10 +99,11 @@ export default function TestimonialsSection() {
                         
                         {/* Author */}
                         <div className="flex items-center gap-3">
-                          <img 
+                          <AvatarWithSkeleton 
                             src={testimonial.avatar}
                             alt={testimonial.name}
-                            className="h-12 w-12 rounded-full object-cover border-2 border-an/20"
+                            size="md"
+                            className="border-2 border-an/20"
                           />
                           <div>
                             <p className="font-serif font-semibold text-foreground">{testimonial.name}</p>

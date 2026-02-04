@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 const navLinks = [
   { label: "Accueil", href: "/" },
   { label: "Modules", href: "#features" },
-  { label: "À propos", href: "#about" },
+  { label: "À propos", href: "/about" },
   { label: "Journal Officiel", href: "/journal-officiel" },
 ];
 
@@ -44,13 +44,23 @@ export default function LandingHeader() {
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-6">
           {navLinks.map((link, index) => (
-            <a 
-              key={index}
-              href={link.href}
-              className="text-sm font-medium text-muted-foreground hover:text-an transition-colors"
-            >
-              {link.label}
-            </a>
+            link.href.startsWith('/') ? (
+              <Link 
+                key={index}
+                to={link.href}
+                className="text-sm font-medium text-muted-foreground hover:text-an transition-colors"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a 
+                key={index}
+                href={link.href}
+                className="text-sm font-medium text-muted-foreground hover:text-an transition-colors"
+              >
+                {link.label}
+              </a>
+            )
           ))}
         </nav>
 
@@ -91,14 +101,25 @@ export default function LandingHeader() {
                 
                 <nav className="flex flex-col gap-4 flex-1">
                   {navLinks.map((link, index) => (
-                    <a 
-                      key={index}
-                      href={link.href}
-                      onClick={() => setIsOpen(false)}
-                      className="text-lg font-medium text-foreground hover:text-an transition-colors py-2 border-b"
-                    >
-                      {link.label}
-                    </a>
+                    link.href.startsWith('/') ? (
+                      <Link 
+                        key={index}
+                        to={link.href}
+                        onClick={() => setIsOpen(false)}
+                        className="text-lg font-medium text-foreground hover:text-an transition-colors py-2 border-b"
+                      >
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a 
+                        key={index}
+                        href={link.href}
+                        onClick={() => setIsOpen(false)}
+                        className="text-lg font-medium text-foreground hover:text-an transition-colors py-2 border-b"
+                      >
+                        {link.label}
+                      </a>
+                    )
                   ))}
                 </nav>
                 

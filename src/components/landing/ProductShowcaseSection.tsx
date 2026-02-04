@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { FadeInView } from "@/components/ui/motion";
+import { ImageWithSkeleton } from "./ImageWithSkeleton";
 import dashboardImage from "@/assets/dashboard-gar.jpg";
 import palaisImage from "@/assets/palais-gouvernement.jpg";
 
@@ -115,10 +116,11 @@ export default function ProductShowcaseSection() {
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <img 
+                  <ImageWithSkeleton 
                     src={item.image}
                     alt={item.title}
                     className="w-full h-64 md:h-80 lg:h-96 object-cover"
+                    skeletonClassName="h-64 md:h-80 lg:h-96"
                   />
                   <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent" />
                 </motion.div>

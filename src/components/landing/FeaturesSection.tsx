@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { FadeInView, StaggerView, StaggerItem, ScaleOnHover } from "@/components/ui/motion";
+import { ImageWithSkeleton } from "./ImageWithSkeleton";
 import palaisImage from "@/assets/palais-gouvernement.jpg";
 import assembleeImage from "@/assets/assemblee-nationale.jpg";
 import senatImage from "@/assets/senat-gabon.jpg";
@@ -81,10 +82,11 @@ export default function FeaturesSection() {
                 <div className="group relative neu-card overflow-hidden transition-all duration-300 hover:shadow-an-lg">
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
-                    <img 
+                    <ImageWithSkeleton 
                       src={feature.image} 
                       alt={feature.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      skeletonClassName="bg-muted"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     

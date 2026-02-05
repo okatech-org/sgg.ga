@@ -11,40 +11,51 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Demo from "./pages/Demo";
+import Profil from "./pages/Profil";
+import GAR from "./pages/GAR";
 import Nominations from "./pages/Nominations";
 import CycleLegislatif from "./pages/CycleLegislatif";
 import EGop from "./pages/EGop";
 import Institutions from "./pages/Institutions";
 import JournalOfficiel from "./pages/JournalOfficiel";
+import JournalOfficielApp from "./pages/JournalOfficielApp";
+import Documents from "./pages/Documents";
+import Rapports from "./pages/Rapports";
 import AdminUsers from "./pages/AdminUsers";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
+import Modules from "./pages/Modules";
+import ModuleLandingPage from "./pages/ModuleLanding";
+import PAG2026 from "./pages/PAG2026";
+import { Navigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
 function AnimatedRoutes() {
   const location = useLocation();
-  
+
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         {/* Public routes */}
         <Route path="/" element={<Index />} />
+        <Route path="/modules" element={<Modules />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/demo" element={<Demo />} />
         <Route path="/about" element={<About />} />
+        <Route path="/pag-2026" element={<PAG2026 />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        
-        {/* Journal Officiel - accessible to all authenticated users */}
-        <Route
-          path="/journal-officiel"
-          element={
-            <ProtectedRoute requiredModule="journalOfficiel">
-              <JournalOfficiel />
-            </ProtectedRoute>
-          }
-        />
+
+        {/* Public Module Landing Pages */}
+        <Route path="/gar" element={<Navigate to="/module/gar" replace />} />
+        <Route path="/nominations" element={<Navigate to="/module/nominations" replace />} />
+        <Route path="/cycle-legislatif" element={<Navigate to="/module/cycleLegislatif" replace />} />
+        <Route path="/egop" element={<Navigate to="/module/egop" replace />} />
+        <Route path="/institutions" element={<Navigate to="/module/institutions" replace />} />
+        <Route path="/module/:moduleId" element={<ModuleLandingPage />} />
+
+        <Route path="/journal-officiel" element={<JournalOfficiel />} />
 
         {/* Protected routes - require authentication */}
         <Route
@@ -56,15 +67,32 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/dashboard/gar"
+          path="/profil"
           element={
-            <ProtectedRoute requiredModule="gar">
-              <Dashboard />
+            <ProtectedRoute>
+              <Profil />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/nominations"
+          path="/dashboard/gar"
+          element={
+            <ProtectedRoute requiredModule="gar">
+              <GAR />
+            </ProtectedRoute>
+          }
+        />
+        {/* New Protected App Routes */}
+        <Route
+          path="/gar/app"
+          element={
+            <ProtectedRoute requiredModule="gar">
+              <GAR />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/nominations/app"
           element={
             <ProtectedRoute requiredModule="nominations">
               <Nominations />
@@ -72,7 +100,7 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/cycle-legislatif"
+          path="/cycle-legislatif/app"
           element={
             <ProtectedRoute requiredModule="cycleLegislatif">
               <CycleLegislatif />
@@ -80,7 +108,7 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/egop"
+          path="/egop/app"
           element={
             <ProtectedRoute requiredModule="egop">
               <EGop />
@@ -88,14 +116,38 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/institutions"
+          path="/institutions/app"
           element={
             <ProtectedRoute requiredModule="institutions">
               <Institutions />
             </ProtectedRoute>
           }
         />
-        
+        <Route
+          path="/journal-officiel/app"
+          element={
+            <ProtectedRoute requiredModule="journalOfficiel">
+              <JournalOfficielApp />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/documents/app"
+          element={
+            <ProtectedRoute requiredModule="documents">
+              <Documents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rapports/app"
+          element={
+            <ProtectedRoute requiredModule="rapports">
+              <Rapports />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Admin routes */}
         <Route
           path="/admin/users"

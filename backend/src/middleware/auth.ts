@@ -1,0 +1,334 @@
+/**
+ * SGG Digital - Authentication Middleware
+ */
+
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { query } from '../config/database.js';
+import { cacheGet, cacheSet } from '../config/redis.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+
+// Types
+export interface JwtPayload {
+  userId: string;
+  email: string;
+  role: string;
+  institutionId?: string;
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: JwtPayload;
+}
+
+type AppRole =
+  | 'admin_sgg'
+  | 'directeur_sgg'
+  | 'sg_ministere'
+  | 'sgpr'
+  | 'premier_ministre'
+  | 'ministre'
+  | 'assemblee'
+  | 'senat'
+  | 'conseil_etat'
+  | 'cour_constitutionnelle'
+  | 'dgjo'
+  | 'citoyen';
+
+type Module = 'gar' | 'nominations' | 'legislatif' | 'egop' | 'jo';
+type Permission = 'read' | 'write' | 'approve' | 'reject' | 'publish' | 'admin';
+
+/**
+ * Generate JWT token
+ */
+export function generateToken(payload: JwtPayload): string {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
+
+/**
+ * Verify JWT token
+ */
+export function verifyToken(token: string): JwtPayload {
+  return jwt.verify(token, JWT_SECRET) as JwtPayload;
+}
+
+/**
+ * Authentication middleware
+ */
+export async function authenticate(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'NO_TOKEN',
+          message: 'Token d\'authentification requis',
+        },
+      });
+      return;
+    }
+
+    const token = authHeader.substring(7);
+
+    // Verify token
+    const decoded = verifyToken(token);
+
+    // Check if user still exists and is active
+    const cacheKey = `user:${decoded.userId}`;
+    let user = await cacheGet<{ is_active: boolean }>(cacheKey);
+
+    if (!user) {
+      const result = await query(
+        'SELECT is_active FROM auth.users WHERE id = $1',
+        [decoded.userId]
+      );
+
+      if (result.rows.length === 0) {
+        res.status(401).json({
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'Utilisateur non trouve',
+          },
+        });
+        return;
+      }
+
+      user = result.rows[0];
+      await cacheSet(cacheKey, user, 300); // Cache for 5 minutes
+    }
+
+    if (!user.is_active) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'USER_INACTIVE',
+          message: 'Compte utilisateur desactive',
+        },
+      });
+      return;
+    }
+
+    // Set user in request
+    req.user = decoded;
+
+    // Set user ID for audit logging
+    try {
+      await query(`SET LOCAL app.current_user_id = '${decoded.userId}'`);
+    } catch {
+      // Ignore if not in transaction
+    }
+
+    next();
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Token invalide',
+        },
+      });
+      return;
+    }
+
+    if (error instanceof jwt.TokenExpiredError) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'TOKEN_EXPIRED',
+          message: 'Token expire',
+        },
+      });
+      return;
+    }
+
+    next(error);
+  }
+}
+
+/**
+ * Optional authentication middleware
+ * Sets user if token is valid, but doesn't require it
+ */
+export async function optionalAuth(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    next();
+    return;
+  }
+
+  try {
+    const token = authHeader.substring(7);
+    const decoded = verifyToken(token);
+    req.user = decoded;
+  } catch {
+    // Ignore invalid tokens for optional auth
+  }
+
+  next();
+}
+
+/**
+ * Role-based authorization middleware
+ */
+export function requireRole(...roles: AppRole[]) {
+  return async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'NOT_AUTHENTICATED',
+          message: 'Authentification requise',
+        },
+      });
+      return;
+    }
+
+    const userRole = req.user.role as AppRole;
+
+    // Admin SGG has access to everything
+    if (userRole === 'admin_sgg') {
+      next();
+      return;
+    }
+
+    if (!roles.includes(userRole)) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Acces non autorise pour ce role',
+        },
+      });
+      return;
+    }
+
+    next();
+  };
+}
+
+/**
+ * Permission-based authorization middleware
+ */
+export function requirePermission(module: Module, permission: Permission) {
+  return async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'NOT_AUTHENTICATED',
+          message: 'Authentification requise',
+        },
+      });
+      return;
+    }
+
+    const userRole = req.user.role as AppRole;
+
+    // Admin SGG has all permissions
+    if (userRole === 'admin_sgg') {
+      next();
+      return;
+    }
+
+    // Check permissions in database
+    const cacheKey = `permission:${userRole}:${module}:${permission}`;
+    let hasPermission = await cacheGet<boolean>(cacheKey);
+
+    if (hasPermission === null) {
+      const result = await query(
+        `SELECT 1 FROM auth.role_permissions
+         WHERE role = $1 AND module = $2 AND permission = $3`,
+        [userRole, module, permission]
+      );
+
+      hasPermission = result.rows.length > 0;
+      await cacheSet(cacheKey, hasPermission, 3600); // Cache for 1 hour
+    }
+
+    if (!hasPermission) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: `Permission ${permission} sur ${module} non autorisee`,
+        },
+      });
+      return;
+    }
+
+    next();
+  };
+}
+
+/**
+ * Check if user can access a specific institution's data
+ */
+export function requireInstitution() {
+  return async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'NOT_AUTHENTICATED',
+          message: 'Authentification requise',
+        },
+      });
+      return;
+    }
+
+    const userRole = req.user.role as AppRole;
+
+    // Admin SGG and central roles can access all institutions
+    if (['admin_sgg', 'directeur_sgg', 'sgpr', 'premier_ministre'].includes(userRole)) {
+      next();
+      return;
+    }
+
+    // For other roles, check institution access
+    const institutionId = req.params.institutionId || req.body?.institution_id;
+
+    if (!institutionId) {
+      next();
+      return;
+    }
+
+    if (req.user.institutionId && req.user.institutionId !== institutionId) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Acces a cette institution non autorise',
+        },
+      });
+      return;
+    }
+
+    next();
+  };
+}

@@ -20,6 +20,7 @@ interface DemoAccount {
   title: string;
   role: string;
   institution: string;
+  email?: string;
   description: string;
   icon: React.ElementType;
   category: "executif" | "presidence" | "legislatif" | "juridictionnel" | "administratif" | "public";
@@ -148,6 +149,7 @@ const demoAccounts: DemoAccount[] = [
     title: "Administrateur SGG",
     role: "Admin Système",
     institution: "SGG - DCSI",
+    email: "admin.systeme@sgg.ga",
     description: "Configuration, tous droits système",
     icon: GraduationCap,
     category: "administratif",
@@ -159,6 +161,7 @@ const demoAccounts: DemoAccount[] = [
     title: "Directeur SGG",
     role: "Direction",
     institution: "SGG",
+    email: "jp.nzoghe@sgg.ga",
     description: "Lecture et édition sur périmètre",
     icon: Users,
     category: "administratif",
@@ -170,6 +173,7 @@ const demoAccounts: DemoAccount[] = [
     title: "Direction Journal Officiel",
     role: "Publication",
     institution: "DGJO (rattachée SGG)",
+    email: "direction@jo.ga",
     description: "Publication et gestion du Journal Officiel",
     icon: BookOpen,
     category: "administratif",
@@ -215,19 +219,31 @@ export default function Demo() {
 
   const handleDemoAccess = (account: DemoAccount) => {
     // Store demo user info in sessionStorage for demo purposes
+    // Include category for role-based dashboard routing
     sessionStorage.setItem("demoUser", JSON.stringify({
       id: account.id,
       title: account.title,
       role: account.role,
       institution: account.institution,
+      email: account.email,
       access: account.access,
+      category: account.category,
     }));
-    
-    // Navigate based on role
-    if (account.category === "public") {
-      navigate("/journal-officiel");
-    } else {
-      navigate("/dashboard");
+
+    // Navigate based on category
+    switch (account.category) {
+      case "public":
+        // Public users go directly to Journal Officiel
+        navigate("/journal-officiel");
+        break;
+      case "legislatif":
+      case "juridictionnel":
+        // Legislative and Judicial users have their own dashboard views
+        navigate("/dashboard");
+        break;
+      default:
+        // Executive, Presidency, and Admin users go to dashboard
+        navigate("/dashboard");
     }
   };
 
@@ -301,7 +317,7 @@ export default function Demo() {
                   {group.accounts.length} compte{group.accounts.length > 1 ? "s" : ""}
                 </span>
               </div>
-              
+
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {group.accounts.map((account) => (
                   <Card

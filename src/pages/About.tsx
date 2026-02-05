@@ -103,7 +103,7 @@ export default function About() {
     <PageTransition>
       <div className="min-h-screen bg-background">
         <LandingHeader />
-        
+
         {/* Hero Section */}
         <section className="relative py-20 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-an/10 via-transparent to-an-light/5" />
@@ -117,7 +117,7 @@ export default function About() {
                 Secrétariat Général du <span className="text-an">Gouvernement</span>
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Pilier de la coordination gouvernementale, le SGG accompagne la transformation 
+                Pilier de la coordination gouvernementale, le SGG accompagne la transformation
                 de l'administration gabonaise depuis plus de 60 ans.
               </p>
             </FadeInView>
@@ -135,11 +135,11 @@ export default function About() {
                 Le SGG remplit quatre missions essentielles au fonctionnement de l'État
               </p>
             </FadeInView>
-            
+
             <StaggerView className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {missions.map((mission, index) => (
                 <StaggerItem key={index}>
-                  <Card className="h-full neu-card border-0 hover:shadow-an transition-shadow duration-300">
+                  <Card className="h-full border border-border hover:border-primary/50 transition-colors duration-300">
                     <CardContent className="p-6 text-center">
                       <div className="w-14 h-14 rounded-xl bg-an/10 flex items-center justify-center mx-auto mb-4">
                         <mission.icon className="h-7 w-7 text-an" />
@@ -175,26 +175,24 @@ export default function About() {
               <div className="relative">
                 {/* Timeline line */}
                 <div className="absolute left-8 md:left-1/2 transform md:-translate-x-px top-0 bottom-0 w-0.5 bg-gradient-to-b from-an via-an-light to-an" />
-                
+
                 {timeline.map((item, index) => (
                   <FadeInView key={index} delay={index * 0.1}>
-                    <motion.div 
-                      className={`relative flex items-center mb-12 ${
-                        index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                      }`}
+                    <motion.div
+                      className={`relative flex items-center mb-12 ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+                        }`}
                       whileHover={{ scale: 1.02 }}
                       transition={{ duration: 0.2 }}
                     >
                       {/* Year bubble */}
-                      <div className="absolute left-8 md:left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full bg-an flex items-center justify-center shadow-an z-10">
+                      <div className="absolute left-8 md:left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full bg-an flex items-center justify-center border-4 border-background z-10">
                         <span className="text-white font-bold text-sm">{item.year}</span>
                       </div>
-                      
+
                       {/* Content */}
-                      <div className={`ml-28 md:ml-0 md:w-1/2 ${
-                        index % 2 === 0 ? 'md:pr-16 md:text-right' : 'md:pl-16 md:text-left'
-                      }`}>
-                        <Card className="glass border-an/20">
+                      <div className={`ml-28 md:ml-0 md:w-1/2 ${index % 2 === 0 ? 'md:pr-16 md:text-right' : 'md:pl-16 md:text-left'
+                        }`}>
+                        <Card className="bg-card border border-border">
                           <CardContent className="p-6">
                             <h3 className="font-serif font-semibold text-xl text-foreground mb-2">
                               {item.title}
@@ -236,14 +234,14 @@ export default function About() {
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Card className="h-full overflow-hidden group neu-card border-0">
+                    <Card className="h-full overflow-hidden group border border-border bg-card">
                       <CardContent className="p-6">
                         <div className="flex flex-col items-center text-center">
                           <motion.div
                             whileHover={{ scale: 1.1 }}
                             transition={{ duration: 0.3 }}
                           >
-                            <Avatar className="w-24 h-24 mb-4 border-4 border-an/20 shadow-an">
+                            <Avatar className="w-24 h-24 mb-4 border-4 border-border">
                               <AvatarFallback className="bg-gradient-to-br from-an to-an-dark text-white text-xl font-serif">
                                 {member.initials}
                               </AvatarFallback>
@@ -281,16 +279,16 @@ export default function About() {
                   Excellence, Intégrité, Innovation
                 </h2>
                 <p className="text-muted-foreground text-lg leading-relaxed">
-                  Le Secrétariat Général du Gouvernement s'engage à servir l'État avec excellence 
-                  et intégrité, tout en embrassant l'innovation pour moderniser l'administration. 
-                  Notre transformation numérique, incarnée par SGG Digital, témoigne de notre 
+                  Le Secrétariat Général du Gouvernement s'engage à servir l'État avec excellence
+                  et intégrité, tout en embrassant l'innovation pour moderniser l'administration.
+                  Notre transformation numérique, incarnée par SGG Digital, témoigne de notre
                   volonté de construire une administration plus efficace, transparente et accessible.
                 </p>
               </FadeInView>
 
               <FadeInView delay={0.2} className="flex flex-wrap justify-center gap-4">
                 <Link to="/demo">
-                  <Button variant="an" size="lg" className="shadow-an">
+                  <Button variant="an" size="lg">
                     Découvrir SGG Digital
                   </Button>
                 </Link>

@@ -44,29 +44,29 @@ const navigation: NavSection[] = [
     title: "Tableau de Bord",
     items: [
       { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard, moduleKey: "dashboard" },
-      { name: "Suivi GAR", href: "/dashboard/gar", icon: BarChart3, moduleKey: "gar" },
+      { name: "Suivi GAR", href: "/gar/app", icon: BarChart3, moduleKey: "gar" },
     ],
   },
   {
     title: "Processus Normatif",
     items: [
-      { name: "Cycle Législatif", href: "/cycle-legislatif", icon: Scale, moduleKey: "gar" },
-      { name: "Nominations", href: "/nominations", icon: Users, moduleKey: "nominations", badge: 5 },
+      { name: "Cycle Législatif", href: "/cycle-legislatif/app", icon: Scale, moduleKey: "cycleLegislatif" },
+      { name: "Nominations", href: "/nominations/app", icon: Users, moduleKey: "nominations", badge: 5 },
     ],
   },
   {
     title: "Coordination",
     items: [
-      { name: "e-Gop", href: "/egop", icon: FolderOpen, moduleKey: "egop" },
-      { name: "Institutions", href: "/institutions", icon: Building2, moduleKey: "dashboard" },
+      { name: "e-Gop", href: "/egop/app", icon: FolderOpen, moduleKey: "egop" },
+      { name: "Institutions", href: "/institutions/app", icon: Building2, moduleKey: "institutions" },
     ],
   },
   {
     title: "Publications",
     items: [
-      { name: "Journal Officiel", href: "/journal-officiel", icon: BookOpen, moduleKey: "journalOfficiel" },
-      { name: "Documents", href: "/documents", icon: FileText, moduleKey: "documents" },
-      { name: "Rapports", href: "/rapports", icon: ClipboardCheck, moduleKey: "rapports" },
+      { name: "Journal Officiel", href: "/journal-officiel/app", icon: BookOpen, moduleKey: "journalOfficiel" },
+      { name: "Documents", href: "/documents/app", icon: FileText, moduleKey: "documents" },
+      { name: "Rapports", href: "/rapports/app", icon: ClipboardCheck, moduleKey: "rapports" },
     ],
   },
   {
@@ -161,9 +161,9 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
               </h3>
               <ul className="space-y-1">
                 {section.items.map((item) => {
-                  const isActive = location.pathname === item.href || 
+                  const isActive = location.pathname === item.href ||
                     (item.href !== "/" && location.pathname.startsWith(item.href));
-                  
+
                   return (
                     <li key={item.name}>
                       <NavLink

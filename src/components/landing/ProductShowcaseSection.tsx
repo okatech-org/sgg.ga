@@ -1,16 +1,16 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  CheckCircle2, 
-  ArrowRight, 
+import {
+  CheckCircle2,
+  ArrowRight,
   BarChart3,
   Shield
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { FadeInView } from "@/components/ui/motion";
 import { ImageWithSkeleton } from "./ImageWithSkeleton";
-import dashboardImage from "@/assets/dashboard-gar.jpg";
-import palaisImage from "@/assets/palais-gouvernement.jpg";
+import dashboardImage from "@/assets/dashboard-tablet.jpg";
+import securityImage from "@/assets/security-infrastructure.jpg";
 
 const showcaseItems = [
   {
@@ -43,7 +43,7 @@ const showcaseItems = [
       "Logs d'audit conservés 5 ans",
       "Conformité RGPD"
     ],
-    image: palaisImage,
+    image: securityImage,
     href: "/auth",
     stats: [
       { value: "99.9%", label: "Disponibilité" },
@@ -59,7 +59,7 @@ export default function ProductShowcaseSection() {
       <div className="container mx-auto px-4 space-y-20 md:space-y-32">
         {showcaseItems.map((item, index) => (
           <FadeInView key={index} delay={index * 0.2}>
-            <div 
+            <div
               className={`grid lg:grid-cols-2 gap-8 lg:gap-16 items-center ${item.reverse ? 'lg:flex-row-reverse' : ''}`}
             >
               {/* Content Column */}
@@ -71,7 +71,7 @@ export default function ProductShowcaseSection() {
                     {item.badge}
                   </span>
                 </div>
-                
+
                 {/* Title & Description */}
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-foreground mb-4">
                   {item.title}
@@ -79,12 +79,12 @@ export default function ProductShowcaseSection() {
                 <p className="text-lg text-muted-foreground mb-6">
                   {item.description}
                 </p>
-                
+
                 {/* Features List */}
                 <ul className="space-y-3 mb-8">
                   {item.features.map((feature, idx) => (
-                    <motion.li 
-                      key={idx} 
+                    <motion.li
+                      key={idx}
                       className="flex items-center gap-3"
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
@@ -98,7 +98,7 @@ export default function ProductShowcaseSection() {
                     </motion.li>
                   ))}
                 </ul>
-                
+
                 {/* CTA Button */}
                 <Link to={item.href}>
                   <Button variant="an" size="lg" className="group">
@@ -107,16 +107,16 @@ export default function ProductShowcaseSection() {
                   </Button>
                 </Link>
               </div>
-              
+
               {/* Visual Column */}
               <div className={`relative ${item.reverse ? 'lg:order-1' : ''}`}>
                 {/* Main Image */}
-                <motion.div 
+                <motion.div
                   className="relative rounded-2xl overflow-hidden shadow-2xl neu-card"
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <ImageWithSkeleton 
+                  <ImageWithSkeleton
                     src={item.image}
                     alt={item.title}
                     className="w-full h-64 md:h-80 lg:h-96 object-cover"
@@ -124,9 +124,9 @@ export default function ProductShowcaseSection() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent" />
                 </motion.div>
-                
+
                 {/* Floating Stats Cards */}
-                <motion.div 
+                <motion.div
                   className="absolute -bottom-6 -left-4 md:-left-8 neu-card p-4"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -142,7 +142,7 @@ export default function ProductShowcaseSection() {
                     ))}
                   </div>
                 </motion.div>
-                
+
                 {/* Decorative Elements */}
                 <div className="absolute -top-4 -right-4 h-24 w-24 bg-an/10 rounded-full blur-2xl" />
                 <div className="absolute -bottom-8 -right-8 h-32 w-32 bg-primary/10 rounded-full blur-3xl" />

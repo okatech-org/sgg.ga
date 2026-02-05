@@ -185,39 +185,25 @@
 }
 
 @layer components {
-  /* Neumorphism Card */
+  /* Flat Card */
   .neu-card {
-    box-shadow: 
-      8px 8px 16px hsl(var(--shadow-dark)),
-      -8px -8px 16px hsl(var(--shadow-light));
-    @apply rounded-xl bg-card transition-all duration-300;
+    @apply rounded-xl border border-border bg-card transition-colors duration-300;
   }
 
-  .neu-card:hover {
-    box-shadow: 
-      12px 12px 24px hsl(var(--shadow-dark)),
-      -12px -12px 24px hsl(var(--shadow-light));
-  }
-
-  /* Neumorphism pressed/inset */
+  /* Flat inset */
   .neu-inset {
-    box-shadow: 
-      inset 4px 4px 8px hsl(var(--shadow-dark)),
-      inset -4px -4px 8px hsl(var(--shadow-light));
-    @apply rounded-lg;
+    @apply rounded-lg bg-muted/50;
   }
 
-  /* Glassmorphism */
+  /* Glassmorphism -> Flat Translucent */
   .glass {
-    backdrop-filter: blur(12px);
-    background: hsl(var(--background) / 0.7);
-    @apply border border-white/20;
+    background: hsl(var(--background) / 0.9);
+    @apply border border-border;
   }
 
   .glass-dark {
-    backdrop-filter: blur(12px);
-    background: hsl(var(--card) / 0.8);
-    @apply border border-white/10;
+    background: hsl(var(--card) / 0.9);
+    @apply border border-border;
   }
 
   /* Badge Styles */
@@ -237,32 +223,19 @@
     @apply bg-[hsl(var(--info))] text-white;
   }
 
-  /* Stat Card with subtle glow */
+  /* Stat Card - Flat */
   .stat-card {
-    @apply relative overflow-hidden neu-card;
-  }
-
-  .stat-card::before {
-    content: '';
-    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
-    background: linear-gradient(135deg, hsl(var(--color-an) / 0.1) 0%, transparent 50%);
-  }
-
-  .stat-card:hover::before {
-    @apply opacity-100;
+    @apply neu-card overflow-hidden;
   }
 
   /* AN Header Bar */
   .an-header {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--color-an-dark)) 100%);
+    background: hsl(var(--primary));
   }
 
-  /* Elegant shadow */
+  /* Flat shadow replacement (border) */
   .shadow-elegant {
-    box-shadow: 
-      0 4px 6px -1px hsl(var(--foreground) / 0.05),
-      0 2px 4px -2px hsl(var(--foreground) / 0.05),
-      0 0 0 1px hsl(var(--border) / 0.5);
+    @apply border border-border;
   }
 
   /* Data Table Striped Rows */
@@ -270,13 +243,13 @@
     @apply bg-muted/50;
   }
 
-  /* AN Button glow */
+  /* AN Button - Flat */
   .an-glow {
-    box-shadow: 0 0 20px hsl(var(--color-an) / 0.3);
+    @apply transition-colors;
   }
 
   .an-glow:hover {
-    box-shadow: 0 0 30px hsl(var(--color-an) / 0.5);
+    @apply ring-2 ring-primary/20;
   }
 }
 

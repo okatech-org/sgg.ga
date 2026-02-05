@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  BarChart3, 
-  Users, 
-  FileText, 
+import {
+  BarChart3,
+  Users,
+  FileText,
   BookOpen,
   ArrowRight,
   TrendingUp,
@@ -75,28 +75,28 @@ export default function FeaturesSection() {
         </FadeInView>
 
         {/* Features Grid */}
-        <StaggerView className="grid md:grid-cols-2 gap-6 lg:gap-8">
+        <StaggerView className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <StaggerItem key={index}>
               <ScaleOnHover>
                 <div className="group relative neu-card overflow-hidden transition-all duration-300 hover:shadow-an-lg">
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
-                    <ImageWithSkeleton 
-                      src={feature.image} 
+                    <ImageWithSkeleton
+                      src={feature.image}
                       alt={feature.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       skeletonClassName="bg-muted"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    
+
                     {/* Icon Overlay */}
                     <div className="absolute -bottom-6 left-6 z-10">
                       <div className="h-14 w-14 rounded-xl bg-primary shadow-lg flex items-center justify-center border-4 border-card group-hover:bg-an transition-colors duration-300">
                         <feature.icon className="h-7 w-7 text-white" />
                       </div>
                     </div>
-                    
+
                     {/* Stats Badge */}
                     <div className="absolute top-4 right-4">
                       <div className="glass rounded-full px-3 py-1 flex items-center gap-1.5">
@@ -114,12 +114,12 @@ export default function FeaturesSection() {
                     <p className="text-muted-foreground mb-4 line-clamp-2">
                       {feature.description}
                     </p>
-                    
+
                     {/* CTA - appears on hover */}
                     <Link to={feature.href} className="inline-block">
-                      <Button 
-                        variant="an-ghost" 
-                        size="sm" 
+                      <Button
+                        variant="an-ghost"
+                        size="sm"
                         className="opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
                       >
                         Découvrir

@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  Globe, 
-  ArrowRight, 
+import {
+  Globe,
+  ArrowRight,
   Menu
 } from "lucide-react";
 import { useState } from "react";
@@ -12,16 +12,17 @@ import { motion } from "framer-motion";
 
 const navLinks = [
   { label: "Accueil", href: "/" },
-  { label: "Modules", href: "#features" },
-  { label: "À propos", href: "/about" },
+  { label: "PAG 2026", href: "/pag-2026" },
+  { label: "Modules", href: "/modules" },
   { label: "Journal Officiel", href: "/journal-officiel" },
+  { label: "À propos", href: "/about" },
 ];
 
 export default function LandingHeader() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <motion.header 
+    <motion.header
       className="sticky top-0 z-50 w-full border-b glass"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -29,15 +30,12 @@ export default function LandingHeader() {
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-an shadow-an">
-            <Globe className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <span className="font-serif font-bold text-primary dark:text-an-light">SGG Digital</span>
-            <span className="hidden md:inline text-sm text-muted-foreground ml-2">
-              République Gabonaise
-            </span>
+        <Link to="/" className="flex items-center gap-4">
+          <img src="/emblem_gabon.png" alt="Emblème du Gabon" className="h-[60px] w-[60px] object-contain" />
+          <div className="flex flex-col items-start justify-center">
+            <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground leading-tight w-full mb-1">Présidence de la République</span>
+            <span className="font-serif font-black text-[13.5px] uppercase leading-none tracking-normal text-primary dark:text-an-light w-full">Secrétariat Général</span>
+            <span className="font-serif font-black text-[12.5px] uppercase leading-none tracking-[0.2em] text-primary dark:text-an-light w-full">du Gouvernement</span>
           </div>
         </Link>
 
@@ -45,7 +43,7 @@ export default function LandingHeader() {
         <nav className="hidden lg:flex items-center gap-6">
           {navLinks.map((link, index) => (
             link.href.startsWith('/') ? (
-              <Link 
+              <Link
                 key={index}
                 to={link.href}
                 className="text-sm font-medium text-muted-foreground hover:text-an transition-colors"
@@ -53,7 +51,7 @@ export default function LandingHeader() {
                 {link.label}
               </Link>
             ) : (
-              <a 
+              <a
                 key={index}
                 href={link.href}
                 className="text-sm font-medium text-muted-foreground hover:text-an transition-colors"
@@ -92,17 +90,19 @@ export default function LandingHeader() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[350px]">
               <div className="flex flex-col h-full">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-an">
-                    <Globe className="h-5 w-5 text-white" />
+                <div className="flex items-center gap-4 mb-8">
+                  <img src="/emblem_gabon.png" alt="Emblème du Gabon" className="h-[60px] w-[60px] object-contain" />
+                  <div className="flex flex-col items-start justify-center">
+                    <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground leading-tight w-full mb-1">Présidence de la République</span>
+                    <span className="font-serif font-black text-[13.5px] uppercase leading-none tracking-normal text-primary dark:text-an-light w-full">Secrétariat Général</span>
+                    <span className="font-serif font-black text-[12.5px] uppercase leading-none tracking-[0.2em] text-primary dark:text-an-light w-full">du Gouvernement</span>
                   </div>
-                  <span className="font-serif font-bold text-primary dark:text-an-light">SGG Digital</span>
                 </div>
-                
+
                 <nav className="flex flex-col gap-4 flex-1">
                   {navLinks.map((link, index) => (
                     link.href.startsWith('/') ? (
-                      <Link 
+                      <Link
                         key={index}
                         to={link.href}
                         onClick={() => setIsOpen(false)}
@@ -111,7 +111,7 @@ export default function LandingHeader() {
                         {link.label}
                       </Link>
                     ) : (
-                      <a 
+                      <a
                         key={index}
                         href={link.href}
                         onClick={() => setIsOpen(false)}
@@ -122,7 +122,7 @@ export default function LandingHeader() {
                     )
                   ))}
                 </nav>
-                
+
                 <div className="flex flex-col gap-3 pt-6 border-t">
                   <Link to="/demo" onClick={() => setIsOpen(false)}>
                     <Button variant="an-outline" className="w-full">

@@ -9,27 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertTriangle, CheckCircle2, Clock, Send } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertTriangle, CheckCircle2, Clock, Send, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface Ministry {
-  id: number;
-  name: string;
-  lastReport: string;
-  status: "submitted" | "pending" | "late";
-  completeness: number;
-  daysOverdue?: number;
-}
-
-const ministries: Ministry[] = [
-  { id: 1, name: "Ministère de l'Économie et des Finances", lastReport: "01/02/2026", status: "submitted", completeness: 100 },
-  { id: 2, name: "Ministère de la Santé", lastReport: "30/01/2026", status: "submitted", completeness: 95 },
-  { id: 3, name: "Ministère de l'Éducation Nationale", lastReport: "28/01/2026", status: "pending", completeness: 75, daysOverdue: 3 },
-  { id: 4, name: "Ministère des Travaux Publics", lastReport: "20/01/2026", status: "late", completeness: 40, daysOverdue: 11 },
-  { id: 5, name: "Ministère de l'Agriculture", lastReport: "25/01/2026", status: "late", completeness: 60, daysOverdue: 6 },
-  { id: 6, name: "Ministère de l'Intérieur", lastReport: "02/02/2026", status: "submitted", completeness: 100 },
-  { id: 7, name: "Ministère des Affaires Étrangères", lastReport: "01/02/2026", status: "submitted", completeness: 90 },
-];
+import { useMinistryStats } from "@/hooks/useGAR";
 
 const statusConfig = {
   submitted: {
@@ -49,77 +32,127 @@ const statusConfig = {
   },
 };
 
+function TableSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="flex items-center gap-4">
+          <Skeleton className="h-4 w-[250px]" />
+          <Skeleton className="h-4 w-[100px]" />
+          <Skeleton className="h-6 w-[80px]" />
+          <Skeleton className="h-2 w-[80px]" />
+          <Skeleton className="h-8 w-[70px]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function MinistryReportingTable() {
+  const { ministries, loading, error, refetch } = useMinistryStats();
+
+  const handleRelanceAll = () => {
+    // TODO: Implémenter la relance de tous les ministères en retard
+    console.log("Relancer tous les ministères en retard");
+  };
+
+  const handleRelance = (ministryId: string) => {
+    // TODO: Implémenter la relance d'un ministère spécifique
+    console.log("Relancer ministère:", ministryId);
+  };
+
   return (
     <Card className="shadow-gov">
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <CardTitle>Suivi Reporting Ministères</CardTitle>
-        <Button variant="outline" size="sm">
-          <Send className="h-4 w-4 mr-2" />
-          Relancer tout
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" onClick={refetch} disabled={loading}>
+            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleRelanceAll}>
+            <Send className="h-4 w-4 mr-2" />
+            Relancer tout
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Ministère</TableHead>
-              <TableHead>Dernier Rapport</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Complétude</TableHead>
-              <TableHead className="text-right">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {ministries.map((ministry) => {
-              const status = statusConfig[ministry.status];
-              const StatusIcon = status.icon;
+        {loading ? (
+          <TableSkeleton />
+        ) : error ? (
+          <div className="text-center py-8 text-status-danger">
+            <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+            <p>{error}</p>
+            <Button variant="outline" size="sm" onClick={refetch} className="mt-4">
+              Réessayer
+            </Button>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ministère</TableHead>
+                <TableHead>Dernier Rapport</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Complétude</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ministries.map((ministry) => {
+                const status = statusConfig[ministry.status];
+                const StatusIcon = status.icon;
 
-              return (
-                <TableRow key={ministry.id} className="hover:bg-muted/50">
-                  <TableCell className="font-medium max-w-[250px] truncate">
-                    {ministry.name}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {ministry.lastReport}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={cn("gap-1", status.className)}>
-                      <StatusIcon className="h-3 w-3" />
-                      {status.label}
-                      {ministry.daysOverdue && (
-                        <span className="ml-1">J+{ministry.daysOverdue}</span>
-                      )}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all",
-                            ministry.completeness >= 90 ? "bg-status-success" :
-                            ministry.completeness >= 60 ? "bg-status-warning" :
-                            "bg-status-danger"
-                          )}
-                          style={{ width: `${ministry.completeness}%` }}
-                        />
+                return (
+                  <TableRow key={ministry.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium max-w-[250px] truncate">
+                      {ministry.name}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {ministry.lastReport}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn("gap-1", status.className)}>
+                        <StatusIcon className="h-3 w-3" />
+                        {status.label}
+                        {ministry.daysOverdue && (
+                          <span className="ml-1">J+{ministry.daysOverdue}</span>
+                        )}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all",
+                              ministry.completeness >= 90 ? "bg-status-success" :
+                              ministry.completeness >= 60 ? "bg-status-warning" :
+                              "bg-status-danger"
+                            )}
+                            style={{ width: `${ministry.completeness}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-muted-foreground">{ministry.completeness}%</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">{ministry.completeness}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {ministry.status !== "submitted" && (
-                      <Button variant="ghost" size="sm" className="text-government-gold hover:text-government-gold-light">
-                        Relancer
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {ministry.status !== "submitted" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-government-gold hover:text-government-gold-light"
+                          onClick={() => handleRelance(ministry.id)}
+                        >
+                          Relancer
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );

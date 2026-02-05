@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Search, Shield, Users, Building2, ChevronLeft, ChevronRight } from "lucide-react";
+import { UserStats } from "@/components/admin/UserStats";
 
 const GABONESE_MINISTRIES = [
   "Présidence de la République",
@@ -146,7 +147,7 @@ export default function AdminUsers() {
       console.error("Error updating role:", error);
       toast.error("Erreur lors de la mise à jour du rôle");
     } finally {
-    setUpdating(null);
+      setUpdating(null);
     }
   };
 
@@ -195,7 +196,7 @@ export default function AdminUsers() {
     (user) =>
       (roleFilter === "all" || user.role === roleFilter) &&
       (user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       user.institution?.toLowerCase().includes(searchTerm.toLowerCase()))
+        user.institution?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
@@ -232,7 +233,19 @@ export default function AdminUsers() {
               Gérez les rôles et permissions des utilisateurs de la plateforme
             </p>
           </div>
-          <Badge variant="outline" className="text-lg px-4 py-2">
+        </div>
+
+        {/* Dashboard Stats Overview */}
+        <div className="mb-6">
+          <UserStats users={users} />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="mb-2">
+            <h2 className="text-xl font-semibold tracking-tight">Annuaire des Comptes</h2>
+            <p className="text-sm text-muted-foreground">Liste détaillée et gestion des accès</p>
+          </div>
+          <Badge variant="outline" className="text-lg px-4 py-2 bg-white">
             <Users className="h-4 w-4 mr-2" />
             {users.length} utilisateurs
           </Badge>

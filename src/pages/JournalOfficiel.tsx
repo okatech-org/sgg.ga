@@ -1,4 +1,5 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import LandingHeader from "@/components/landing/LandingHeader";
+import LandingFooter from "@/components/landing/LandingFooter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -122,7 +123,7 @@ function TexteCard({ texte }: { texte: TexteJO }) {
   const TypeIcon = type.icon;
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:border-primary/50 transition-colors border border-border">
       <CardContent className="p-4">
         <div className="flex items-start gap-3 mb-3">
           <div className={cn("p-2 rounded-lg flex-shrink-0", type.color.replace("text-", "bg-").split(" ")[0])}>
@@ -220,162 +221,162 @@ function TexteRow({ texte }: { texte: TexteJO }) {
 
 export default function JournalOfficiel() {
   return (
-    <DashboardLayout>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              Journal Officiel
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Portail Open Data — Accès universel au droit gabonais
-            </p>
+    <div className="min-h-screen bg-background flex flex-col">
+      <LandingHeader />
+      <main className="flex-1 container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                Journal Officiel
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Portail Open Data — Accès universel au droit gabonais
+              </p>
+            </div>
           </div>
-          <Button className="bg-government-navy hover:bg-government-navy-light">
-            <BookOpen className="h-4 w-4 mr-2" />
-            Consulter le JO
-          </Button>
         </div>
-      </div>
 
-      {/* Recherche */}
-      <Card className="mb-8">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                placeholder="Rechercher un texte (mots-clés, numéro, date...)" 
-                className="pl-10 h-12 text-base"
-              />
+        {/* Recherche */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher un texte (mots-clés, numéro, date...)"
+                  className="pl-10 h-12 text-base"
+                />
+              </div>
+              <Button variant="outline" size="lg" className="md:w-auto">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtres avancés
+              </Button>
+              <Button size="lg" className="bg-government-gold hover:bg-government-gold-light text-government-navy md:w-auto">
+                <Search className="h-4 w-4 mr-2" />
+                Rechercher
+              </Button>
             </div>
-            <Button variant="outline" size="lg" className="md:w-auto">
-              <Filter className="h-4 w-4 mr-2" />
-              Filtres avancés
-            </Button>
-            <Button size="lg" className="bg-government-gold hover:bg-government-gold-light text-government-navy md:w-auto">
-              <Search className="h-4 w-4 mr-2" />
-              Rechercher
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-4">
-            <Badge variant="outline" className="cursor-pointer hover:bg-muted">Lois 2026</Badge>
-            <Badge variant="outline" className="cursor-pointer hover:bg-muted">Décrets présidentiels</Badge>
-            <Badge variant="outline" className="cursor-pointer hover:bg-muted">Nominations</Badge>
-            <Badge variant="outline" className="cursor-pointer hover:bg-muted">PAG 2026</Badge>
-            <Badge variant="outline" className="cursor-pointer hover:bg-muted">Constitution 2024</Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats */}
-      <div className="grid gap-4 md:gap-6 grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-government-navy/10">
-                <FileText className="h-5 w-5 text-government-navy" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{statsJO.textesPublies.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Textes publiés</p>
-              </div>
+            <div className="flex flex-wrap gap-2 mt-4">
+              <Badge variant="outline" className="cursor-pointer hover:bg-muted">Lois 2026</Badge>
+              <Badge variant="outline" className="cursor-pointer hover:bg-muted">Décrets présidentiels</Badge>
+              <Badge variant="outline" className="cursor-pointer hover:bg-muted">Nominations</Badge>
+              <Badge variant="outline" className="cursor-pointer hover:bg-muted">PAG 2026</Badge>
+              <Badge variant="outline" className="cursor-pointer hover:bg-muted">Constitution 2024</Badge>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-government-gold/10">
-                <Eye className="h-5 w-5 text-government-gold" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{(statsJO.consultations / 1000).toFixed(0)}k</p>
-                <p className="text-xs text-muted-foreground">Consultations</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-status-success/10">
-                <Download className="h-5 w-5 text-status-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{(statsJO.telechargements / 1000).toFixed(1)}k</p>
-                <p className="text-xs text-muted-foreground">Téléchargements</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-status-info/10">
-                <BookOpen className="h-5 w-5 text-status-info" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{statsJO.textesConsolides}</p>
-                <p className="text-xs text-muted-foreground">Textes consolidés</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="recents" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="recents">Publications récentes</TabsTrigger>
-          <TabsTrigger value="populaires">Les plus consultés</TabsTrigger>
-          <TabsTrigger value="lois">Lois</TabsTrigger>
-          <TabsTrigger value="decrets">Décrets</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="recents">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {textesRecents.map((texte) => (
-              <TexteCard key={texte.id} texte={texte} />
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="populaires">
+        {/* Stats */}
+        <div className="grid gap-4 md:gap-6 grid-cols-2 lg:grid-cols-4 mb-8">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-government-gold" />
-                Textes les plus consultés
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y">
-                {[...textesRecents].sort((a, b) => b.vues - a.vues).map((texte) => (
-                  <TexteRow key={texte.id} texte={texte} />
-                ))}
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-government-navy/10">
+                  <FileText className="h-5 w-5 text-government-navy" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{statsJO.textesPublies.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Textes publiés</p>
+                </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-government-gold/10">
+                  <Eye className="h-5 w-5 text-government-gold" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{(statsJO.consultations / 1000).toFixed(0)}k</p>
+                  <p className="text-xs text-muted-foreground">Consultations</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-status-success/10">
+                  <Download className="h-5 w-5 text-status-success" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{(statsJO.telechargements / 1000).toFixed(1)}k</p>
+                  <p className="text-xs text-muted-foreground">Téléchargements</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-status-info/10">
+                  <BookOpen className="h-5 w-5 text-status-info" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{statsJO.textesConsolides}</p>
+                  <p className="text-xs text-muted-foreground">Textes consolidés</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        <TabsContent value="lois">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {textesRecents.filter(t => t.type === "loi").map((texte) => (
-              <TexteCard key={texte.id} texte={texte} />
-            ))}
-          </div>
-        </TabsContent>
+        {/* Tabs */}
+        <Tabs defaultValue="recents" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="recents">Publications récentes</TabsTrigger>
+            <TabsTrigger value="populaires">Les plus consultés</TabsTrigger>
+            <TabsTrigger value="lois">Lois</TabsTrigger>
+            <TabsTrigger value="decrets">Décrets</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="decrets">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {textesRecents.filter(t => t.type === "decret").map((texte) => (
-              <TexteCard key={texte.id} texte={texte} />
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
-    </DashboardLayout>
+          <TabsContent value="recents">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {textesRecents.map((texte) => (
+                <TexteCard key={texte.id} texte={texte} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="populaires">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-government-gold" />
+                  Textes les plus consultés
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y">
+                  {[...textesRecents].sort((a, b) => b.vues - a.vues).map((texte) => (
+                    <TexteRow key={texte.id} texte={texte} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="lois">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {textesRecents.filter(t => t.type === "loi").map((texte) => (
+                <TexteCard key={texte.id} texte={texte} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="decrets">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {textesRecents.filter(t => t.type === "decret").map((texte) => (
+                <TexteCard key={texte.id} texte={texte} />
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
+      <LandingFooter />
+    </div>
   );
 }

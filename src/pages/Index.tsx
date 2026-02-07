@@ -1,7 +1,7 @@
-import Landing from "./Landing";
+import { Navigate } from "react-router-dom";
 
 const Index = () => {
-  return <Landing />;
+  return <Navigate to="/dashboard" replace />;
 };
 
 export default Index;

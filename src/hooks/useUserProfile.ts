@@ -5,6 +5,7 @@
 
 import { useState, useMemo } from 'react';
 import { useDemoUser } from './useDemoUser';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { UserProfile, ProfileFormValues } from '@/types/user-profile';
 import { ROLE_DISPLAY_LABELS } from '@/types/user-profile';
@@ -33,6 +34,7 @@ function buildDemoProfile(demoUser: { id: string; title: string; role: string; i
 
 export function useUserProfile() {
   const { demoUser } = useDemoUser();
+  const { supabase, user } = useAuth();
   const isDemo = !!demoUser;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -50,28 +52,57 @@ export function useUserProfile() {
       if (isDemo) {
         // Simule un délai réseau
         await new Promise((r) => setTimeout(r, 800));
-        toast.success('Mode Démo : modifications simulées');
+        toast.success('Mode Demo : modifications simulees');
         return;
       }
-      // TODO: Supabase update
-      toast.success('Profil mis à jour');
+      // Production: Supabase profile update
+      if (supabase && user) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ full_name: data.fullName, phone: data.phone })
+          .eq('id', user.id);
+        if (updateError) throw updateError;
+      }
+      toast.success('Profil mis a jour');
     } catch (e: any) {
       setError(e.message);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error('Erreur lors de la mise a jour');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const uploadAvatar = async (_file: File) => {
+  const uploadAvatar = async (file: File) => {
     setIsLoading(true);
     try {
       if (isDemo) {
         await new Promise((r) => setTimeout(r, 600));
-        toast.success('Mode Démo : avatar simulé');
+        toast.success('Mode Demo : avatar simule');
         return;
       }
-      // TODO: Supabase storage upload
+      // Production: Supabase storage upload
+      if (supabase && user) {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `avatars/${user.id}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, file, { upsert: true });
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        await supabase
+          .from('profiles')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', user.id);
+
+        // Avatar URL is derived from storage path
+        console.log('Avatar uploaded:', urlData.publicUrl);
+
+        toast.success('Avatar mis a jour');
+      }
     } catch (e: any) {
       toast.error('Erreur lors de l\'upload');
     } finally {

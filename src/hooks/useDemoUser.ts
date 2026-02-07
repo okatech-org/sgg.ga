@@ -284,7 +284,8 @@ export function useDemoUser() {
   };
 
   const hasAccess = (module: string): boolean => {
-    if (!demoUser) return true; // No demo user = full access
+    // SECURITY: No demo user means no demo access — real auth should take over
+    if (!demoUser) return false;
     return demoUser.access.some((a) =>
       a.toLowerCase().includes(module.toLowerCase()) ||
       module.toLowerCase().includes(a.toLowerCase())

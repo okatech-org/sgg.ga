@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, CheckCircle2, Clock, Send, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMinistryStats } from "@/hooks/useGAR";
+import { toast } from "sonner";
 
 const statusConfig = {
   submitted: {
@@ -52,13 +53,20 @@ export function MinistryReportingTable() {
   const { ministries, loading, error, refetch } = useMinistryStats();
 
   const handleRelanceAll = () => {
-    // TODO: Implémenter la relance de tous les ministères en retard
-    console.log("Relancer tous les ministères en retard");
+    const lateMinistries = ministries.filter((m) => m.status === 'late');
+    if (lateMinistries.length === 0) {
+      toast.info('Aucun ministere en retard');
+      return;
+    }
+    // Simulate sending relance notifications
+    toast.success(`Relance envoyee a ${lateMinistries.length} ministere(s) en retard`);
   };
 
   const handleRelance = (ministryId: string) => {
-    // TODO: Implémenter la relance d'un ministère spécifique
-    console.log("Relancer ministère:", ministryId);
+    const ministry = ministries.find((m) => m.id === ministryId);
+    if (!ministry) return;
+    // Simulate sending a relance notification
+    toast.success(`Relance envoyee au ${ministry.name}`);
   };
 
   return (

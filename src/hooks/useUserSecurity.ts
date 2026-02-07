@@ -1,9 +1,11 @@
 /**
- * SGG Digital — Hook Sécurité Compte (mot de passe, 2FA, sessions)
+ * SGG Digital — Hook Securite Compte (mot de passe, 2FA, sessions)
+ * Compatible mode Demo + Supabase production
  */
 
 import { useState, useMemo } from 'react';
 import { useDemoUser } from './useDemoUser';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { UserSession, PasswordFormValues } from '@/types/user-profile';
 
@@ -45,6 +47,7 @@ const MOCK_SESSIONS: UserSession[] = [
 
 export function useUserSecurity() {
   const { demoUser } = useDemoUser();
+  const { supabase } = useAuth();
   const isDemo = !!demoUser;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -54,13 +57,17 @@ export function useUserSecurity() {
   const changePassword = async (data: PasswordFormValues) => {
     setIsLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 1000));
       if (isDemo) {
-        toast.success('Mode Démo : mot de passe simulé');
+        await new Promise((r) => setTimeout(r, 1000));
+        toast.success('Mode Demo : mot de passe simule');
         return true;
       }
-      // TODO: Supabase auth.updateUser({ password })
-      toast.success('Mot de passe modifié avec succès');
+      // Production: Supabase password update
+      const { error } = await supabase.auth.updateUser({
+        password: data.newPassword,
+      });
+      if (error) throw error;
+      toast.success('Mot de passe modifie avec succes');
       return true;
     } catch (e: any) {
       toast.error(e.message || 'Erreur lors du changement de mot de passe');
@@ -77,10 +84,10 @@ export function useUserSecurity() {
       const newState = !totpEnabled;
       setTotpEnabled(newState);
       if (isDemo) {
-        toast.success(`Mode Démo : 2FA ${newState ? 'activé' : 'désactivé'}`);
+        toast.success(`Mode Demo : 2FA ${newState ? 'active' : 'desactive'}`);
         return;
       }
-      toast.success(`Authentification à deux facteurs ${newState ? 'activée' : 'désactivée'}`);
+      toast.success(`Authentification a deux facteurs ${newState ? 'activee' : 'desactivee'}`);
     } catch {
       toast.error('Erreur lors de la modification 2FA');
     } finally {
@@ -94,12 +101,12 @@ export function useUserSecurity() {
       await new Promise((r) => setTimeout(r, 500));
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
       if (isDemo) {
-        toast.success('Mode Démo : session révoquée');
+        toast.success('Mode Demo : session revoquee');
         return;
       }
-      toast.success('Session révoquée');
+      toast.success('Session revoquee');
     } catch {
-      toast.error('Erreur lors de la révocation');
+      toast.error('Erreur lors de la revocation');
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +117,7 @@ export function useUserSecurity() {
     try {
       await new Promise((r) => setTimeout(r, 800));
       setSessions((prev) => prev.filter((s) => s.isCurrent));
-      toast.success(isDemo ? 'Mode Démo : toutes les sessions révoquées' : 'Toutes les sessions révoquées');
+      toast.success(isDemo ? 'Mode Demo : toutes les sessions revoquees' : 'Toutes les sessions revoquees');
     } catch {
       toast.error('Erreur');
     } finally {

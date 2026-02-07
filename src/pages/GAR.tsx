@@ -41,8 +41,34 @@ export default function GAR() {
   const { data, loading } = useGARDashboard();
 
   const handleExport = () => {
-    // TODO: Implémenter l'export Excel/PDF
-    console.log("Exporting GAR data...");
+    if (!data) return;
+    import('xlsx').then(({ utils, writeFile }) => {
+      const exportRows = data.priorities.map((p) => ({
+        Priorite: p.name,
+        Code: p.code,
+        Avancement: `${p.progress}%`,
+        Cible: `${p.target}%`,
+        Budget_Alloue: p.budgetAlloue,
+        Budget_Consomme: p.budgetConsomme,
+        Objectifs_Atteints: p.objectifsAtteints,
+        Objectifs_Total: p.objectifsTotal,
+      }));
+      const ws = utils.json_to_sheet(exportRows);
+      const wb = utils.book_new();
+      utils.book_append_sheet(wb, ws, 'GAR');
+      writeFile(wb, `GAR_${selectedYear}_export.xlsx`);
+    }).catch(() => {
+      // Fallback: export as CSV
+      const csvContent = 'data:text/csv;charset=utf-8,' +
+        'Priorite,Avancement,Cible,Budget Alloue,Budget Consomme\n' +
+        data.priorities.map((p) =>
+          `${p.name},${p.progress}%,${p.target}%,${p.budgetAlloue},${p.budgetConsomme}`
+        ).join('\n');
+      const link = document.createElement('a');
+      link.href = encodeURI(csvContent);
+      link.download = `GAR_${selectedYear}_export.csv`;
+      link.click();
+    });
   };
 
   return (

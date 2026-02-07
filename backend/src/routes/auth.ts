@@ -1,20 +1,68 @@
 /**
  * SGG Digital - Authentication Routes
+ * Secured: rate limiting, token blacklisting, strong password policy
  */
 
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import rateLimit from 'express-rate-limit';
 import { query } from '../config/database.js';
 import { cacheDelete } from '../config/redis.js';
-import { authenticate, generateToken, AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  authenticate,
+  generateToken,
+  blacklistToken,
+  validatePasswordStrength,
+  AuthenticatedRequest,
+} from '../middleware/auth.js';
 
 const router = Router();
 
 /**
- * POST /api/auth/login
- * User login
+ * Rate limiter specifically for login endpoint
+ * Stricter than global: 10 attempts per 15 minutes per IP
  */
-router.post('/login', async (req: Request, res: Response) => {
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 login attempts per window
+  message: {
+    success: false,
+    error: {
+      code: 'TOO_MANY_LOGIN_ATTEMPTS',
+      message: 'Trop de tentatives de connexion. Reessayez dans 15 minutes.',
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => {
+    // Rate limit by IP + email combination for more precision
+    const email = req.body?.email || 'unknown';
+    return `${req.ip}-${email}`;
+  },
+});
+
+/**
+ * Rate limiter for password change
+ */
+const passwordChangeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 password changes per hour
+  message: {
+    success: false,
+    error: {
+      code: 'TOO_MANY_PASSWORD_CHANGES',
+      message: 'Trop de tentatives de changement de mot de passe.',
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
+ * POST /api/auth/login
+ * User login (rate limited)
+ */
+router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -28,13 +76,25 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_EMAIL',
+          message: 'Format email invalide',
+        },
+      });
+    }
+
     // Find user
     const userResult = await query(
       `SELECT u.id, u.email, u.password_hash, u.full_name, u.is_active, u.is_verified,
               u.failed_login_count, u.locked_until, u.totp_enabled
        FROM auth.users u
        WHERE u.email = $1`,
-      [email.toLowerCase()]
+      [email.toLowerCase().trim()]
     );
 
     if (userResult.rows.length === 0) {
@@ -51,11 +111,13 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // Check if account is locked
     if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      const remainingMs = new Date(user.locked_until).getTime() - Date.now();
+      const remainingMin = Math.ceil(remainingMs / 60000);
       return res.status(423).json({
         success: false,
         error: {
           code: 'ACCOUNT_LOCKED',
-          message: 'Compte temporairement verrouille. Reessayez plus tard.',
+          message: `Compte temporairement verrouille. Reessayez dans ${remainingMin} minutes.`,
         },
       });
     }
@@ -93,6 +155,7 @@ router.post('/login', async (req: Request, res: Response) => {
         error: {
           code: 'INVALID_CREDENTIALS',
           message: 'Email ou mot de passe incorrect',
+          remaining_attempts: Math.max(0, 5 - failedCount),
         },
       });
     }
@@ -162,10 +225,17 @@ router.post('/login', async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/logout
- * User logout
+ * User logout — blacklists the current token
  */
 router.post('/logout', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    // Blacklist the current token so it can't be reused
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      await blacklistToken(token);
+    }
+
     // Clear user cache
     if (req.user) {
       await cacheDelete(`user:${req.user.userId}`);
@@ -267,7 +337,7 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response)
 
 /**
  * POST /api/auth/refresh
- * Refresh token
+ * Refresh token — blacklists old token, issues new one
  */
 router.post('/refresh', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -279,6 +349,13 @@ router.post('/refresh', authenticate, async (req: AuthenticatedRequest, res: Res
           message: 'Authentification requise',
         },
       });
+    }
+
+    // Blacklist the old token
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const oldToken = authHeader.substring(7);
+      await blacklistToken(oldToken);
     }
 
     // Generate new token
@@ -309,9 +386,9 @@ router.post('/refresh', authenticate, async (req: AuthenticatedRequest, res: Res
 
 /**
  * POST /api/auth/change-password
- * Change password
+ * Change password with strong validation (rate limited)
  */
-router.post('/change-password', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/change-password', passwordChangeLimiter, authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { current_password, new_password } = req.body;
 
@@ -325,12 +402,25 @@ router.post('/change-password', authenticate, async (req: AuthenticatedRequest, 
       });
     }
 
-    if (new_password.length < 8) {
+    // Strong password validation
+    const passwordCheck = validatePasswordStrength(new_password);
+    if (!passwordCheck.valid) {
       return res.status(400).json({
         success: false,
         error: {
           code: 'WEAK_PASSWORD',
-          message: 'Le mot de passe doit contenir au moins 8 caracteres',
+          message: passwordCheck.message,
+        },
+      });
+    }
+
+    // Prevent reusing the same password
+    if (current_password === new_password) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'SAME_PASSWORD',
+          message: 'Le nouveau mot de passe doit etre different de l\'ancien',
         },
       });
     }
@@ -364,8 +454,8 @@ router.post('/change-password', authenticate, async (req: AuthenticatedRequest, 
       });
     }
 
-    // Hash new password
-    const newPasswordHash = await bcrypt.hash(new_password, 10);
+    // Hash new password (12 rounds for better security)
+    const newPasswordHash = await bcrypt.hash(new_password, 12);
 
     // Update password
     await query(
@@ -373,10 +463,17 @@ router.post('/change-password', authenticate, async (req: AuthenticatedRequest, 
       [newPasswordHash, req.user?.userId]
     );
 
+    // Blacklist current token to force re-login with new password
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      await blacklistToken(token);
+    }
+
     res.json({
       success: true,
       data: {
-        message: 'Mot de passe modifie avec succes',
+        message: 'Mot de passe modifie avec succes. Veuillez vous reconnecter.',
       },
     });
   } catch (error) {

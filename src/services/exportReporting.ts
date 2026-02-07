@@ -91,7 +91,7 @@ export async function exportToExcel(
 
   try {
     // Try dynamic import for xlsx
-    const XLSX = await import('xlsx').catch(() => null);
+    const XLSX = await import('xlsx').catch((): null => null);
 
     if (XLSX) {
       const wsData = rows.map((row) => {
@@ -141,7 +141,7 @@ export async function exportToPDF(
   ];
 
   try {
-    const jsPDFModule = await import('jspdf').catch(() => null);
+    const jsPDFModule = await import('jspdf').catch((): null => null);
 
     if (jsPDFModule) {
       const { jsPDF } = jsPDFModule;

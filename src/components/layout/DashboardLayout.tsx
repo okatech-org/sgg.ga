@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { DemoBanner } from "@/components/DemoBanner";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -11,8 +12,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      <DemoBanner />
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-      
+
       <div className="md:ml-64">
         <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
         <main className="p-4 md:p-6">

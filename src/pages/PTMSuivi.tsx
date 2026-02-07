@@ -316,7 +316,7 @@ export default function PTMSuivi() {
                   <div key={row.ministereSigle} className="grid grid-cols-[150px_repeat(5,1fr)] gap-0.5 mb-0.5">
                     <div className="text-[10px] font-medium p-1 truncate">{row.ministereSigle}</div>
                     {(['brouillon', 'soumis_sgg', 'valide_sgg', 'inscrit_ptg', 'rejete'] as const).map((statut) => {
-                      const count = row[statut] as number;
+                      const count = (row as Record<string, number | string>)[statut] as number;
                       return (
                         <TooltipProvider key={statut}>
                           <Tooltip>

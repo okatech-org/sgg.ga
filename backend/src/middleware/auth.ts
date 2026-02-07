@@ -5,10 +5,18 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { query } from '../config/database.js';
-import { cacheGet, cacheSet } from '../config/redis.js';
+import { cacheGet, cacheSet, cacheDelete } from '../config/redis.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// SECURITY: JWT_SECRET is mandatory — no fallback to prevent weak defaults
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is required. Exiting.');
+  process.exit(1);
+}
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+
+// Token blacklist prefix for revocation
+const TOKEN_BLACKLIST_PREFIX = 'token:blacklist:';
 
 // Types
 export interface JwtPayload {
@@ -119,9 +127,22 @@ export async function authenticate(
     // Set user in request
     req.user = decoded;
 
-    // Set user ID for audit logging
+    // Check if token is blacklisted (revoked)
+    const isBlacklisted = await cacheGet<boolean>(`${TOKEN_BLACKLIST_PREFIX}${token}`);
+    if (isBlacklisted) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'TOKEN_REVOKED',
+          message: 'Token revoque',
+        },
+      });
+      return;
+    }
+
+    // Set user ID for audit logging (using set_config to prevent SQL injection)
     try {
-      await query(`SET LOCAL app.current_user_id = '${decoded.userId}'`);
+      await query('SELECT set_config($1, $2, true)', ['app.current_user_id', decoded.userId]);
     } catch {
       // Ignore if not in transaction
     }
@@ -331,4 +352,45 @@ export function requireInstitution() {
 
     next();
   };
+}
+
+/**
+ * Blacklist a JWT token (for logout / revocation)
+ * The token is stored in Redis until its natural expiry
+ */
+export async function blacklistToken(token: string): Promise<void> {
+  try {
+    const decoded = jwt.decode(token) as jwt.JwtPayload | null;
+    if (!decoded || !decoded.exp) return;
+    // TTL = remaining time until token expiry
+    const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+    if (ttl > 0) {
+      await cacheSet(`${TOKEN_BLACKLIST_PREFIX}${token}`, true, ttl);
+    }
+  } catch {
+    // Ignore blacklist errors — token will expire naturally
+  }
+}
+
+/**
+ * Validate password strength
+ * Requires: min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char
+ */
+export function validatePasswordStrength(password: string): { valid: boolean; message?: string } {
+  if (password.length < 8) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins 8 caracteres' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins une majuscule' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins une minuscule' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins un chiffre' };
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins un caractere special' };
+  }
+  return { valid: true };
 }

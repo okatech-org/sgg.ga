@@ -16,10 +16,11 @@ const config: PoolConfig = {
   idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
   connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'),
 
-  // SSL configuration for Cloud SQL (required even in development)
+  // SSL configuration for Cloud SQL
+  // SECURITY: rejectUnauthorized should be true in production to prevent MITM attacks
   ssl: process.env.DATABASE_URL?.includes('35.195.248.19')
-    ? { rejectUnauthorized: false } // Cloud SQL Hub (idetude-db)
-    : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false),
+    ? { rejectUnauthorized: process.env.NODE_ENV === 'production' }
+    : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false),
 
   // Application name for query identification
   application_name: 'sgg-digital-api',
@@ -61,9 +62,9 @@ export async function query<T = any>(
   const client = await pool.connect();
 
   try {
-    // Set the current user for audit logging
+    // Set the current user for audit logging (parameterized to prevent SQL injection)
     if (userId) {
-      await client.query(`SET LOCAL app.current_user_id = '${userId}'`);
+      await client.query('SELECT set_config($1, $2, true)', ['app.current_user_id', userId]);
     }
 
     const start = Date.now();
@@ -98,7 +99,7 @@ export async function transaction<T>(
     await client.query('BEGIN');
 
     if (userId) {
-      await client.query(`SET LOCAL app.current_user_id = '${userId}'`);
+      await client.query('SELECT set_config($1, $2, true)', ['app.current_user_id', userId]);
     }
 
     const result = await callback(client);

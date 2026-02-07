@@ -18,7 +18,14 @@ router.get('/', optionalAuth, async (req: AuthenticatedRequest, res: Response) =
     const { type, parent_id, is_active = 'true' } = req.query;
 
     const cacheKey = `institutions:list:${type || 'all'}:${parent_id || 'all'}:${is_active}`;
-    let institutions = await cacheGet<any[]>(cacheKey);
+
+    // Try cache first (optional - won't fail if Redis unavailable)
+    let institutions: any[] | null = null;
+    try {
+      institutions = await cacheGet<any[]>(cacheKey);
+    } catch (cacheError) {
+      // Redis unavailable - continue without cache
+    }
 
     if (!institutions) {
       const params: any[] = [];
@@ -53,7 +60,13 @@ router.get('/', optionalAuth, async (req: AuthenticatedRequest, res: Response) =
       `, params);
 
       institutions = result.rows;
-      await cacheSet(cacheKey, institutions, 600); // 10 minutes
+
+      // Try to cache (optional)
+      try {
+        await cacheSet(cacheKey, institutions, 600);
+      } catch (cacheError) {
+        // Ignore cache errors
+      }
     }
 
     res.json({ success: true, data: institutions });
@@ -72,13 +85,24 @@ router.get('/', optionalAuth, async (req: AuthenticatedRequest, res: Response) =
  */
 router.get('/ministeres', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const cacheKey = 'institutions:ministeres';
-    let ministeres = await cacheGet<any[]>(cacheKey);
+    // Try cache first (optional - won't fail if Redis unavailable)
+    let ministeres: any[] | null = null;
+    try {
+      ministeres = await cacheGet<any[]>('institutions:ministeres');
+    } catch (cacheError) {
+      // Redis unavailable - continue without cache
+    }
 
     if (!ministeres) {
       const result = await query(`SELECT * FROM institutions.v_ministeres`);
       ministeres = result.rows;
-      await cacheSet(cacheKey, ministeres, 3600);
+
+      // Try to cache (optional)
+      try {
+        await cacheSet('institutions:ministeres', ministeres, 3600);
+      } catch (cacheError) {
+        // Ignore cache errors
+      }
     }
 
     res.json({ success: true, data: ministeres });

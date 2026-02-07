@@ -160,7 +160,12 @@
   }
 
   /* Typography - Titres en serif */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-serif;
   }
 
@@ -185,6 +190,7 @@
 }
 
 @layer components {
+
   /* Flat Card */
   .neu-card {
     @apply rounded-xl border border-border bg-card transition-colors duration-300;
@@ -251,9 +257,15 @@
   .an-glow:hover {
     @apply ring-2 ring-primary/20;
   }
+
+  /* Government Header - Dark background for sections */
+  .gov-header {
+    @apply bg-government-navy;
+  }
 }
 
 @layer utilities {
+
   /* Animation utilities */
   .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
@@ -268,33 +280,36 @@
   }
 
   @keyframes fadeIn {
-    from { 
+    from {
       opacity: 0;
       transform: translateY(20px);
     }
-    to { 
+
+    to {
       opacity: 1;
       transform: translateY(0);
     }
   }
 
   @keyframes slideUp {
-    from { 
+    from {
       opacity: 0;
       transform: translateY(20px);
     }
-    to { 
+
+    to {
       opacity: 1;
       transform: translateY(0);
     }
   }
 
   @keyframes scaleIn {
-    from { 
+    from {
       opacity: 0;
       transform: scale(0.95);
     }
-    to { 
+
+    to {
       opacity: 1;
       transform: scale(1);
     }
@@ -306,7 +321,14 @@
   }
 
   @keyframes countUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }

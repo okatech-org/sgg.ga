@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Globe, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 
 // Validation schemas
@@ -18,7 +18,7 @@ const fullNameSchema = z.string().min(2, "Le nom doit contenir au moins 2 caract
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signIn, signUp, loading: authLoading } = useAuth();
-  
+
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -111,15 +111,12 @@ export default function Auth() {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-government-navy to-government-navy-light">
       {/* Header */}
       <header className="p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-            <Globe className="h-5 w-5 text-government-navy" />
-          </div>
-          <div>
-            <span className="font-bold text-white">SGG Digital</span>
-            <span className="hidden md:inline text-sm text-white/70 ml-2">
-              République Gabonaise
-            </span>
+        <div className="flex items-center gap-4">
+          <img src="/emblem_gabon.png" alt="Emblème du Gabon" className="h-[60px] w-[60px] object-contain" />
+          <div className="flex flex-col items-start justify-center">
+            <span className="text-[10px] uppercase font-semibold tracking-wider text-white/70 leading-tight w-full mb-1">Présidence de la République</span>
+            <span className="font-serif font-black text-[13.5px] uppercase leading-none tracking-normal text-white w-full">Secrétariat Général</span>
+            <span className="font-serif font-black text-[12.5px] uppercase leading-none tracking-[0.2em] text-white w-full">du Gouvernement</span>
           </div>
         </div>
       </header>
@@ -129,13 +126,11 @@ export default function Auth() {
         <Card className="w-full max-w-md shadow-2xl">
           <CardHeader className="text-center pb-2">
             <div className="flex justify-center mb-4">
-              <div className="h-16 w-16 rounded-full bg-government-navy flex items-center justify-center">
-                <Globe className="h-8 w-8 text-white" />
-              </div>
+              <img src="/emblem_gabon.png" alt="Emblème du Gabon" className="h-20 w-20 object-contain" />
             </div>
-            <CardTitle className="text-2xl">Plateforme SGG</CardTitle>
+            <CardTitle className="text-2xl">SGG Digital</CardTitle>
             <CardDescription>
-              Secrétariat Général du Gouvernement — Ve République
+              Plateforme Numérique du Secrétariat Général du Gouvernement
             </CardDescription>
           </CardHeader>
 

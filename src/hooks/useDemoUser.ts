@@ -331,6 +331,8 @@ export function useDemoUser() {
         institutions: true,
         cycleLegislatif: true,
         adminUsers: true,
+        matriceReporting: true,
+        ptmptg: true,
       };
     }
 
@@ -339,35 +341,35 @@ export function useDemoUser() {
     // Define access per role type
     const accessMap: Record<string, Record<string, boolean>> = {
       // Full access roles - Exécutif
-      "president": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: true, cycleLegislatif: true, adminUsers: false },
-      "vice-president": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: true, cycleLegislatif: true, adminUsers: false },
-      "premier-ministre": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: true, cycleLegislatif: true, adminUsers: false },
+      "president": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: true, cycleLegislatif: true, adminUsers: false, matriceReporting: true, ptmptg: true },
+      "vice-president": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: true, cycleLegislatif: true, adminUsers: false, matriceReporting: true, ptmptg: true },
+      "premier-ministre": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: true, cycleLegislatif: true, adminUsers: false, matriceReporting: true, ptmptg: true },
 
       // Présidence
-      "sgpr": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: true, cycleLegislatif: true, adminUsers: false },
+      "sgpr": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: true, cycleLegislatif: true, adminUsers: false, matriceReporting: true, ptmptg: true },
 
       // Administratif SGG
-      "sgg-admin": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: true, parametres: true, institutions: true, cycleLegislatif: true, adminUsers: true },
-      "sgg-directeur": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: true, parametres: false, institutions: true, cycleLegislatif: true, adminUsers: false },
+      "sgg-admin": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: true, parametres: true, institutions: true, cycleLegislatif: true, adminUsers: true, matriceReporting: true, ptmptg: true },
+      "sgg-directeur": { dashboard: true, gar: true, nominations: true, egop: true, journalOfficiel: true, documents: true, rapports: true, formation: true, parametres: false, institutions: true, cycleLegislatif: true, adminUsers: false, matriceReporting: true, ptmptg: true },
 
       // Ministry roles
-      "ministre": { dashboard: true, gar: true, nominations: true, egop: false, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false },
-      "sg-ministere": { dashboard: true, gar: true, nominations: true, egop: false, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false },
+      "ministre": { dashboard: true, gar: true, nominations: true, egop: false, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false, matriceReporting: true, ptmptg: true },
+      "sg-ministere": { dashboard: true, gar: true, nominations: true, egop: false, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false, matriceReporting: true, ptmptg: true },
 
       // Legislative roles
-      "assemblee": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: true, adminUsers: false },
-      "senat": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: true, adminUsers: false },
+      "assemblee": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: true, adminUsers: false, matriceReporting: false, ptmptg: false },
+      "senat": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: true, adminUsers: false, matriceReporting: false, ptmptg: false },
 
       // Juridictionnel
-      "conseil-etat": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: true, adminUsers: false },
-      "cour-constitutionnelle": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: true, adminUsers: false },
+      "conseil-etat": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: true, adminUsers: false, matriceReporting: false, ptmptg: false },
+      "cour-constitutionnelle": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: true, adminUsers: false, matriceReporting: false, ptmptg: false },
 
       // DGJO
-      "dgjo": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false },
+      "dgjo": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false, matriceReporting: false, ptmptg: false },
 
       // Public
-      "citoyen": { dashboard: false, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: false, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false },
-      "professionnel-droit": { dashboard: false, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false },
+      "citoyen": { dashboard: false, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: false, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false, matriceReporting: false, ptmptg: false },
+      "professionnel-droit": { dashboard: false, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false, matriceReporting: false, ptmptg: false },
     };
 
     return accessMap[id] || accessMap["citoyen"];

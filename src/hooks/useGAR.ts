@@ -1,25 +1,45 @@
 /**
  * SGG Digital - GAR (Gestion Axée sur les Résultats) Hooks
  * Hooks React pour la gestion des données GAR
+ * Connecté au backend réel avec fallback sur données mock
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { gar } from '@/lib/api';
+import { garApi } from '@/services/api';
 import type {
-  GARDashboard,
-  GARObjectif,
-  GARRapportMensuel,
-  GARPriorite,
-  Ministry,
   PrioritePresidentielle,
-  PRIORITE_LABELS,
-  PRIORITE_COLORS,
 } from '@/types';
 
 // Types pour les états de chargement
 interface LoadingState {
   loading: boolean;
   error: string | null;
+}
+
+// Types locaux pour les objectifs et rapports
+interface GARObjectif {
+  id: string;
+  code: string;
+  titre: string;
+  ministere_id: string;
+  priorite_id: string;
+  annee: number;
+  taux_execution: number;
+  statut: string;
+  [key: string]: any;
+}
+
+interface GARRapportMensuel {
+  id: string;
+  ministere_id: string;
+  annee: number;
+  mois: number;
+  statut: string;
+  synthese?: string;
+  difficultes?: string;
+  perspectives?: string;
+  [key: string]: any;
 }
 
 // Type pour les statistiques du dashboard
@@ -53,7 +73,7 @@ interface DashboardStats {
   }[];
 }
 
-// Mock data pour le développement (sera remplacé par l'API)
+// Mock data pour le développement (fallback si API indisponible)
 const MOCK_DASHBOARD_STATS: DashboardStats = {
   totalProgress: 68,
   priorities: [
@@ -203,8 +223,21 @@ const MOCK_DASHBOARD_STATS: DashboardStats = {
   recentActivity: [],
 };
 
+// Mapping des codes priorité vers les codes PrioritePresidentielle
+const PRIORITE_CODE_MAP: Record<string, PrioritePresidentielle> = {
+  'sante': 'sante',
+  'education': 'education',
+  'infrastructure': 'infrastructure',
+  'agriculture': 'agriculture',
+  'numerique': 'numerique',
+  'emploi': 'emploi',
+  'environnement': 'environnement',
+  'gouvernance': 'gouvernance',
+};
+
 /**
  * Hook pour récupérer les données du dashboard GAR
+ * Essaie d'abord l'API réelle, puis fallback sur les données mock
  */
 export function useGARDashboard() {
   const [data, setData] = useState<DashboardStats | null>(null);
@@ -216,16 +249,44 @@ export function useGARDashboard() {
     setError(null);
 
     try {
-      const response = await gar.getDashboard();
+      // Essayer d'abord l'API publique pour les priorités
+      const prioritiesResponse = await garApi.getPrioritiesPublic();
 
-      if (response.success && response.data) {
-        setData(response.data);
+      if (prioritiesResponse.success && prioritiesResponse.data && prioritiesResponse.data.length > 0) {
+        // Convertir les données API en format DashboardStats
+        const apiPriorities = prioritiesResponse.data;
+
+        const mappedPriorities = apiPriorities.map((p: any) => ({
+          code: PRIORITE_CODE_MAP[p.priorite] || p.priorite,
+          name: p.titre,
+          progress: Number(p.taux_execution_moyen) || 0,
+          target: 75, // Cible par défaut
+          budgetAlloue: Number(p.budget_alloue) || 0,
+          budgetConsomme: 0, // Sera calculé quand il y aura des objectifs
+          objectifsAtteints: Number(p.objectifs_atteints) || 0,
+          objectifsTotal: Number(p.nb_objectifs_actifs) || 0,
+          color: p.couleur || '#6366f1',
+        }));
+
+        // Calculer le taux d'exécution global
+        const totalProgress = mappedPriorities.length > 0
+          ? Math.round(mappedPriorities.reduce((acc: number, p: any) => acc + p.progress, 0) / mappedPriorities.length)
+          : 0;
+
+        // Utiliser les données mock pour ministryStats (pas encore connecté)
+        setData({
+          totalProgress: totalProgress || MOCK_DASHBOARD_STATS.totalProgress,
+          priorities: mappedPriorities.length > 0 ? mappedPriorities : MOCK_DASHBOARD_STATS.priorities,
+          ministryStats: MOCK_DASHBOARD_STATS.ministryStats,
+          recentActivity: [],
+        });
       } else {
-        // Utiliser les données mock en développement
+        // Fallback sur les données mock
+        console.warn('API GAR non disponible, utilisation des données mock');
         setData(MOCK_DASHBOARD_STATS);
       }
     } catch (err) {
-      console.warn('API non disponible, utilisation des données mock');
+      console.warn('API GAR non disponible, utilisation des données mock:', err);
       setData(MOCK_DASHBOARD_STATS);
     } finally {
       setLoading(false);

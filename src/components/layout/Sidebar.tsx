@@ -2,6 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
+  User,
   FileText,
   BookOpen,
   GraduationCap,
@@ -9,6 +10,7 @@ import {
   ChevronLeft,
   BarChart3,
   ClipboardCheck,
+  ClipboardList,
   FolderOpen,
   Globe,
   LucideIcon,
@@ -16,6 +18,13 @@ import {
   Building2,
   Calendar,
   Mail,
+  Table2,
+  FileEdit,
+  CheckCircle2,
+  ShieldCheck,
+  Download,
+  FileSpreadsheet,
+  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -48,6 +57,27 @@ const navigation: NavSection[] = [
     ],
   },
   {
+    title: "Matrice Reporting",
+    items: [
+      { name: "Matrice GAR/PAG", href: "/matrice-reporting", icon: Table2, moduleKey: "matriceReporting" },
+      { name: "Saisie Mensuelle", href: "/matrice-reporting/saisie", icon: FileEdit, moduleKey: "matriceReporting" },
+      { name: "Validation SGG", href: "/matrice-reporting/validation", icon: CheckCircle2, moduleKey: "matriceReporting" },
+      { name: "Validation SGPR", href: "/matrice-reporting/validation-sgpr", icon: ShieldCheck, moduleKey: "matriceReporting" },
+      { name: "Suivi Remplissage", href: "/matrice-reporting/suivi", icon: ClipboardList, moduleKey: "matriceReporting" },
+      { name: "Exports", href: "/matrice-reporting/exports", icon: Download, moduleKey: "matriceReporting" },
+    ],
+  },
+  {
+    title: "Programmation",
+    items: [
+      { name: "Matrice PTM", href: "/ptm/matrice", icon: FileSpreadsheet, moduleKey: "ptmptg" },
+      { name: "Saisie PTM", href: "/ptm/saisie", icon: FileEdit, moduleKey: "ptmptg" },
+      { name: "Validation SGG", href: "/ptm/validation", icon: CheckCircle2, moduleKey: "ptmptg" },
+      { name: "Suivi Programmation", href: "/ptm/suivi", icon: ClipboardList, moduleKey: "ptmptg" },
+      { name: "Cohérence PTM↔PAG", href: "/ptm/coherence", icon: Link2, moduleKey: "ptmptg" },
+    ],
+  },
+  {
     title: "Processus Normatif",
     items: [
       { name: "Cycle Législatif", href: "/cycle-legislatif/app", icon: Scale, moduleKey: "cycleLegislatif" },
@@ -67,6 +97,12 @@ const navigation: NavSection[] = [
       { name: "Journal Officiel", href: "/journal-officiel/app", icon: BookOpen, moduleKey: "journalOfficiel" },
       { name: "Documents", href: "/documents/app", icon: FileText, moduleKey: "documents" },
       { name: "Rapports", href: "/rapports/app", icon: ClipboardCheck, moduleKey: "rapports" },
+    ],
+  },
+  {
+    title: "Mon Compte",
+    items: [
+      { name: "Mon Profil", href: "/profil", icon: User, moduleKey: "dashboard" },
     ],
   },
   {
@@ -120,12 +156,11 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         {/* Logo and Header */}
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary">
-              <Globe className="h-5 w-5 text-sidebar-primary-foreground" />
-            </div>
+            <img src="/emblem_gabon.png" alt="Emblème du Gabon" className="h-10 w-10 object-contain" />
             <div className="flex flex-col">
-              <span className="font-bold text-sm">SGG Digital</span>
-              <span className="text-[10px] text-sidebar-foreground/60">République Gabonaise</span>
+              <span className="text-[8px] uppercase font-semibold tracking-wider text-sidebar-foreground/60 leading-tight">Présidence de la République</span>
+              <span className="font-serif font-black text-[10px] uppercase leading-none tracking-normal text-sidebar-foreground">Secrétariat Général</span>
+              <span className="font-serif font-black text-[9px] uppercase leading-none tracking-[0.1em] text-sidebar-foreground">du Gouvernement</span>
             </div>
           </div>
           <Button

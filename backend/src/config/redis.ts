@@ -54,7 +54,11 @@ redis.on('reconnecting', () => {
  * Initialize Redis connection
  */
 export async function connectRedis(): Promise<void> {
-  await redis.connect();
+  try {
+    await redis.connect();
+  } catch (error) {
+    console.warn('Redis: Connection failed, running without cache');
+  }
 }
 
 /**
@@ -73,12 +77,17 @@ const DEFAULT_TTL = 3600; // 1 hour
  * Get a value from cache
  */
 export async function cacheGet<T>(key: string): Promise<T | null> {
-  const value = await redis.get(key);
-  if (!value) return null;
   try {
-    return JSON.parse(value) as T;
+    const value = await redis.get(key);
+    if (!value) return null;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return value as unknown as T;
+    }
   } catch {
-    return value as unknown as T;
+    // Redis unavailable - return null (cache miss)
+    return null;
   }
 }
 
@@ -90,15 +99,23 @@ export async function cacheSet(
   value: any,
   ttlSeconds: number = DEFAULT_TTL
 ): Promise<void> {
-  const serialized = typeof value === 'string' ? value : JSON.stringify(value);
-  await redis.setex(key, ttlSeconds, serialized);
+  try {
+    const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+    await redis.setex(key, ttlSeconds, serialized);
+  } catch {
+    // Redis unavailable - skip caching
+  }
 }
 
 /**
  * Delete a value from cache
  */
 export async function cacheDelete(key: string): Promise<void> {
-  await redis.del(key);
+  try {
+    await redis.del(key);
+  } catch {
+    // Redis unavailable - skip cache delete
+  }
 }
 
 /**

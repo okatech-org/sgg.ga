@@ -72,7 +72,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Briefcase,
     category: "executif",
     intensity: 4,
-    access: ["Propositions", "Nominations", "Reporting GAR"],
+    access: ["Propositions", "Nominations", "Reporting GAR", "Matrice Reporting (Lecture)"],
   },
   {
     id: "sg-ministere",
@@ -83,7 +83,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Users,
     category: "executif",
     intensity: 4,
-    access: ["Saisie GAR", "Suivi Nominations", "Documents"],
+    access: ["Saisie GAR", "Suivi Nominations", "Documents", "Matrice Reporting (Saisie)"],
   },
   // Présidence
   {
@@ -95,7 +95,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Building2,
     category: "presidence",
     intensity: 5,
-    access: ["Lecture Complète", "Arbitrages", "Décisions Présidentielles"],
+    access: ["Lecture Complète", "Arbitrages", "Décisions Présidentielles", "Matrice Reporting (SGPR)"],
   },
   // Législatif
   {
@@ -154,7 +154,7 @@ const demoAccounts: DemoAccount[] = [
     icon: GraduationCap,
     category: "administratif",
     intensity: 5,
-    access: ["Configuration", "Tous Modules", "Administration"],
+    access: ["Configuration", "Tous Modules", "Administration", "Matrice Reporting (Admin)"],
   },
   {
     id: "sgg-directeur",
@@ -166,7 +166,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Users,
     category: "administratif",
     intensity: 4,
-    access: ["Lecture", "Édition Périmètre", "Validation"],
+    access: ["Lecture", "Édition Périmètre", "Validation", "Matrice Reporting (Validation)"],
   },
   {
     id: "dgjo",
@@ -271,21 +271,21 @@ export default function Demo() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-card/80 backdrop-blur-lg">
+      <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-government-navy">
-              <Globe className="h-5 w-5 text-white" />
+            <img src="/emblem_gabon.png" alt="Emblème du Gabon" className="h-10 w-10 object-contain" />
+            <div className="flex flex-col items-start justify-center">
+              <span className="text-[8px] uppercase font-semibold tracking-wider text-muted-foreground leading-tight">Présidence de la République</span>
+              <span className="font-serif font-black text-[11px] uppercase leading-none tracking-normal text-foreground">Secrétariat Général</span>
+              <span className="font-serif font-black text-[10px] uppercase leading-none tracking-[0.15em] text-foreground">du Gouvernement</span>
             </div>
-            <div>
-              <span className="font-bold text-government-navy">SGG Digital</span>
-              <span className="hidden md:inline text-sm text-muted-foreground ml-2">
-                Accès Démo
-              </span>
-            </div>
+            <span className="hidden md:inline text-sm text-muted-foreground ml-2 border-l pl-3">
+              Accès Démo
+            </span>
           </div>
           <Badge variant="outline" className="border-government-gold text-government-gold">
             Mode Démonstration

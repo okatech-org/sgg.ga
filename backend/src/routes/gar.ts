@@ -10,7 +10,91 @@ import { authenticate, requirePermission, AuthenticatedRequest } from '../middle
 
 const router = Router();
 
-// All GAR routes require authentication
+// ============================================================================
+// PUBLIC ROUTES (No authentication required)
+// ============================================================================
+
+/**
+ * GET /api/gar/public/priorities
+ * Get PAG priorities (public access for PAG 2026 page)
+ */
+router.get('/public/priorities', async (req, res: Response) => {
+  try {
+    const result = await query(`
+      SELECT 
+        p.id, p.code, p.priorite, p.titre, p.description, 
+        p.icone, p.couleur, p.ordre, p.budget_alloue,
+        COUNT(DISTINCT o.id) as nb_objectifs_actifs,
+        COUNT(DISTINCT CASE WHEN o.statut = 'atteint' THEN o.id END) as objectifs_atteints,
+        COUNT(DISTINCT CASE WHEN o.statut = 'en_retard' THEN o.id END) as objectifs_en_retard,
+        COALESCE(ROUND(AVG(o.taux_execution)::numeric, 1), 0) as taux_execution_moyen
+      FROM gar.priorites_pag p
+      LEFT JOIN gar.objectifs o ON p.id = o.priorite_id AND o.annee = EXTRACT(YEAR FROM NOW())
+      GROUP BY p.id
+      ORDER BY p.ordre
+    `);
+
+    res.json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error('Get public priorities error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'FETCH_ERROR',
+        message: 'Erreur lors de la recuperation des priorites',
+      },
+    });
+  }
+});
+
+/**
+ * GET /api/gar/public/stats
+ * Get basic PAG stats (public)
+ */
+router.get('/public/stats', async (req, res: Response) => {
+  try {
+    const annee = Number(req.query.annee) || new Date().getFullYear();
+
+    const result = await query(`
+      SELECT
+        COUNT(DISTINCT o.id) as total_objectifs,
+        COUNT(DISTINCT CASE WHEN o.statut = 'atteint' THEN o.id END) as objectifs_atteints,
+        COUNT(DISTINCT CASE WHEN o.statut = 'en_cours' THEN o.id END) as objectifs_en_cours,
+        COALESCE(ROUND(AVG(o.taux_execution)::numeric, 1), 0) as taux_execution_global,
+        COALESCE(SUM(o.budget_prevu), 0) as budget_total_prevu,
+        COALESCE(SUM(o.budget_decaisse), 0) as budget_total_decaisse,
+        (SELECT COUNT(*) FROM institutions.institutions WHERE type = 'ministere' AND is_active = true) as nb_ministeres
+      FROM gar.objectifs o
+      WHERE o.annee = $1
+    `, [annee]);
+
+    res.json({
+      success: true,
+      data: {
+        ...result.rows[0],
+        annee,
+      },
+    });
+  } catch (error) {
+    console.error('Get public stats error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'FETCH_ERROR',
+        message: 'Erreur lors de la recuperation des statistiques',
+      },
+    });
+  }
+});
+
+// ============================================================================
+// AUTHENTICATED ROUTES
+// ============================================================================
+
+// All following GAR routes require authentication
 router.use(authenticate);
 
 /**

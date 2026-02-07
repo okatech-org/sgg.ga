@@ -11,19 +11,23 @@ const config: PoolConfig = {
   connectionString: process.env.DATABASE_URL,
 
   // Pool configuration
-  max: parseInt(process.env.DB_POOL_MAX || '20'),
-  min: parseInt(process.env.DB_POOL_MIN || '5'),
+  max: parseInt(process.env.DB_POOL_MAX || '10'),
+  min: parseInt(process.env.DB_POOL_MIN || '2'),
   idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
-  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '5000'),
+  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'),
 
-  // SSL configuration for Cloud SQL
-  ssl: process.env.NODE_ENV === 'production' ? {
-    rejectUnauthorized: false, // Cloud SQL uses self-signed certs
-  } : false,
+  // SSL configuration for Cloud SQL (required even in development)
+  ssl: process.env.DATABASE_URL?.includes('35.195.248.19')
+    ? { rejectUnauthorized: false } // Cloud SQL Hub (idetude-db)
+    : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false),
 
   // Application name for query identification
   application_name: 'sgg-digital-api',
 };
+
+// Log database connection info
+const dbName = process.env.DATABASE_URL?.split('/').pop()?.split('?')[0] || 'unknown';
+console.log(`📦 Database config: ${dbName} (SSL: ${config.ssl ? 'enabled' : 'disabled'})`);
 
 // Create the connection pool
 export const pool = new Pool(config);

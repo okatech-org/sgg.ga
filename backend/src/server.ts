@@ -3,6 +3,9 @@
  * Express server for Google Cloud Run
  */
 
+// Load environment variables FIRST
+import 'dotenv/config';
+
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -209,10 +212,14 @@ async function startServer() {
     await connectDB();
     console.log('Database connected');
 
-    // Connect to Redis
+    // Connect to Redis (optional - continue if unavailable)
     console.log('Connecting to Redis...');
-    await connectRedis();
-    console.log('Redis connected');
+    try {
+      await connectRedis();
+      console.log('Redis connected');
+    } catch (redisError) {
+      console.warn('⚠️ Redis unavailable - running without cache');
+    }
 
     // Start server
     const server = app.listen(PORT, () => {

@@ -127,8 +127,12 @@ router.post('/login', async (req: Request, res: Response) => {
       [user.id]
     );
 
-    // Clear user cache
-    await cacheDelete(`user:${user.id}`);
+    // Clear user cache (optional - don't fail login if Redis unavailable)
+    try {
+      await cacheDelete(`user:${user.id}`);
+    } catch (cacheError) {
+      // Redis unavailable - continue without cache clear
+    }
 
     res.json({
       success: true,

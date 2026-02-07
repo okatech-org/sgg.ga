@@ -1,5 +1,5 @@
 
-import { BarChart3, Users, Gavel, LayoutDashboard, Building2, FileText, Database, Shield, MonitorCheck } from "lucide-react";
+import { BarChart3, Users, Gavel, LayoutDashboard, Building2, FileText, Database, Shield, MonitorCheck, ClipboardList } from "lucide-react";
 
 export const modulesData = {
     gar: {
@@ -103,5 +103,23 @@ export const modulesData = {
         color: "green",
         appLink: "/journal-officiel",
         image: "/images/jo.png"
+    },
+    ptmptg: {
+        id: "ptmptg",
+        title: "Programme de Travail Ministériel (PTM/PTG)",
+        shortDescription: "Planification, validation et inscription des initiatives gouvernementales au programme de travail.",
+        fullDescription: "Le Programme de Travail Ministériel (PTM) est le premier maillon de la chaîne de planification gouvernementale. Chaque ministère y inscrit ses initiatives annuelles — textes législatifs, politiques générales, missions diplomatiques — que le SGG consolide et valide avant inscription au Programme de Travail Gouvernemental (PTG) pour exécution.",
+        sggRole: "Pivot central de la programmation gouvernementale, le SGG réceptionne les PTM de chaque ministère, en vérifie la conformité stratégique et la cohérence avec le PAG 2026, puis inscrit les initiatives validées au PTG. Ce processus garantit que seules les actions alignées sur les 7 Priorités Présidentielles sont programmées.",
+        features: [
+            "Saisie des initiatives selon la matrice officielle 10 colonnes",
+            "Workflow de validation SGG → inscription PTG",
+            "Pont de données automatique vers la Matrice de Reporting",
+            "Suivi du taux d'inscription au PTG par ministère",
+            "Dashboard de cohérence Planification ↔ Exécution"
+        ],
+        icon: ClipboardList,
+        color: "indigo",
+        appLink: "/ptm/matrice",
+        image: "/images/ptm.png"
     }
 };

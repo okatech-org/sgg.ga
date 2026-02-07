@@ -1,4 +1,4 @@
-import { Bell, Search, User, Menu, LogOut, ChevronDown, Home } from "lucide-react";
+import { Bell, Search, User, Menu, LogOut, ChevronDown, Home, Shield, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -179,8 +179,18 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   <DropdownMenuSeparator />
                 </>
               )}
-              <DropdownMenuItem onClick={() => navigate("/profil")}>Profil</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/parametres")}>Paramètres</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/profil")}>
+                <User className="h-4 w-4 mr-2" />
+                Mon Profil
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/profil/securite")}>
+                <Shield className="h-4 w-4 mr-2" />
+                Sécurité
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/profil/preferences")}>
+                <Settings className="h-4 w-4 mr-2" />
+                Préférences
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />

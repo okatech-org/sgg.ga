@@ -618,6 +618,137 @@ export const joApi = {
 };
 
 // ============================================================================
+// PTM API (Programme de Travail du Ministère)
+// ============================================================================
+
+export interface InitiativePTMApi {
+    id: string;
+    ministere_id: string;
+    ministere_nom?: string;
+    ministere_sigle?: string;
+    annee: number;
+    rubrique: 'projet_texte_legislatif' | 'politique_generale' | 'missions_conferences';
+    numero: number;
+    intitule: string;
+    cadrage: 'sept_priorites' | 'pag' | 'pncd' | 'pap';
+    cadrage_detail?: string;
+    incidence_financiere: boolean;
+    loi_finance: boolean;
+    services_porteurs: string[];
+    date_transmission_sgg?: string;
+    observations?: string;
+    programme_pag_id?: string;
+    statut: 'brouillon' | 'soumis_sgg' | 'valide_sgg' | 'inscrit_ptg' | 'rejete';
+    soumis_par?: string;
+    soumis_par_nom?: string;
+    date_soumission?: string;
+    valide_sgg_par?: string;
+    valide_sgg_par_nom?: string;
+    date_validation_sgg?: string;
+    commentaire_sgg?: string;
+    inscrit_ptg_par?: string;
+    inscrit_ptg_par_nom?: string;
+    date_inscription_ptg?: string;
+    motif_rejet?: string;
+    created_by?: string;
+    updated_by?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PTMStatsApi {
+    totalInitiatives: number;
+    parRubrique: Record<string, number>;
+    parStatut: Record<string, number>;
+    tauxInscriptionPTG: number;
+    avecIncidenceFinanciere: number;
+    avecLoiFinance: number;
+    annee: number;
+}
+
+export const ptmApi = {
+    /**
+     * Get PTM initiatives with filters and pagination
+     */
+    getInitiatives: async (filters?: {
+        page?: number;
+        limit?: number;
+        annee?: number;
+        ministere_id?: string;
+        statut?: string;
+        rubrique?: string;
+        search?: string;
+    }): Promise<ApiResponse<InitiativePTMApi[]>> => {
+        const params = new URLSearchParams();
+        if (filters) {
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value !== undefined) params.append(key, String(value));
+            });
+        }
+        return fetchApi<InitiativePTMApi[]>(`/api/ptm/initiatives?${params}`);
+    },
+
+    /**
+     * Get single initiative
+     */
+    getInitiative: async (id: string): Promise<ApiResponse<InitiativePTMApi>> => {
+        return fetchApi<InitiativePTMApi>(`/api/ptm/initiatives/${id}`);
+    },
+
+    /**
+     * Create initiative
+     */
+    createInitiative: async (data: Partial<InitiativePTMApi>): Promise<ApiResponse<InitiativePTMApi>> => {
+        return fetchApi<InitiativePTMApi>('/api/ptm/initiatives', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
+    /**
+     * Update initiative
+     */
+    updateInitiative: async (id: string, data: Partial<InitiativePTMApi>): Promise<ApiResponse<InitiativePTMApi>> => {
+        return fetchApi<InitiativePTMApi>(`/api/ptm/initiatives/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    },
+
+    /**
+     * Submit initiative for validation
+     */
+    submitInitiative: async (id: string): Promise<ApiResponse<InitiativePTMApi>> => {
+        return fetchApi<InitiativePTMApi>(`/api/ptm/initiatives/${id}/submit`, {
+            method: 'POST',
+        });
+    },
+
+    /**
+     * Validate/Reject initiative
+     */
+    validateInitiative: async (
+        id: string,
+        decision: 'valide_sgg' | 'inscrit_ptg' | 'rejete',
+        commentaire?: string,
+        motif_rejet?: string
+    ): Promise<ApiResponse<InitiativePTMApi>> => {
+        return fetchApi<InitiativePTMApi>(`/api/ptm/initiatives/${id}/validate`, {
+            method: 'PATCH',
+            body: JSON.stringify({ decision, commentaire, motif_rejet }),
+        });
+    },
+
+    /**
+     * Get PTM statistics
+     */
+    getStats: async (annee?: number): Promise<ApiResponse<PTMStatsApi>> => {
+        const params = annee ? `?annee=${annee}` : '';
+        return fetchApi<PTMStatsApi>(`/api/ptm/stats${params}`);
+    },
+};
+
+// ============================================================================
 // HEALTH API
 // ============================================================================
 
@@ -642,5 +773,6 @@ export default {
     institutions: institutionsApi,
     nominations: nominationsApi,
     jo: joApi,
+    ptm: ptmApi,
     health: healthApi,
 };

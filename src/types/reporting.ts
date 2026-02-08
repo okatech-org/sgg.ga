@@ -73,8 +73,10 @@ export interface GouvernanceProgramme {
   /** Col 7 — Pilote Programme (Ministère chef de file) */
   ministerePiloteId: string;
   ministerePiloteNom: string;
-  /** Col 8 — Ministères Co-responsables */
+  /** Col 8 — Ministères Co-responsables (noms pour affichage) */
   ministeresCoResponsables: string[];
+  /** Col 8b — IDs des ministères co-responsables (pour filtrage/logique) */
+  ministeresCoResponsablesIds: string[];
   /** Col 9 — PTF / Partenaires */
   partenairesPTF: string[];
 }

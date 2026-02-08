@@ -1,6 +1,7 @@
 /**
  * SGG Digital — Tableau de Bord Suivi du Remplissage
  * Monitoring temps réel du taux de remplissage de la matrice
+ * DYNAMIQUE — Calculé depuis le Store Zustand
  */
 
 import { useState, useMemo } from "react";
@@ -8,6 +9,13 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -30,6 +38,7 @@ import {
   TrendingUp,
   Send,
   Users,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -49,12 +58,18 @@ import {
 import {
   PILIERS,
   PROGRAMMES,
-  RAPPORTS_MENSUELS,
-  SUIVI_MINISTERES,
-  GOUVERNANCES,
 } from "@/data/reportingData";
+import { useReportingStore } from "@/stores/reportingStore";
 
-const MOIS_COURTS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+const MOIS_LABELS = [
+  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+];
+
+const MOIS_COURTS = [
+  'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun',
+  'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc',
+];
 
 const HEATMAP_COLORS: Record<string, string> = {
   valide: 'bg-status-success text-white',
@@ -65,19 +80,50 @@ const HEATMAP_COLORS: Record<string, string> = {
 };
 
 export default function SuiviRemplissage() {
-  const [annee] = useState(2026);
+  const [mois, setMois] = useState("1");
+  const [annee, setAnnee] = useState("2026");
 
-  // KPI
+  // Store Zustand
+  const rapports = useReportingStore((state) => state.rapports);
+  const computeSuiviRemplissage = useReportingStore(
+    (state) => state.computeSuiviRemplissage,
+  );
+
+  const moisNum = parseInt(mois);
+  const anneeNum = parseInt(annee);
+
+  // Suivi dynamique depuis le store
+  const suiviMinisteres = useMemo(
+    () => computeSuiviRemplissage(moisNum, anneeNum),
+    [computeSuiviRemplissage, moisNum, anneeNum, rapports],
+  );
+
+  // KPI dynamiques
   const kpis = useMemo(() => {
-    const rapportsCeMois = RAPPORTS_MENSUELS.filter(r => r.periodeMois === 1 && r.periodeAnnee === 2026);
-    const valides = rapportsCeMois.filter(r => r.statutValidation === 'valide_sgpr');
-    const ministeresData = SUIVI_MINISTERES.filter(s => s.mois === 1 && s.annee === 2026);
-    const enRetard = ministeresData.filter(s => s.statut === 'non_saisi' && s.joursRetard > 0);
-    const rapportsAvecExec = rapportsCeMois.filter(r => r.pctExecutionFinanciere > 0);
-    const moyExec = rapportsAvecExec.length > 0
-      ? Math.round(rapportsAvecExec.reduce((s, r) => s + r.pctExecutionFinanciere, 0) / rapportsAvecExec.length)
+    const rapportsCeMois = rapports.filter(
+      (r) => r.periodeMois === moisNum && r.periodeAnnee === anneeNum,
+    );
+    const valides = rapportsCeMois.filter(
+      (r) => r.statutValidation === 'valide_sgpr',
+    );
+    const enRetard = suiviMinisteres.filter(
+      (s) => s.statut === 'non_saisi' && s.joursRetard > 0,
+    );
+    const rapportsAvecExec = rapportsCeMois.filter(
+      (r) => r.pctExecutionFinanciere > 0,
+    );
+    const moyExec =
+      rapportsAvecExec.length > 0
+        ? Math.round(
+          rapportsAvecExec.reduce(
+            (s, r) => s + r.pctExecutionFinanciere,
+            0,
+          ) / rapportsAvecExec.length,
+        )
+        : 0;
+    const tauxRemplissage = PROGRAMMES.length > 0
+      ? Math.round((rapportsCeMois.length / PROGRAMMES.length) * 100)
       : 0;
-    const tauxRemplissage = Math.round((rapportsCeMois.length / PROGRAMMES.length) * 100);
 
     return {
       tauxRemplissage,
@@ -87,70 +133,145 @@ export default function SuiviRemplissage() {
       ministeresEnRetard: enRetard.length,
       moyExecFinanciere: moyExec,
     };
-  }, []);
+  }, [rapports, suiviMinisteres, moisNum, anneeNum]);
 
   // Données par pilier pour le bar chart
   const pilierData = useMemo(() => {
     return PILIERS.map((pilier) => {
-      const progs = PROGRAMMES.filter(p => p.pilierId === pilier.id);
-      const rapports = progs
-        .map(p => RAPPORTS_MENSUELS.find(r => r.programmeId === p.id && r.periodeMois === 1 && r.periodeAnnee === 2026))
+      const progs = PROGRAMMES.filter((p) => p.pilierId === pilier.id);
+      const raps = progs
+        .map((p) =>
+          rapports.find(
+            (r) =>
+              r.programmeId === p.id &&
+              r.periodeMois === moisNum &&
+              r.periodeAnnee === anneeNum,
+          ),
+        )
         .filter(Boolean);
 
-      const execFin = rapports.length > 0
-        ? Math.round(rapports.reduce((s, r) => s + (r?.pctExecutionFinanciere ?? 0), 0) / rapports.length)
-        : 0;
-      const physique = rapports.length > 0
-        ? Math.round(rapports.reduce((s, r) => s + (r?.pctAvancementPhysique ?? 0), 0) / rapports.length)
-        : 0;
+      const execFin =
+        raps.length > 0
+          ? Math.round(
+            raps.reduce(
+              (s, r) => s + (r?.pctExecutionFinanciere ?? 0),
+              0,
+            ) / raps.length,
+          )
+          : 0;
+      const physique =
+        raps.length > 0
+          ? Math.round(
+            raps.reduce(
+              (s, r) => s + (r?.pctAvancementPhysique ?? 0),
+              0,
+            ) / raps.length,
+          )
+          : 0;
 
       return {
         nom: pilier.nom.split(' ')[0],
         nomComplet: pilier.nom,
         execFinanciere: execFin,
         avancementPhysique: physique,
-        remplissage: Math.round((rapports.length / progs.length) * 100),
+        remplissage: progs.length > 0
+          ? Math.round((raps.length / progs.length) * 100)
+          : 0,
         couleur: pilier.couleur,
       };
     });
-  }, []);
+  }, [rapports, moisNum, anneeNum]);
 
-  // Données trend (simulation 6 mois)
+  // Données trend (simulation 6 mois précédents + mois actuel dynamique)
   const trendData = useMemo(() => {
-    return [
-      { mois: 'Août', taux: 45 },
-      { mois: 'Sep', taux: 58 },
-      { mois: 'Oct', taux: 62 },
-      { mois: 'Nov', taux: 70 },
-      { mois: 'Déc', taux: 75 },
-      { mois: 'Jan', taux: kpis.tauxRemplissage },
-    ];
-  }, [kpis.tauxRemplissage]);
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      let m = moisNum - i;
+      let a = anneeNum;
+      if (m <= 0) {
+        m += 12;
+        a -= 1;
+      }
+      const count = rapports.filter(
+        (r) => r.periodeMois === m && r.periodeAnnee === a,
+      ).length;
+      const taux = PROGRAMMES.length > 0
+        ? Math.round((count / PROGRAMMES.length) * 100)
+        : 0;
+      months.push({
+        mois: MOIS_COURTS[m - 1],
+        taux,
+      });
+    }
+    return months;
+  }, [rapports, moisNum, anneeNum]);
 
   // Ministères en retard
   const ministeresEnRetard = useMemo(() => {
-    return SUIVI_MINISTERES
-      .filter(s => s.mois === 1 && s.annee === 2026 && s.statut === 'non_saisi')
+    return suiviMinisteres
+      .filter((s) => s.statut === 'non_saisi' && s.joursRetard > 0)
       .sort((a, b) => b.joursRetard - a.joursRetard);
-  }, []);
+  }, [suiviMinisteres]);
 
   const handleRelance = (ministereNom: string) => {
     toast.success(`Relance envoyée à ${ministereNom}`);
   };
 
+  // Heatmap 12 mois pour chaque ministère
+  const heatmapMinisteres = useMemo(() => {
+    // Unique ministères from suiviMinisteres
+    const unique = new Map<string, { id: string; nom: string; sigle: string }>();
+    suiviMinisteres.forEach((s) => {
+      if (!unique.has(s.ministereId)) {
+        unique.set(s.ministereId, {
+          id: s.ministereId,
+          nom: s.ministereNom,
+          sigle: s.ministereSigle,
+        });
+      }
+    });
+    return Array.from(unique.values());
+  }, [suiviMinisteres]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* En-tête */}
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <ClipboardList className="h-6 w-6 text-government-gold" />
-            Suivi du Remplissage — Janvier {annee}
-            <InfoButton pageId="suivi-remplissage" />
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Tableau de bord de pilotage du reporting GAR mensuel
-          </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <ClipboardList className="h-6 w-6 text-government-gold" />
+              Suivi du Remplissage — {MOIS_LABELS[moisNum - 1]} {anneeNum}
+              <InfoButton pageId="suivi-remplissage" />
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Tableau de bord de pilotage du reporting GAR mensuel
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Select value={mois} onValueChange={setMois}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MOIS_LABELS.map((label, i) => (
+                  <SelectItem key={i + 1} value={String(i + 1)}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={annee} onValueChange={setAnnee}>
+              <SelectTrigger className="w-[90px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* KPI Cards */}
@@ -161,7 +282,9 @@ export default function SuiviRemplissage() {
                 <div>
                   <p className="text-xs text-muted-foreground">Taux de Remplissage</p>
                   <p className="text-3xl font-bold">{kpis.tauxRemplissage}%</p>
-                  <p className="text-xs text-muted-foreground">{kpis.rapportsCeMois}/{kpis.totalProgrammes} programmes</p>
+                  <p className="text-xs text-muted-foreground">
+                    {kpis.rapportsCeMois}/{kpis.totalProgrammes} programmes
+                  </p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-government-navy flex items-center justify-center">
                   <BarChart3 className="h-6 w-6 text-white" />
@@ -188,7 +311,9 @@ export default function SuiviRemplissage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">Ministères en Retard</p>
-                  <p className="text-3xl font-bold text-status-danger">{kpis.ministeresEnRetard}</p>
+                  <p className="text-3xl font-bold text-status-danger">
+                    {kpis.ministeresEnRetard}
+                  </p>
                   <p className="text-xs text-muted-foreground">&gt;5 jours après deadline</p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-status-danger flex items-center justify-center">
@@ -218,67 +343,92 @@ export default function SuiviRemplissage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Heatmap Remplissage par Ministère
+              Heatmap Remplissage par Ministère — {MOIS_LABELS[moisNum - 1]} {anneeNum}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <div className="min-w-[800px]">
-                {/* Header */}
-                <div className="grid grid-cols-[180px_repeat(12,1fr)] gap-0.5 mb-1">
-                  <div className="text-xs font-medium text-muted-foreground p-1">Ministère</div>
-                  {MOIS_COURTS.map((m, i) => (
-                    <div key={i} className="text-[10px] font-medium text-center text-muted-foreground p-1">
-                      {m}
-                    </div>
-                  ))}
-                </div>
-                {/* Rows */}
-                {SUIVI_MINISTERES.filter((s, i, arr) => {
-                  // Unique ministries
-                  return arr.findIndex(x => x.ministereId === s.ministereId) === i;
-                }).map((ministere) => (
-                  <div key={ministere.ministereId} className="grid grid-cols-[180px_repeat(12,1fr)] gap-0.5 mb-0.5">
-                    <div className="text-[10px] font-medium p-1 truncate">{ministere.ministereSigle}</div>
-                    {Array.from({ length: 12 }, (_, mois) => {
-                      const data = SUIVI_MINISTERES.find(
-                        s => s.ministereId === ministere.ministereId && s.mois === mois + 1 && s.annee === annee
-                      );
-                      const statut = data?.statut ?? (mois + 1 > 1 ? 'non_applicable' : 'non_saisi');
+              <div className="min-w-[600px]">
+                {/* Rows from computed suivi */}
+                {suiviMinisteres.length === 0 ? (
+                  <div className="text-center py-8 text-sm text-muted-foreground">
+                    Aucune donnée pour cette période
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {suiviMinisteres.map((ministere) => {
+                      const statut = ministere.statut;
                       return (
-                        <TooltipProvider key={mois}>
+                        <TooltipProvider key={ministere.ministereId}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div
-                                className={cn(
-                                  "h-6 rounded-sm text-[8px] flex items-center justify-center cursor-default",
-                                  HEATMAP_COLORS[statut] || 'bg-muted'
-                                )}
-                              >
-                                {statut === 'valide' ? '✓' : statut === 'non_saisi' ? '✗' : ''}
+                              <div className="grid grid-cols-[180px_1fr_80px_80px] gap-2 items-center">
+                                <div className="text-xs font-medium truncate">
+                                  {ministere.ministereSigle}
+                                </div>
+                                <div className="w-full bg-muted rounded-sm overflow-hidden h-6">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-sm flex items-center justify-center text-[10px] font-medium transition-all",
+                                      HEATMAP_COLORS[statut] || 'bg-muted',
+                                    )}
+                                    style={{
+                                      width: `${Math.max(ministere.tauxCompletude, 5)}%`,
+                                    }}
+                                  >
+                                    {ministere.tauxCompletude > 20 && `${ministere.tauxCompletude}%`}
+                                  </div>
+                                </div>
+                                <Badge
+                                  variant={
+                                    statut === 'valide'
+                                      ? 'default'
+                                      : statut === 'non_saisi'
+                                        ? 'destructive'
+                                        : 'secondary'
+                                  }
+                                  className="text-[10px] justify-center"
+                                >
+                                  {statut.replace('_', ' ')}
+                                </Badge>
+                                <div className="text-[10px] text-right tabular-nums text-muted-foreground">
+                                  {ministere.joursRetard > 0
+                                    ? <span className="text-status-danger font-medium">-{ministere.joursRetard}j</span>
+                                    : '—'}
+                                </div>
                               </div>
                             </TooltipTrigger>
                             <TooltipContent>
                               <p className="text-xs font-medium">{ministere.ministereNom}</p>
-                              <p className="text-xs">{MOIS_COURTS[mois]} {annee}: {statut.replace('_', ' ')}</p>
-                              {data?.joursRetard ? <p className="text-xs text-status-danger">Retard: {data.joursRetard}j</p> : null}
+                              <p className="text-xs">
+                                Statut: {statut.replace('_', ' ')} | Complétude: {ministere.tauxCompletude}%
+                              </p>
+                              {ministere.joursRetard > 0 && (
+                                <p className="text-xs text-status-danger">
+                                  Retard: {ministere.joursRetard} jour(s)
+                                </p>
+                              )}
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       );
                     })}
                   </div>
-                ))}
+                )}
               </div>
             </div>
             {/* Légende */}
             <div className="flex flex-wrap gap-4 mt-4 pt-3 border-t">
-              {Object.entries(HEATMAP_COLORS).map(([key, color]) => (
-                <div key={key} className="flex items-center gap-1.5">
-                  <div className={cn("h-3 w-3 rounded-sm", color)} />
-                  <span className="text-[10px] text-muted-foreground capitalize">{key.replace('_', ' ')}</span>
-                </div>
-              ))}
+              {Object.entries(HEATMAP_COLORS)
+                .filter(([key]) => key !== 'non_applicable')
+                .map(([key, color]) => (
+                  <div key={key} className="flex items-center gap-1.5">
+                    <div className={cn("h-3 w-3 rounded-sm", color)} />
+                    <span className="text-[10px] text-muted-foreground capitalize">
+                      {key.replace('_', ' ')}
+                    </span>
+                  </div>
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -293,12 +443,31 @@ export default function SuiviRemplissage() {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={pilierData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-                  <YAxis type="category" dataKey="nom" width={80} tick={{ fontSize: 11 }} />
+                  <XAxis
+                    type="number"
+                    domain={[0, 100]}
+                    tickFormatter={(v) => `${v}%`}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="nom"
+                    width={80}
+                    tick={{ fontSize: 11 }}
+                  />
                   <RechartsTooltip />
                   <Legend />
-                  <Bar dataKey="execFinanciere" name="% Exec. Financière" fill="#8B5CF6" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="avancementPhysique" name="% Avancement Physique" fill="#3B82F6" radius={[0, 4, 4, 0]} />
+                  <Bar
+                    dataKey="execFinanciere"
+                    name="% Exec. Financière"
+                    fill="#8B5CF6"
+                    radius={[0, 4, 4, 0]}
+                  />
+                  <Bar
+                    dataKey="avancementPhysique"
+                    name="% Avancement Physique"
+                    fill="#3B82F6"
+                    radius={[0, 4, 4, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -314,7 +483,10 @@ export default function SuiviRemplissage() {
                 <LineChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="mois" />
-                  <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                  <YAxis
+                    domain={[0, 100]}
+                    tickFormatter={(v) => `${v}%`}
+                  />
                   <RechartsTooltip />
                   <Line
                     type="monotone"
@@ -336,7 +508,7 @@ export default function SuiviRemplissage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2 text-status-danger">
                 <AlertTriangle className="h-4 w-4" />
-                Ministères en Retard
+                Ministères en Retard ({ministeresEnRetard.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -356,7 +528,9 @@ export default function SuiviRemplissage() {
                       <TableCell>
                         <Badge variant="destructive">{m.joursRetard} jours</Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{m.tauxCompletude}%</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {m.tauxCompletude}%
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="outline"

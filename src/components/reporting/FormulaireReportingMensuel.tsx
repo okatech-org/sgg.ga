@@ -2,6 +2,7 @@
  * SGG Digital — Formulaire de Reporting Mensuel
  * Formulaire 4 étapes: Opérationnel → Financier → Performance → Récapitulatif
  * Auto-calcul taux exécution financière, auto-save sessionStorage
+ * BRANCHÉ AU STORE ZUSTAND — Mutations réelles
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -26,6 +27,7 @@ import {
   Send,
   ChevronLeft,
   ChevronRight,
+  Lock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -35,8 +37,9 @@ import {
   PROGRAMMES,
   GOUVERNANCES,
   PILIERS,
-  RAPPORTS_MENSUELS,
 } from '@/data/reportingData';
+import { useReportingStore } from '@/stores/reportingStore';
+import { useMatricePermissions } from '@/hooks/useMatricePermissions';
 import type { StatutProgramme } from '@/types/reporting';
 
 interface FormulaireReportingMensuelProps {
@@ -85,6 +88,16 @@ export function FormulaireReportingMensuel({
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Store Zustand
+  const { getRapport, saveDraft, submitRapport, createOrUpdateRapport } = useReportingStore();
+
+  // Permissions
+  const permissions = useMatricePermissions();
+  const canEditOperationnel = permissions.canWrite('operationnel');
+  const canEditFinancier = permissions.canWrite('financier');
+  const canEditPerformance = permissions.canWrite('performance');
+  const canEditJuridique = permissions.canWrite('juridique');
+
   const programme = useMemo(
     () => PROGRAMMES.find((p) => p.id === programmeId),
     [programmeId]
@@ -97,11 +110,11 @@ export function FormulaireReportingMensuel({
     () => programme ? PILIERS.find((p) => p.id === programme.pilierId) : null,
     [programme]
   );
+
+  // Lire le rapport existant depuis le store
   const existingRapport = useMemo(
-    () => RAPPORTS_MENSUELS.find(
-      (r) => r.programmeId === programmeId && r.periodeMois === mois && r.periodeAnnee === annee
-    ),
-    [programmeId, mois, annee]
+    () => getRapport(programmeId, mois, annee),
+    [programmeId, mois, annee, getRapport]
   );
 
   // Initialize form from existing rapport or sessionStorage
@@ -188,21 +201,36 @@ export function FormulaireReportingMensuel({
 
   const handleSaveDraft = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
-    toast.success('Brouillon enregistré');
+    try {
+      const ministereId = gouvernance?.ministerePiloteId || '';
+      saveDraft(programmeId, ministereId, mois, annee, formData);
+      toast.success('Brouillon enregistré dans le système');
+    } catch {
+      toast.error('Erreur lors de l\'enregistrement');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setSubmitting(false);
-    // Clear sessionStorage
     try {
-      sessionStorage.removeItem(STORAGE_KEY(programmeId, mois, annee));
-    } catch { /* ignore */ }
-    toast.success('Rapport soumis pour validation');
-    onClose();
+      const ministereId = gouvernance?.ministerePiloteId || '';
+      // Créer ou mettre à jour le rapport
+      const rapport = createOrUpdateRapport(programmeId, ministereId, mois, annee, formData);
+      // Le soumettre
+      submitRapport(rapport.id, permissions.currentRole, `Agent ${permissions.currentRole}`);
+      // Clear sessionStorage
+      try {
+        sessionStorage.removeItem(STORAGE_KEY(programmeId, mois, annee));
+      } catch { /* ignore */ }
+      toast.success('Rapport soumis pour validation SGG');
+      onClose();
+    } catch {
+      toast.error('Erreur lors de la soumission');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!programme || !gouvernance || !pilier) {
@@ -212,6 +240,12 @@ export function FormulaireReportingMensuel({
   const isReadOnly =
     existingRapport?.statutValidation === 'valide_sgpr' ||
     existingRapport?.statutValidation === 'valide_sgg';
+
+  // Permission-based read-only per bloc
+  const operationnelDisabled = isReadOnly || !canEditOperationnel;
+  const financierDisabled = isReadOnly || !canEditFinancier;
+  const performanceDisabled = isReadOnly || !canEditPerformance;
+  const juridiqueDisabled = isReadOnly || !canEditJuridique;
 
   return (
     <div className="space-y-6">
@@ -225,6 +259,11 @@ export function FormulaireReportingMensuel({
         <span className="text-sm font-medium">{programme.libelleProgramme}</span>
         {existingRapport && (
           <StatutBadge type="validation" statut={existingRapport.statutValidation} size="md" />
+        )}
+        {existingRapport?.statutValidation === 'rejete' && existingRapport.motifRejet && (
+          <Badge variant="destructive" className="text-xs">
+            Rejeté : {existingRapport.motifRejet}
+          </Badge>
         )}
       </div>
 
@@ -262,7 +301,14 @@ export function FormulaireReportingMensuel({
         {/* Step 0: Opérationnel */}
         {step === 0 && (
           <div className="space-y-4">
-            <h3 className="font-semibold">Suivi Opérationnel</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold">Suivi Opérationnel</h3>
+              {operationnelDisabled && !isReadOnly && (
+                <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
+                  <Lock className="h-3 w-3" /> Accès restreint
+                </Badge>
+              )}
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Date Début</label>
@@ -270,7 +316,7 @@ export function FormulaireReportingMensuel({
                   type="date"
                   value={formData.dateDebut}
                   onChange={(e) => updateField('dateDebut', e.target.value)}
-                  disabled={isReadOnly}
+                  disabled={operationnelDisabled}
                 />
               </div>
               <div className="space-y-2">
@@ -279,7 +325,7 @@ export function FormulaireReportingMensuel({
                   type="date"
                   value={formData.dateFin}
                   onChange={(e) => updateField('dateFin', e.target.value)}
-                  disabled={isReadOnly}
+                  disabled={operationnelDisabled}
                 />
               </div>
             </div>
@@ -290,17 +336,24 @@ export function FormulaireReportingMensuel({
                 onChange={(e) => updateField('activitesRealisees', e.target.value)}
                 placeholder="Décrivez les activités réalisées au cours de cette période..."
                 rows={5}
-                disabled={isReadOnly}
+                disabled={operationnelDisabled}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Encadrement Législatif / Réglementaire</label>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Encadrement Législatif / Réglementaire</label>
+                {juridiqueDisabled && !isReadOnly && (
+                  <Badge variant="outline" className="text-[10px] text-muted-foreground gap-1">
+                    <Lock className="h-2.5 w-2.5" /> Restreint
+                  </Badge>
+                )}
+              </div>
               <Textarea
                 value={formData.encadrementJuridique}
                 onChange={(e) => updateField('encadrementJuridique', e.target.value)}
                 placeholder="Textes juridiques, décrets, arrêtés..."
                 rows={3}
-                disabled={isReadOnly}
+                disabled={juridiqueDisabled}
               />
             </div>
           </div>
@@ -309,7 +362,14 @@ export function FormulaireReportingMensuel({
         {/* Step 1: Financier */}
         {step === 1 && (
           <div className="space-y-4">
-            <h3 className="font-semibold">Suivi Financier</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold">Suivi Financier</h3>
+              {financierDisabled && !isReadOnly && (
+                <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
+                  <Lock className="h-3 w-3" /> Accès restreint
+                </Badge>
+              )}
+            </div>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Budget (Md FCFA)</label>
@@ -318,7 +378,7 @@ export function FormulaireReportingMensuel({
                   step="0.1"
                   value={formData.budgetMdFcfa || ''}
                   onChange={(e) => updateField('budgetMdFcfa', parseFloat(e.target.value) || 0)}
-                  disabled={isReadOnly}
+                  disabled={financierDisabled}
                 />
               </div>
               <div className="space-y-2">
@@ -328,7 +388,7 @@ export function FormulaireReportingMensuel({
                   step="0.1"
                   value={formData.engageMdFcfa || ''}
                   onChange={(e) => updateField('engageMdFcfa', parseFloat(e.target.value) || 0)}
-                  disabled={isReadOnly}
+                  disabled={financierDisabled}
                 />
               </div>
               <div className="space-y-2">
@@ -338,7 +398,7 @@ export function FormulaireReportingMensuel({
                   step="0.1"
                   value={formData.decaisseMdFcfa || ''}
                   onChange={(e) => updateField('decaisseMdFcfa', parseFloat(e.target.value) || 0)}
-                  disabled={isReadOnly}
+                  disabled={financierDisabled}
                 />
               </div>
             </div>
@@ -366,7 +426,14 @@ export function FormulaireReportingMensuel({
         {/* Step 2: Performance */}
         {step === 2 && (
           <div className="space-y-4">
-            <h3 className="font-semibold">Performance & Évaluation</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold">Performance & Évaluation</h3>
+              {performanceDisabled && !isReadOnly && (
+                <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
+                  <Lock className="h-3 w-3" /> Accès restreint
+                </Badge>
+              )}
+            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Indicateurs de Performance (KPI)</label>
               <Textarea
@@ -374,7 +441,7 @@ export function FormulaireReportingMensuel({
                 onChange={(e) => updateField('indicateursKpi', e.target.value)}
                 placeholder="Listez les indicateurs clés et leurs valeurs..."
                 rows={4}
-                disabled={isReadOnly}
+                disabled={performanceDisabled}
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
@@ -388,7 +455,7 @@ export function FormulaireReportingMensuel({
                   onChange={(e) =>
                     updateField('pctAvancementPhysique', Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))
                   }
-                  disabled={isReadOnly}
+                  disabled={performanceDisabled}
                 />
                 <ProgressGauge value={formData.pctAvancementPhysique} size="sm" />
               </div>
@@ -397,7 +464,7 @@ export function FormulaireReportingMensuel({
                 <Select
                   value={formData.statutProgramme}
                   onValueChange={(v) => updateField('statutProgramme', v as StatutProgramme)}
-                  disabled={isReadOnly}
+                  disabled={performanceDisabled}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -419,7 +486,7 @@ export function FormulaireReportingMensuel({
                 onChange={(e) => updateField('observationsContraintes', e.target.value)}
                 placeholder="Difficultés, risques, recommandations..."
                 rows={4}
-                disabled={isReadOnly}
+                disabled={performanceDisabled}
               />
             </div>
           </div>

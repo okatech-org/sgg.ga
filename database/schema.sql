@@ -1869,3 +1869,132 @@ COMMENT ON TABLE jo.textes IS 'Textes publies au Journal Officiel';
 
 COMMENT ON TABLE institutions.institutions IS 'Cartographie des institutions de l''Etat';
 COMMENT ON TABLE institutions.interactions IS 'Interactions et flux entre institutions';
+
+-- ============================================================================
+-- SCHEMA: ptm - Programme de Travail du Ministère / PTG
+-- ============================================================================
+
+CREATE SCHEMA IF NOT EXISTS ptm;
+
+CREATE TYPE ptm.rubrique AS ENUM (
+    'projet_texte_legislatif',
+    'politique_generale',
+    'missions_conferences'
+);
+
+CREATE TYPE ptm.statut_initiative AS ENUM (
+    'brouillon',
+    'soumis_sgg',
+    'valide_sgg',
+    'inscrit_ptg',
+    'rejete'
+);
+
+CREATE TYPE ptm.cadrage_strategique AS ENUM (
+    'sept_priorites',
+    'pag',
+    'pncd',
+    'pap'
+);
+
+-- Table: Initiatives PTM (10 colonnes du formulaire)
+CREATE TABLE ptm.initiatives (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    ministere_id UUID NOT NULL, -- Reference vers institutions.institutions
+    annee INTEGER NOT NULL DEFAULT EXTRACT(YEAR FROM NOW()),
+
+    -- Col 1: Rubrique PTM
+    rubrique ptm.rubrique NOT NULL,
+
+    -- Col 2: Numero d'ordre par rubrique
+    numero INTEGER NOT NULL DEFAULT 1,
+
+    -- Col 3: Intitule / Titre
+    intitule VARCHAR(500) NOT NULL,
+
+    -- Col 4: Cadrage strategique
+    cadrage ptm.cadrage_strategique NOT NULL DEFAULT 'pag',
+    cadrage_detail VARCHAR(500),
+
+    -- Col 5: Incidence financiere
+    incidence_financiere BOOLEAN DEFAULT FALSE,
+
+    -- Col 6: Loi de finance
+    loi_finance BOOLEAN DEFAULT FALSE,
+
+    -- Col 7: Services porteurs (multi-ministeres)
+    services_porteurs UUID[] DEFAULT '{}',
+
+    -- Col 8: Date transmission SGG
+    date_transmission_sgg TIMESTAMP WITH TIME ZONE,
+
+    -- Col 9: Observations
+    observations TEXT,
+
+    -- Col 10: Lien programme PAG
+    programme_pag_id UUID,
+
+    -- Workflow de validation
+    statut ptm.statut_initiative NOT NULL DEFAULT 'brouillon',
+
+    soumis_par UUID,
+    date_soumission TIMESTAMP WITH TIME ZONE,
+
+    valide_sgg_par UUID,
+    date_validation_sgg TIMESTAMP WITH TIME ZONE,
+    commentaire_sgg TEXT,
+
+    inscrit_ptg_par UUID,
+    date_inscription_ptg TIMESTAMP WITH TIME ZONE,
+
+    motif_rejet TEXT,
+
+    -- Lien reporting
+    rapport_mensuel_id UUID,
+
+    -- Audit
+    created_by UUID,
+    updated_by UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_ptm_initiatives_ministere ON ptm.initiatives(ministere_id);
+CREATE INDEX idx_ptm_initiatives_annee ON ptm.initiatives(annee);
+CREATE INDEX idx_ptm_initiatives_statut ON ptm.initiatives(statut);
+CREATE INDEX idx_ptm_initiatives_rubrique ON ptm.initiatives(rubrique);
+CREATE INDEX idx_ptm_initiatives_created_by ON ptm.initiatives(created_by);
+
+-- Table: Historique des actions PTM
+CREATE TABLE ptm.historique (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    initiative_id UUID NOT NULL REFERENCES ptm.initiatives(id) ON DELETE CASCADE,
+    action VARCHAR(100) NOT NULL,
+    ancien_statut ptm.statut_initiative,
+    nouveau_statut ptm.statut_initiative,
+    commentaire TEXT,
+    acteur_id UUID NOT NULL,
+    acteur_nom VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_ptm_historique_initiative ON ptm.historique(initiative_id);
+CREATE INDEX idx_ptm_historique_date ON ptm.historique(created_at);
+
+-- Vue: Initiatives avec details ministere
+CREATE VIEW ptm.v_initiatives_details AS
+SELECT
+    i.*,
+    inst.nom AS ministere_nom,
+    inst.sigle AS ministere_sigle,
+    u_soumis.full_name AS soumis_par_nom,
+    u_valide.full_name AS valide_sgg_par_nom,
+    u_inscrit.full_name AS inscrit_ptg_par_nom
+FROM ptm.initiatives i
+LEFT JOIN institutions.institutions inst ON i.ministere_id = inst.id
+LEFT JOIN auth.users u_soumis ON i.soumis_par = u_soumis.id
+LEFT JOIN auth.users u_valide ON i.valide_sgg_par = u_valide.id
+LEFT JOIN auth.users u_inscrit ON i.inscrit_ptg_par = u_inscrit.id;
+
+COMMENT ON TABLE ptm.initiatives IS 'Initiatives du Programme de Travail du Ministere';
+COMMENT ON TABLE ptm.historique IS 'Historique des actions sur les initiatives PTM';

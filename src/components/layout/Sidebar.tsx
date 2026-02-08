@@ -149,7 +149,8 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-64 bg-sidebar text-sidebar-foreground transition-transform duration-300 md:translate-x-0",
+          "fixed left-0 z-50 w-64 flex flex-col bg-sidebar text-sidebar-foreground transition-transform duration-300 md:translate-x-0",
+          demoUser ? "top-7 h-[calc(100vh-1.75rem)]" : "top-0 h-screen",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -187,8 +188,8 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
           </div>
         )}
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        {/* Navigation — scrollable zone */}
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 sidebar-scroll">
           {filteredNavigation.map((section) => (
             <div key={section.title} className="mb-6">
               <h3 className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
@@ -226,8 +227,8 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className="border-t border-sidebar-border p-4">
+        {/* Footer — fixed at bottom */}
+        <div className="flex-shrink-0 border-t border-sidebar-border p-4">
           <div className="rounded-lg bg-sidebar-accent/50 p-3">
             <p className="text-xs text-sidebar-foreground/70">Version 1.0</p>
             <p className="text-[10px] text-sidebar-foreground/50">© 2026 SGG Gabon</p>

@@ -24,6 +24,7 @@ import nominationsRoutes from './routes/nominations.js';
 import legislatifRoutes from './routes/legislatif.js';
 import egopRoutes from './routes/egop.js';
 import joRoutes from './routes/jo.js';
+import ptmRoutes from './routes/ptm.js';
 import healthRoutes from './routes/health.js';
 
 const app: Express = express();
@@ -117,6 +118,7 @@ app.use('/api/nominations', nominationsRoutes);
 app.use('/api/legislatif', legislatifRoutes);
 app.use('/api/egop', egopRoutes);
 app.use('/api/jo', joRoutes);
+app.use('/api/ptm', ptmRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {

@@ -22,17 +22,19 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { useDemoUser } from "@/hooks/useDemoUser";
 import { usePTMPermissions } from "@/hooks/usePTMPermissions";
 import { InfoButton } from "@/components/reporting/InfoButton";
-import { INITIATIVES_PTM, MINISTERES_PTM } from "@/data/ptmData";
+import { usePTMInitiatives } from "@/hooks/useApiData";
 import {
   RUBRIQUE_SHORT_LABELS,
   STATUT_PTM_LABELS,
   CADRAGE_SHORT_LABELS,
 } from "@/types/ptm";
 import type { InitiativePTM } from "@/types/ptm";
+import { FormulairePTM } from "@/components/ptm/FormulairePTM";
 
 export default function PTMSaisie() {
   const { demoUser } = useDemoUser();
@@ -40,14 +42,17 @@ export default function PTMSaisie() {
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | null>(null);
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
 
-  // Récupérer les initiatives du ministère courant (ou toutes en mode démo)
+  // Récupérer les initiatives via l'API backend
+  const { data: apiData, isLoading, isError } = usePTMInitiatives();
+  const apiInitiatives = apiData?.data || [];
+
+  // Mapper les initiatives API vers le format UI et calculer la complétude
   const initiatives = useMemo(() => {
-    // En mode démo, afficher toutes les initiatives
-    return INITIATIVES_PTM.map((init) => {
+    return apiInitiatives.map((init) => {
       const completude = calculateCompletude(init);
       return { ...init, completude };
     });
-  }, []);
+  }, [apiInitiatives]);
 
   // Statistiques
   const stats = useMemo(() => {
@@ -59,13 +64,6 @@ export default function PTMSaisie() {
 
     return { total, brouillons, soumis, valides, inscritsPTG };
   }, [initiatives]);
-
-  // Ministère courant (pour affichage)
-  const ministereActuel = useMemo(() => {
-    if (!demoUser) return MINISTERES_PTM[0];
-    // En mode démo, on peut afficher tout
-    return MINISTERES_PTM[0];
-  }, [demoUser]);
 
   const handleSelectInitiative = (initiativeId: string) => {
     setSelectedInitiativeId(initiativeId);
@@ -131,7 +129,24 @@ export default function PTMSaisie() {
         </div>
 
         {/* Grille des initiatives */}
-        {initiatives.length === 0 ? (
+        {isLoading ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Loader2 className="h-12 w-12 mx-auto text-muted-foreground mb-4 animate-spin" />
+              <h3 className="text-lg font-semibold">Chargement des initiatives...</h3>
+            </CardContent>
+          </Card>
+        ) : isError ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <AlertTriangle className="h-12 w-12 mx-auto text-status-danger mb-4" />
+              <h3 className="text-lg font-semibold">Erreur de chargement</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Impossible de récupérer les initiatives. Vérifiez la connexion au serveur.
+              </p>
+            </CardContent>
+          </Card>
+        ) : initiatives.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <FileEdit className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -146,21 +161,20 @@ export default function PTMSaisie() {
             {initiatives.map((initiative) => (
               <Card
                 key={initiative.id}
-                className={`transition-all hover:shadow-gov-lg ${
-                  initiative.statut === "inscrit_ptg"
-                    ? "opacity-60 cursor-not-allowed"
-                    : "hover:border-government-gold/30 cursor-pointer"
-                }`}
+                className={`transition-all hover:shadow-gov-lg ${initiative.statut === "inscrit_ptg"
+                  ? "opacity-60 cursor-not-allowed"
+                  : "hover:border-government-gold/30 cursor-pointer"
+                  }`}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <Badge variant="outline" className="text-[10px] mb-2">
-                        {RUBRIQUE_SHORT_LABELS[initiative.rubrique]}
+                        {RUBRIQUE_SHORT_LABELS[initiative.rubrique] || initiative.rubrique}
                       </Badge>
                       <CardTitle className="text-base line-clamp-2">{initiative.intitule}</CardTitle>
                       <CardDescription className="text-xs mt-1">
-                        {initiative.ministereSigle}
+                        {initiative.ministere_sigle || ''}
                       </CardDescription>
                     </div>
                     <div>
@@ -169,16 +183,15 @@ export default function PTMSaisie() {
                           initiative.statut === "brouillon"
                             ? "outline"
                             : initiative.statut === "soumis_sgg"
-                            ? "secondary"
-                            : initiative.statut === "valide_sgg"
-                            ? "default"
-                            : "default"
+                              ? "secondary"
+                              : initiative.statut === "valide_sgg"
+                                ? "default"
+                                : "default"
                         }
-                        className={`text-[10px] ${
-                          initiative.statut === "inscrit_ptg"
-                            ? "bg-status-success/10 text-status-success border-status-success/20"
-                            : ""
-                        }`}
+                        className={`text-[10px] ${initiative.statut === "inscrit_ptg"
+                          ? "bg-status-success/10 text-status-success border-status-success/20"
+                          : ""
+                          }`}
                       >
                         {STATUT_PTM_LABELS[initiative.statut]}
                       </Badge>
@@ -188,12 +201,12 @@ export default function PTMSaisie() {
 
                 <CardContent className="space-y-3">
                   <div className="text-xs text-muted-foreground line-clamp-2">
-                    <span className="font-semibold">Cadrage:</span> {CADRAGE_SHORT_LABELS[initiative.cadrage]}
+                    <span className="font-semibold">Cadrage:</span> {CADRAGE_SHORT_LABELS[initiative.cadrage] || initiative.cadrage}
                   </div>
 
-                  {initiative.cadrageDetail && (
+                  {initiative.cadrage_detail && (
                     <div className="text-xs text-muted-foreground line-clamp-1">
-                      <span className="font-semibold">Détail:</span> {initiative.cadrageDetail}
+                      <span className="font-semibold">Détail:</span> {initiative.cadrage_detail}
                     </div>
                   )}
 
@@ -208,17 +221,17 @@ export default function PTMSaisie() {
 
                   {/* Indicateurs */}
                   <div className="flex gap-2 flex-wrap">
-                    {initiative.incidenceFinanciere && (
+                    {initiative.incidence_financiere && (
                       <Badge variant="secondary" className="text-[9px]">
                         Fin. Incidence
                       </Badge>
                     )}
-                    {initiative.loiFinance && (
+                    {initiative.loi_finance && (
                       <Badge variant="secondary" className="text-[9px]">
                         Loi Finance
                       </Badge>
                     )}
-                    {!initiative.cadrageDetail && (
+                    {!initiative.cadrage_detail && (
                       <Badge
                         variant="destructive"
                         className="text-[9px] bg-status-danger/20 text-status-danger border-status-danger/20"
@@ -232,7 +245,7 @@ export default function PTMSaisie() {
                   {/* Bouton action */}
                   <Button
                     variant={
-                      initiative.statut === "brouillon" || !initiative.dateSoumission
+                      initiative.statut === "brouillon" || !initiative.date_soumission
                         ? "default"
                         : "outline"
                     }
@@ -241,7 +254,7 @@ export default function PTMSaisie() {
                     disabled={initiative.statut === "inscrit_ptg"}
                     onClick={() => handleSelectInitiative(initiative.id)}
                   >
-                    {!initiative.dateSoumission ? (
+                    {!initiative.date_soumission ? (
                       <>
                         <FileEdit className="h-4 w-4 mr-2" />
                         Créer/Compléter
@@ -284,23 +297,11 @@ export default function PTMSaisie() {
                   : "Nouvelle Initiative PTM"}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                [Formulaire de saisie PTM — À intégrer avec composant FormulairePTM]
-              </p>
-              <p className="text-sm">
-                {selectedInitiativeId
-                  ? `Initiative ID: ${selectedInitiativeId}`
-                  : "Créer une nouvelle initiative"}
-              </p>
-              <Button
-                variant="outline"
-                onClick={handleCloseDialog}
-                className="w-full"
-              >
-                Fermer
-              </Button>
-            </div>
+            <FormulairePTM
+              initiativeId={selectedInitiativeId || undefined}
+              onClose={handleCloseDialog}
+              onSave={handleCloseDialog}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -309,20 +310,20 @@ export default function PTMSaisie() {
 }
 
 /**
- * Calcule le taux de complétude d'une initiative
+ * Calcule le taux de complétude d'une initiative (API format)
  */
-function calculateCompletude(initiative: InitiativePTM): number {
+function calculateCompletude(initiative: any): number {
   let filled = 0;
-  let total = 8;
+  const total = 8;
 
   if (initiative.intitule && initiative.intitule.length > 5) filled++;
-  if (initiative.cadrageDetail && initiative.cadrageDetail.length > 0) filled++;
+  if (initiative.cadrage_detail && initiative.cadrage_detail.length > 0) filled++;
   if (initiative.observations && initiative.observations.length > 5) filled++;
-  if (initiative.servicesPorteurs && initiative.servicesPorteurs.length > 0) filled++;
-  if (initiative.incidenceFinanciere !== undefined) filled++;
-  if (initiative.loiFinance !== undefined) filled++;
-  if (initiative.programmePAGId) filled++;
-  if (initiative.dateSoumission) filled++;
+  if (initiative.services_porteurs && initiative.services_porteurs.length > 0) filled++;
+  if (initiative.incidence_financiere !== undefined) filled++;
+  if (initiative.loi_finance !== undefined) filled++;
+  if (initiative.programme_pag_id) filled++;
+  if (initiative.date_soumission) filled++;
 
   return Math.round((filled / total) * 100);
 }

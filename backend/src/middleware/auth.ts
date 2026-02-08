@@ -44,7 +44,7 @@ type AppRole =
   | 'dgjo'
   | 'citoyen';
 
-type Module = 'gar' | 'nominations' | 'legislatif' | 'egop' | 'jo';
+type Module = 'gar' | 'nominations' | 'legislatif' | 'egop' | 'jo' | 'ptm' | 'reporting';
 type Permission = 'read' | 'write' | 'approve' | 'reject' | 'publish' | 'admin';
 
 /**

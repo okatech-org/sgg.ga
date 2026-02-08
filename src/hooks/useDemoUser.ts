@@ -17,6 +17,8 @@ export interface DemoUser {
   email?: string;
   access: string[];
   category?: DemoCategory;
+  /** ID du ministère rattaché (pour sg-ministere et ministre) */
+  ministereId?: string;
 }
 
 // Configuration des capacités par rôle

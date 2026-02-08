@@ -187,6 +187,30 @@
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.5);
   }
+
+  /* Sidebar thin scrollbar */
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--sidebar-accent) / 0.6);
+    border-radius: 4px;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--sidebar-accent) / 1);
+  }
+
+  /* Firefox scrollbar for sidebar */
+  .sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--sidebar-accent) / 0.6) transparent;
+  }
 }
 
 @layer components {

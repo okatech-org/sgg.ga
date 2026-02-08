@@ -23,7 +23,10 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PILIERS, PROGRAMMES } from "@/data/reportingData";
+import { PILIERS, PROGRAMMES, GOUVERNANCES } from "@/data/reportingData";
+import { useReportingStore } from "@/stores/reportingStore";
+import { exportToCSV, exportToExcel, exportToPDF } from "@/services/exportReporting";
+import type { MatriceReportingRow } from "@/types/reporting";
 
 const MOIS_LABELS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -60,15 +63,51 @@ export default function ExportsReporting() {
   const [scope, setScope] = useState("all");
   const [loading, setLoading] = useState<string | null>(null);
 
+  // Store Zustand
+  const storeRapports = useReportingStore((state) => state.rapports);
+
+  // Build export data from store
+  const getExportRows = (): MatriceReportingRow[] => {
+    const m = parseInt(mois);
+    const a = parseInt(annee);
+    let progs = PROGRAMMES;
+    if (scope !== 'all') {
+      const pilId = parseInt(scope.replace('pilier-', ''));
+      progs = progs.filter((p) => p.pilierId === pilId);
+    }
+    return progs.map((prog) => {
+      const pilier = PILIERS.find((p) => p.id === prog.pilierId)!;
+      const gouvernance = GOUVERNANCES.find((g) => g.programmeId === prog.id)!;
+      const rapport = storeRapports.find(
+        (r) => r.programmeId === prog.id && r.periodeMois === m && r.periodeAnnee === a,
+      ) || null;
+      return { programme: prog, pilier, gouvernance, rapport };
+    });
+  };
+
   const handleExport = async (formatId: string) => {
     setLoading(formatId);
 
-    // Simulation export
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const rows = getExportRows();
+      const m = parseInt(mois);
+      const a = parseInt(annee);
 
-    const format = FORMATS.find(f => f.id === formatId)!;
-    toast.success(`Export ${format.label} généré avec succès`);
-    setLoading(null);
+      if (formatId === 'csv') {
+        exportToCSV(rows, m, a);
+      } else if (formatId === 'excel') {
+        await exportToExcel(rows, m, a);
+      } else if (formatId === 'pdf') {
+        await exportToPDF(rows, m, a);
+      }
+
+      const format = FORMATS.find(f => f.id === formatId)!;
+      toast.success(`Export ${format.label} généré avec succès`);
+    } catch {
+      toast.error('Erreur lors de l\'export');
+    } finally {
+      setLoading(null);
+    }
   };
 
   return (

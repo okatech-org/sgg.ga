@@ -78,8 +78,8 @@ import {
   PILIERS,
   PROGRAMMES,
   GOUVERNANCES,
-  RAPPORTS_MENSUELS,
 } from "@/data/reportingData";
+import { useReportingStore } from "@/stores/reportingStore";
 import type {
   MatriceReportingRow,
   StatutProgramme,
@@ -107,6 +107,9 @@ export default function MatriceReporting() {
   const { demoUser } = useDemoUser();
   const permissions = useMatricePermissions();
 
+  // Store Zustand — rapports réactifs
+  const storeRapports = useReportingStore((state) => state.rapports);
+
   // Filtres
   const [mois, setMois] = useState(1);
   const [annee, setAnnee] = useState(2026);
@@ -119,18 +122,18 @@ export default function MatriceReporting() {
   const [selectedRow, setSelectedRow] = useState<MatriceReportingRow | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  // Construire les données de la matrice
+  // Construire les données de la matrice depuis le STORE
   const matriceData: MatriceReportingRow[] = useMemo(() => {
     return PROGRAMMES.map((prog) => {
       const pilier = PILIERS.find((p) => p.id === prog.pilierId)!;
       const gouvernance = GOUVERNANCES.find((g) => g.programmeId === prog.id)!;
-      const rapport = RAPPORTS_MENSUELS.find(
+      const rapport = storeRapports.find(
         (r) => r.programmeId === prog.id && r.periodeMois === mois && r.periodeAnnee === annee
       ) || null;
 
       return { programme: prog, pilier, gouvernance, rapport };
     });
-  }, [mois, annee]);
+  }, [mois, annee, storeRapports]);
 
   // Filtrage
   const filteredData = useMemo(() => {
@@ -871,8 +874,8 @@ export default function MatriceReporting() {
                                   isCurrent
                                     ? "bg-green-500 text-white ring-2 ring-green-200 dark:ring-green-800"
                                     : isActive
-                                    ? "bg-green-500 text-white"
-                                    : "bg-muted text-muted-foreground"
+                                      ? "bg-green-500 text-white"
+                                      : "bg-muted text-muted-foreground"
                                 )}>
                                   <StepIcon className="h-4 w-4" />
                                 </div>

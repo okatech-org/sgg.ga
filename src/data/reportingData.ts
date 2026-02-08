@@ -146,6 +146,7 @@ export const GOUVERNANCES: GouvernanceProgramme[] = [
     ministerePiloteId: 'min-energie',
     ministerePiloteNom: 'Ministère de l\'Énergie et de l\'Eau',
     ministeresCoResponsables: ['Min. Économie', 'Min. Aménagement du Territoire'],
+    ministeresCoResponsablesIds: ['min-economie', 'min-amenagement'],
     partenairesPTF: ['Banque Mondiale', 'AFD', 'BAD'],
   },
   {
@@ -153,6 +154,7 @@ export const GOUVERNANCES: GouvernanceProgramme[] = [
     ministerePiloteId: 'min-energie',
     ministerePiloteNom: 'Ministère de l\'Énergie et de l\'Eau',
     ministeresCoResponsables: ['Min. Santé', 'Min. Intérieur'],
+    ministeresCoResponsablesIds: ['min-sante', 'min-interieur'],
     partenairesPTF: ['UNICEF', 'AFD'],
   },
   {
@@ -160,6 +162,7 @@ export const GOUVERNANCES: GouvernanceProgramme[] = [
     ministerePiloteId: 'min-education',
     ministerePiloteNom: 'Ministère de l\'Éducation Nationale',
     ministeresCoResponsables: ['Min. Formation Professionnelle', 'Min. Emploi'],
+    ministeresCoResponsablesIds: ['min-formation-pro', 'min-emploi'],
     partenairesPTF: ['UNESCO', 'Banque Mondiale'],
   },
   {
@@ -167,6 +170,7 @@ export const GOUVERNANCES: GouvernanceProgramme[] = [
     ministerePiloteId: 'min-sante',
     ministerePiloteNom: 'Ministère de la Santé',
     ministeresCoResponsables: ['Min. Affaires Sociales', 'CNAMGS'],
+    ministeresCoResponsablesIds: ['min-affaires-sociales'],
     partenairesPTF: ['OMS', 'Banque Mondiale', 'Fonds Mondial'],
   },
   {
@@ -174,6 +178,7 @@ export const GOUVERNANCES: GouvernanceProgramme[] = [
     ministerePiloteId: 'min-habitat',
     ministerePiloteNom: 'Ministère de l\'Habitat et de l\'Urbanisme',
     ministeresCoResponsables: ['Min. Économie', 'ANUTTC'],
+    ministeresCoResponsablesIds: ['min-economie'],
     partenairesPTF: ['BAD', 'Shelter Afrique'],
   },
   {
@@ -181,6 +186,7 @@ export const GOUVERNANCES: GouvernanceProgramme[] = [
     ministerePiloteId: 'min-infrastructures',
     ministerePiloteNom: 'Ministère des Infrastructures et des Travaux Publics',
     ministeresCoResponsables: ['Min. Transports', 'Min. Défense'],
+    ministeresCoResponsablesIds: ['min-transports', 'min-defense'],
     partenairesPTF: ['BAD', 'BEI', 'Chine Exim Bank'],
   },
   {
@@ -188,6 +194,7 @@ export const GOUVERNANCES: GouvernanceProgramme[] = [
     ministerePiloteId: 'min-numerique',
     ministerePiloteNom: 'Ministère de l\'Économie Numérique',
     ministeresCoResponsables: ['Min. Communication', 'ARCEP'],
+    ministeresCoResponsablesIds: ['min-communication'],
     partenairesPTF: ['Banque Mondiale', 'UIT', 'Smart Africa'],
   },
   {
@@ -195,6 +202,7 @@ export const GOUVERNANCES: GouvernanceProgramme[] = [
     ministerePiloteId: 'min-agriculture',
     ministerePiloteNom: 'Ministère de l\'Agriculture',
     ministeresCoResponsables: ['Min. Eaux et Forêts', 'Min. Commerce'],
+    ministeresCoResponsablesIds: ['min-eaux-forets', 'min-commerce'],
     partenairesPTF: ['FAO', 'FIDA', 'BAD'],
   },
   {
@@ -202,6 +210,7 @@ export const GOUVERNANCES: GouvernanceProgramme[] = [
     ministerePiloteId: 'min-fonction-publique',
     ministerePiloteNom: 'Ministère de la Fonction Publique',
     ministeresCoResponsables: ['Min. Économie Numérique', 'SGG'],
+    ministeresCoResponsablesIds: ['min-numerique'],
     partenairesPTF: ['PNUD', 'UE'],
   },
   {
@@ -209,6 +218,7 @@ export const GOUVERNANCES: GouvernanceProgramme[] = [
     ministerePiloteId: 'min-justice',
     ministerePiloteNom: 'Ministère de la Justice',
     ministeresCoResponsables: ['Min. Intérieur', 'Min. Défense'],
+    ministeresCoResponsablesIds: ['min-interieur', 'min-defense'],
     partenairesPTF: ['PNUD', 'UE', 'France'],
   },
 ];
@@ -770,3 +780,57 @@ export function getRapportByProgrammeEtPeriode(
 export function getMinistereById(id: string): MinistereInfo | undefined {
   return MINISTERES.find(m => m.id === id);
 }
+
+/**
+ * Retourne tous les programmes dans lesquels un ministère est impliqué
+ * (en tant que pilote OU co-responsable).
+ * Chaque résultat inclut le rôle du ministère dans le programme.
+ */
+export type RoleMinistereProgramme = 'pilote' | 'co-responsable';
+
+export interface ProgrammeMinistere {
+  programme: ProgrammePAG;
+  gouvernance: GouvernanceProgramme;
+  role: RoleMinistereProgramme;
+}
+
+export function getProgrammesForMinistere(ministereId: string): ProgrammeMinistere[] {
+  const results: ProgrammeMinistere[] = [];
+
+  for (const gouv of GOUVERNANCES) {
+    const programme = PROGRAMMES.find(p => p.id === gouv.programmeId);
+    if (!programme) continue;
+
+    if (gouv.ministerePiloteId === ministereId) {
+      results.push({ programme, gouvernance: gouv, role: 'pilote' });
+    } else if (gouv.ministeresCoResponsablesIds.includes(ministereId)) {
+      results.push({ programme, gouvernance: gouv, role: 'co-responsable' });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Retourne le rôle d'un ministère dans un programme donné.
+ * null si le ministère n'est pas impliqué.
+ */
+export function getRoleInProgramme(
+  ministereId: string,
+  programmeId: string
+): RoleMinistereProgramme | null {
+  const gouv = GOUVERNANCES.find(g => g.programmeId === programmeId);
+  if (!gouv) return null;
+
+  if (gouv.ministerePiloteId === ministereId) return 'pilote';
+  if (gouv.ministeresCoResponsablesIds.includes(ministereId)) return 'co-responsable';
+  return null;
+}
+
+/**
+ * Vérifie si un ministère est impliqué dans un programme (pilote ou co-responsable)
+ */
+export function isMinistereInProgramme(ministereId: string, programmeId: string): boolean {
+  return getRoleInProgramme(ministereId, programmeId) !== null;
+}
+

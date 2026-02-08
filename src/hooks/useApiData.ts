@@ -10,6 +10,7 @@ import {
     nominationsApi,
     joApi,
     authApi,
+    ptmApi,
     type PrioritePAG,
     type ObjectifGAR,
     type RapportGAR,
@@ -17,6 +18,8 @@ import {
     type Institution,
     type Nomination,
     type TexteJO,
+    type InitiativePTMApi,
+    type PTMStatsApi,
 } from '@/services/api';
 
 // ============================================================================
@@ -452,5 +455,131 @@ export function useCurrentUser() {
         },
         staleTime: 5 * 60 * 1000,
         retry: false,
+    });
+}
+
+// ============================================================================
+// PTM HOOKS (Programme de Travail du Ministère)
+// ============================================================================
+
+/**
+ * Hook pour récupérer les initiatives PTM avec filtres
+ */
+export function usePTMInitiatives(filters?: {
+    page?: number;
+    limit?: number;
+    annee?: number;
+    ministere_id?: string;
+    statut?: string;
+    rubrique?: string;
+    search?: string;
+}) {
+    return useQuery({
+        queryKey: ['ptm', 'initiatives', filters],
+        queryFn: async () => {
+            const response = await ptmApi.getInitiatives(filters);
+            if (!response.success) throw new Error(response.error?.message);
+            return { data: response.data as InitiativePTMApi[], pagination: response.pagination };
+        },
+        staleTime: 2 * 60 * 1000,
+    });
+}
+
+/**
+ * Hook pour récupérer une initiative PTM par ID
+ */
+export function usePTMInitiative(id: string | null) {
+    return useQuery({
+        queryKey: ['ptm', 'initiative', id],
+        queryFn: async () => {
+            if (!id) return null;
+            const response = await ptmApi.getInitiative(id);
+            if (!response.success) throw new Error(response.error?.message);
+            return response.data as InitiativePTMApi;
+        },
+        enabled: !!id,
+        staleTime: 2 * 60 * 1000,
+    });
+}
+
+/**
+ * Hook pour récupérer les statistiques PTM
+ */
+export function usePTMStats(annee?: number) {
+    return useQuery({
+        queryKey: ['ptm', 'stats', annee],
+        queryFn: async () => {
+            const response = await ptmApi.getStats(annee);
+            if (!response.success) throw new Error(response.error?.message);
+            return response.data as PTMStatsApi;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
+/**
+ * Mutation pour créer une initiative PTM
+ */
+export function useCreatePTMInitiative() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (data: Partial<InitiativePTMApi>) => ptmApi.createInitiative(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ptm'] });
+        },
+    });
+}
+
+/**
+ * Mutation pour modifier une initiative PTM
+ */
+export function useUpdatePTMInitiative() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: Partial<InitiativePTMApi> }) =>
+            ptmApi.updateInitiative(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ptm'] });
+        },
+    });
+}
+
+/**
+ * Mutation pour soumettre une initiative PTM
+ */
+export function useSubmitPTMInitiative() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string) => ptmApi.submitInitiative(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ptm'] });
+        },
+    });
+}
+
+/**
+ * Mutation pour valider/rejeter une initiative PTM
+ */
+export function useValidatePTMInitiative() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            id,
+            decision,
+            commentaire,
+            motif_rejet,
+        }: {
+            id: string;
+            decision: 'valide_sgg' | 'inscrit_ptg' | 'rejete';
+            commentaire?: string;
+            motif_rejet?: string;
+        }) => ptmApi.validateInitiative(id, decision, commentaire, motif_rejet),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ptm'] });
+        },
     });
 }

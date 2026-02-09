@@ -6,13 +6,14 @@ FTP_HOST = "ftp.cluster029.hosting.ovh.net"
 FTP_USER = "franciq"
 FTP_PASS = "Detsadid82"
 LOCAL_DIR = "dist"
-REMOTE_DIR = "sgg"
+REMOTE_DIR = "www/digital"
 
 def upload_files():
     try:
         # Connect to FTP
-        ftp = ftplib.FTP(FTP_HOST)
+        ftp = ftplib.FTP(FTP_HOST, timeout=30)
         ftp.login(FTP_USER, FTP_PASS)
+        ftp.set_pasv(True)
         print(f"Connected to {FTP_HOST}")
 
         # Create/Enter remote root directory
@@ -24,6 +25,17 @@ def upload_files():
 
         ftp.cwd(REMOTE_DIR)
         print(f"Changed to remote directory: {REMOTE_DIR}")
+
+        # Upload .htaccess for SPA routing
+        htaccess = b"""RewriteEngine On
+RewriteBase /sgg/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /sgg/index.html [L]
+"""
+        import io
+        ftp.storbinary('STOR .htaccess', io.BytesIO(htaccess))
+        print("Uploaded .htaccess for SPA routing")
 
         # Walk through local directory
         for root, dirs, files in os.walk(LOCAL_DIR):

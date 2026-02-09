@@ -108,19 +108,19 @@ export default function PTMMatrice() {
     const textesLegislatifs = filteredData.filter(
       (i) => i.rubrique === "projet_texte_legislatif"
     ).length;
-    const inscritsPTG = filteredData.filter(
-      (i) => i.statut === "inscrit_ptg"
+    const transmisesPM = filteredData.filter(
+      (i) => ['soumis_pm', 'soumis_sgpr'].includes(i.statut)
     ).length;
-    const tauxInscription =
+    const tauxTransmission =
       totalInitiatives > 0
-        ? Math.round((inscritsPTG / totalInitiatives) * 100)
+        ? Math.round((transmisesPM / totalInitiatives) * 100)
         : 0;
 
     return {
       totalInitiatives,
       textesLegislatifs,
-      inscritsPTG,
-      tauxInscription,
+      transmisesPM,
+      tauxTransmission,
     };
   }, [filteredData]);
 
@@ -137,10 +137,14 @@ export default function PTMMatrice() {
   const statuts = useMemo(
     () => [
       { id: "brouillon", label: STATUT_PTM_LABELS.brouillon },
+      { id: "soumis_sg", label: STATUT_PTM_LABELS.soumis_sg },
+      { id: "consolide_sg", label: STATUT_PTM_LABELS.consolide_sg },
       { id: "soumis_sgg", label: STATUT_PTM_LABELS.soumis_sgg },
-      { id: "valide_sgg", label: STATUT_PTM_LABELS.valide_sgg },
-      { id: "inscrit_ptg", label: STATUT_PTM_LABELS.inscrit_ptg },
-      { id: "rejete", label: STATUT_PTM_LABELS.rejete },
+      { id: "consolide_sgg", label: STATUT_PTM_LABELS.consolide_sgg },
+      { id: "soumis_pm", label: STATUT_PTM_LABELS.soumis_pm },
+      { id: "soumis_sgpr", label: STATUT_PTM_LABELS.soumis_sgpr },
+      { id: "rejete_sg", label: STATUT_PTM_LABELS.rejete_sg },
+      { id: "rejete_sgg", label: STATUT_PTM_LABELS.rejete_sgg },
     ] as Array<{ id: StatutPTM; label: string }>,
     []
   );
@@ -235,9 +239,9 @@ export default function PTMMatrice() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Inscrites PTG</p>
+                  <p className="text-xs text-muted-foreground">Transmises PM/SGPR</p>
                   <p className="text-2xl font-bold">
-                    {stats.inscritsPTG}
+                    {stats.transmisesPM}
                     <span className="text-sm font-normal ml-1">/ {stats.totalInitiatives}</span>
                   </p>
                 </div>
@@ -252,9 +256,9 @@ export default function PTMMatrice() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Taux Inscription %</p>
+                  <p className="text-xs text-muted-foreground">Taux Transmission %</p>
                   <p className="text-2xl font-bold">
-                    {stats.tauxInscription}
+                    {stats.tauxTransmission}
                     <span className="text-sm font-normal ml-1">%</span>
                   </p>
                 </div>

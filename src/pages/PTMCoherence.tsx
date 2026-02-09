@@ -44,7 +44,7 @@ export default function PTMCoherence() {
   const kpiCouverture = useMemo(() => {
     const programmesAvecPTM = PROGRAMMES.filter((prog) =>
       INITIATIVES_PTM.some(
-        (init) => init.statut === 'inscrit_ptg' && init.programmePAGId === prog.id
+        (init) => ['soumis_pm', 'soumis_sgpr'].includes(init.statut) && init.programmePAGId === prog.id
       )
     );
     const couverture = Math.round((programmesAvecPTM.length / PROGRAMMES.length) * 100);
@@ -58,7 +58,7 @@ export default function PTMCoherence() {
   // KPI 2: Pont de Données
   const kpiPont = useMemo(() => {
     const initiativesAvecRapport = INITIATIVES_PTM.filter((init) =>
-      init.statut === 'inscrit_ptg' && init.rapportMensuelId
+      ['soumis_pm', 'soumis_sgpr'].includes(init.statut) && init.rapportMensuelId
     );
     return initiativesAvecRapport.length;
   }, []);
@@ -73,7 +73,7 @@ export default function PTMCoherence() {
 
   // Section 1: Initiatives inscrites au PTG avec lien Reporting
   const initiativesAvecLien = useMemo(() => {
-    return INITIATIVES_PTM.filter((init) => init.statut === 'inscrit_ptg' && init.programmePAGId).map(
+    return INITIATIVES_PTM.filter((init) => ['soumis_pm', 'soumis_sgpr'].includes(init.statut) && init.programmePAGId).map(
       (init) => {
         const programme = PROGRAMMES.find((p) => p.id === init.programmePAGId);
         const rapport = RAPPORTS_MENSUELS.find((r) => r.id === init.rapportMensuelId);
@@ -117,7 +117,7 @@ export default function PTMCoherence() {
     return PILIERS.map((pilier) => {
       const progsParPilier = PROGRAMMES.filter((p) => p.pilierId === pilier.id);
       const initiativesInscrites = INITIATIVES_PTM.filter((init) =>
-        init.statut === 'inscrit_ptg' && init.programmePAGId &&
+        ['soumis_pm', 'soumis_sgpr'].includes(init.statut) && init.programmePAGId &&
         progsParPilier.some((p) => p.id === init.programmePAGId)
       );
 
@@ -137,13 +137,15 @@ export default function PTMCoherence() {
     switch (status) {
       case 'valide_sgpr':
         return 'bg-status-success/10 text-status-success border-status-success/20';
-      case 'valide_sgg':
+      case 'consolide_sgg':
+      case 'soumis_pm':
         return 'bg-status-warning/10 text-status-warning border-status-warning/20';
       case 'soumis':
+      case 'soumis_sgg':
         return 'bg-status-info/10 text-status-info border-status-info/20';
       case 'brouillon':
         return 'bg-muted text-muted-foreground border-muted';
-      case 'inscrit_ptg':
+      case 'soumis_sgpr':
         return 'bg-status-success/10 text-status-success border-status-success/20';
       default:
         return 'bg-muted text-muted-foreground border-muted';
@@ -250,7 +252,7 @@ export default function PTMCoherence() {
                       <TableCell className="text-sm">{item.ministere}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-xs bg-status-success/10 text-status-success border-status-success/20">
-                          Inscrit PTG
+                          Transmis PM/SGPR
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -259,7 +261,7 @@ export default function PTMCoherence() {
                           className={cn("text-xs", getStatusColor(item.statutReporting))}
                         >
                           {item.statutReporting === 'valide_sgpr' && 'Validé SGPR'}
-                          {item.statutReporting === 'valide_sgg' && 'Validé SGG'}
+                          {item.statutReporting === 'consolide_sgg' && 'Consolidé SGG'}
                           {item.statutReporting === 'soumis' && 'Soumis'}
                           {item.statutReporting === 'brouillon' && 'Brouillon'}
                           {item.statutReporting === 'Non lié' && 'Non lié'}
@@ -390,8 +392,8 @@ export default function PTMCoherence() {
                                   row.couverture === 100
                                     ? 'bg-status-success/10 text-status-success border-status-success/20'
                                     : row.couverture >= 50
-                                    ? 'bg-status-warning/10 text-status-warning border-status-warning/20'
-                                    : 'bg-status-danger/10 text-status-danger border-status-danger/20'
+                                      ? 'bg-status-warning/10 text-status-warning border-status-warning/20'
+                                      : 'bg-status-danger/10 text-status-danger border-status-danger/20'
                                 )}
                               >
                                 {row.couverture}%

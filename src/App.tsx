@@ -49,6 +49,7 @@ import SuiviRemplissage from "./pages/SuiviRemplissage";
 import ExportsReporting from "./pages/ExportsReporting";
 import PTMMatrice from "./pages/PTMMatrice";
 import PTMSaisie from "./pages/PTMSaisie";
+import PTMConsolidation from "./pages/PTMConsolidation";
 import PTMValidation from "./pages/PTMValidation";
 import PTMSuivi from "./pages/PTMSuivi";
 import PTMCoherence from "./pages/PTMCoherence";
@@ -251,6 +252,14 @@ function AnimatedRoutes() {
           element={
             <ProtectedRoute requiredModule="ptmptg">
               <PTMSaisie />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ptm/consolidation"
+          element={
+            <ProtectedRoute requiredModule="ptmptg">
+              <PTMConsolidation />
             </ProtectedRoute>
           }
         />

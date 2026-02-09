@@ -73,11 +73,11 @@ export default function PTMValidation() {
     }));
   }, [validatedIds, rejectedIds]);
 
-  // Initiatives validées SGG (valide_sgg) — En attente inscription PTG
+  // Initiatives consolidées SGG (consolide_sgg) — En attente transmission PM
   const initiativesValideesAttentePTG = useMemo(() => {
     return INITIATIVES_PTM.filter(
       (i) =>
-        i.statut === "valide_sgg" &&
+        i.statut === "consolide_sgg" &&
         !inscritIds.includes(i.id)
     ).map((i) => ({
       ...i,
@@ -160,7 +160,7 @@ export default function PTMValidation() {
   };
 
   const handleInscrirePTG = (initiativeId: string) => {
-    if (!permissions.canInscrirePTG()) {
+    if (!permissions.canTransmettre()) {
       toast.error("Vous n'avez pas le droit d'inscrire au PTG");
       return;
     }
@@ -170,7 +170,7 @@ export default function PTMValidation() {
   };
 
   const handleInscrireSelectionPTG = () => {
-    if (!permissions.canInscrirePTG()) {
+    if (!permissions.canTransmettre()) {
       toast.error("Vous n'avez pas le droit d'inscrire au PTG");
       return;
     }
@@ -234,7 +234,7 @@ export default function PTMValidation() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Badge variant="secondary">{initiativesSoumises.length} à valider</Badge>
-                    {!permissions.canValiderSGG() && (
+                    {!permissions.canValider() && (
                       <Badge variant="outline" className="text-status-danger border-status-danger">
                         <AlertTriangle className="h-3 w-3 mr-1" />
                         Accès restreint
@@ -245,7 +245,7 @@ export default function PTMValidation() {
                     <Button
                       size="sm"
                       onClick={handleValiderSelectionSGG}
-                      disabled={!permissions.canValiderSGG()}
+                      disabled={!permissions.canValider()}
                       className="bg-status-success hover:bg-status-success/90"
                     >
                       <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -267,7 +267,7 @@ export default function PTMValidation() {
                                   initiativesSoumises.length > 0
                                 }
                                 onCheckedChange={toggleAllSoumis}
-                                disabled={!permissions.canValiderSGG()}
+                                disabled={!permissions.canValider()}
                               />
                             </TableHead>
                             <TableHead>Intitulé</TableHead>
@@ -285,7 +285,7 @@ export default function PTMValidation() {
                                 <Checkbox
                                   checked={selectedSoumisIds.includes(initiative.id)}
                                   onCheckedChange={() => toggleSelectSoumis(initiative.id)}
-                                  disabled={!permissions.canValiderSGG()}
+                                  disabled={!permissions.canValider()}
                                 />
                               </TableCell>
                               <TableCell>
@@ -347,7 +347,7 @@ export default function PTMValidation() {
                                     size="sm"
                                     className="text-status-success hover:text-status-success"
                                     onClick={() => handleValiderSGG(initiative.id)}
-                                    disabled={!permissions.canValiderSGG()}
+                                    disabled={!permissions.canValider()}
                                   >
                                     <CheckCircle2 className="h-4 w-4" />
                                   </Button>
@@ -356,7 +356,7 @@ export default function PTMValidation() {
                                     size="sm"
                                     className="text-status-danger hover:text-status-danger"
                                     onClick={() => setRejectDialogId(initiative.id)}
-                                    disabled={!permissions.canValiderSGG()}
+                                    disabled={!permissions.canValider()}
                                   >
                                     <XCircle className="h-4 w-4" />
                                   </Button>
@@ -390,7 +390,7 @@ export default function PTMValidation() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Badge variant="secondary">{initiativesValideesAttentePTG.length} à inscrire</Badge>
-                    {!permissions.canInscrirePTG() && (
+                    {!permissions.canTransmettre() && (
                       <Badge variant="outline" className="text-status-danger border-status-danger">
                         <AlertTriangle className="h-3 w-3 mr-1" />
                         Rôle restreint
@@ -401,7 +401,7 @@ export default function PTMValidation() {
                     <Button
                       size="sm"
                       onClick={handleInscrireSelectionPTG}
-                      disabled={!permissions.canInscrirePTG()}
+                      disabled={!permissions.canTransmettre()}
                       className="bg-status-success hover:bg-status-success/90"
                     >
                       <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -423,7 +423,7 @@ export default function PTMValidation() {
                                   initiativesValideesAttentePTG.length > 0
                                 }
                                 onCheckedChange={toggleAllValide}
-                                disabled={!permissions.canInscrirePTG()}
+                                disabled={!permissions.canTransmettre()}
                               />
                             </TableHead>
                             <TableHead>Intitulé</TableHead>
@@ -441,7 +441,7 @@ export default function PTMValidation() {
                                 <Checkbox
                                   checked={selectedValideIds.includes(initiative.id)}
                                   onCheckedChange={() => toggleSelectValide(initiative.id)}
-                                  disabled={!permissions.canInscrirePTG()}
+                                  disabled={!permissions.canTransmettre()}
                                 />
                               </TableCell>
                               <TableCell>
@@ -482,7 +482,7 @@ export default function PTMValidation() {
                                   size="sm"
                                   className="text-status-success hover:text-status-success"
                                   onClick={() => handleInscrirePTG(initiative.id)}
-                                  disabled={!permissions.canInscrirePTG()}
+                                  disabled={!permissions.canTransmettre()}
                                 >
                                   <CheckCircle2 className="h-4 w-4" />
                                 </Button>

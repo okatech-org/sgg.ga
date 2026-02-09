@@ -23,18 +23,22 @@ import {
   Clock,
   AlertTriangle,
   Loader2,
+  Send,
+  Calendar,
 } from "lucide-react";
 import { useDemoUser } from "@/hooks/useDemoUser";
 import { usePTMPermissions } from "@/hooks/usePTMPermissions";
 import { InfoButton } from "@/components/reporting/InfoButton";
 import { usePTMInitiatives } from "@/hooks/useApiData";
+import { DEADLINES_PTM } from "@/hooks/usePTMWorkflow";
 import {
   RUBRIQUE_SHORT_LABELS,
   STATUT_PTM_LABELS,
   CADRAGE_SHORT_LABELS,
 } from "@/types/ptm";
-import type { InitiativePTM } from "@/types/ptm";
+import type { InitiativePTM, StatutPTM } from "@/types/ptm";
 import { FormulairePTM } from "@/components/ptm/FormulairePTM";
+import { toast } from "sonner";
 
 export default function PTMSaisie() {
   const { demoUser } = useDemoUser();
@@ -58,11 +62,11 @@ export default function PTMSaisie() {
   const stats = useMemo(() => {
     const total = initiatives.length;
     const brouillons = initiatives.filter((i) => i.statut === "brouillon").length;
-    const soumis = initiatives.filter((i) => i.statut === "soumis_sgg").length;
-    const valides = initiatives.filter((i) => i.statut === "valide_sgg").length;
-    const inscritsPTG = initiatives.filter((i) => i.statut === "inscrit_ptg").length;
+    const soumis = initiatives.filter((i) => ['soumis_sg', 'consolide_sg', 'soumis_sgg'].includes(i.statut)).length;
+    const transmis = initiatives.filter((i) => ['consolide_sgg', 'soumis_pm', 'soumis_sgpr'].includes(i.statut)).length;
+    const rejetes = initiatives.filter((i) => i.statut.startsWith('rejete')).length;
 
-    return { total, brouillons, soumis, valides, inscritsPTG };
+    return { total, brouillons, soumis, transmis, rejetes };
   }, [initiatives]);
 
   const handleSelectInitiative = (initiativeId: string) => {
@@ -74,9 +78,62 @@ export default function PTMSaisie() {
     setIsNewDialogOpen(false);
   };
 
+  // Deadline alert
+  const deadlineDay = DEADLINES_PTM[permissions.niveau];
+  const today = new Date();
+  const currentDay = today.getDate();
+  const joursRestants = deadlineDay - currentDay;
+  const showDeadlineAlert = permissions.niveau === 'direction' && joursRestants > 0 && joursRestants <= 7;
+  const deadlinePassed = permissions.niveau === 'direction' && currentDay > deadlineDay;
+
+  // Handle "Transmettre au SG" for a single initiative
+  const handleTransmettre = (initiativeId: string, intitule: string) => {
+    toast.success(
+      `Initiative "${intitule.substring(0, 40)}..." transmise au Secrétaire Général du Ministère`,
+      { description: 'La matrice a été poussée au niveau SG pour consolidation.' }
+    );
+  };
+
+  // Count brouillons ready to transmit (completude >= 70%)
+  const brouillonsReady = initiatives.filter(
+    (i) => i.statut === 'brouillon' && (i.completude ?? 0) >= 70
+  );
+
+  // Handle bulk "Transmettre tout au SG"
+  const handleTransmettreTout = () => {
+    toast.success(
+      `${brouillonsReady.length} initiative(s) transmise(s) au SG du Ministère`,
+      { description: 'Les matrices ont été poussées au niveau SG pour consolidation.' }
+    );
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Deadline alert banner */}
+        {(showDeadlineAlert || deadlinePassed) && (
+          <div className={`flex items-center gap-3 p-4 rounded-lg border ${deadlinePassed
+              ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800'
+              : 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800'
+            }`}>
+            <Calendar className={`h-5 w-5 flex-shrink-0 ${deadlinePassed ? 'text-red-600' : 'text-amber-600'
+              }`} />
+            <div className="flex-1">
+              <p className={`text-sm font-semibold ${deadlinePassed ? 'text-red-800 dark:text-red-200' : 'text-amber-800 dark:text-amber-200'
+                }`}>
+                {deadlinePassed
+                  ? `⚠️ Deadline dépassée — La transmission au SG devait être faite avant le ${deadlineDay} du mois`
+                  : `📅 Il vous reste ${joursRestants} jour${joursRestants > 1 ? 's' : ''} pour transmettre votre matrice au SG`
+                }
+              </p>
+              <p className={`text-xs mt-0.5 ${deadlinePassed ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'
+                }`}>
+                Les directions doivent transmettre avant le {deadlineDay} de chaque mois
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* En-tête */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -89,14 +146,26 @@ export default function PTMSaisie() {
               Créez et complétez les initiatives du programme de travail ministériel 2026
             </p>
           </div>
-          <Button
-            onClick={() => setIsNewDialogOpen(true)}
-            disabled={!permissions.canSaisir()}
-            className="bg-government-gold hover:bg-government-gold/90"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle Initiative
-          </Button>
+          <div className="flex gap-2">
+            {brouillonsReady.length > 0 && permissions.canTransmettre() && (
+              <Button
+                onClick={handleTransmettreTout}
+                variant="default"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Transmettre tout au SG ({brouillonsReady.length})
+              </Button>
+            )}
+            <Button
+              onClick={() => setIsNewDialogOpen(true)}
+              disabled={!permissions.canSaisir()}
+              className="bg-government-gold hover:bg-government-gold/90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvelle Initiative
+            </Button>
+          </div>
         </div>
 
         {/* Statistiques */}
@@ -115,15 +184,15 @@ export default function PTMSaisie() {
               {stats.soumis} soumis
             </Badge>
           )}
-          {stats.valides > 0 && (
+          {stats.transmis > 0 && (
             <Badge variant="outline" className="text-status-warning border-status-warning text-sm">
-              {stats.valides} validés SGG
+              {stats.transmis} transmis PM
             </Badge>
           )}
-          {stats.inscritsPTG > 0 && (
-            <Badge variant="outline" className="text-status-success border-status-success text-sm">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              {stats.inscritsPTG} inscrits PTG
+          {stats.rejetes > 0 && (
+            <Badge variant="outline" className="text-status-danger border-status-danger text-sm">
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              {stats.rejetes} rejetés
             </Badge>
           )}
         </div>
@@ -161,7 +230,7 @@ export default function PTMSaisie() {
             {initiatives.map((initiative) => (
               <Card
                 key={initiative.id}
-                className={`transition-all hover:shadow-gov-lg ${initiative.statut === "inscrit_ptg"
+                className={`transition-all hover:shadow-gov-lg ${initiative.statut === "soumis_sgpr"
                   ? "opacity-60 cursor-not-allowed"
                   : "hover:border-government-gold/30 cursor-pointer"
                   }`}
@@ -184,16 +253,16 @@ export default function PTMSaisie() {
                             ? "outline"
                             : initiative.statut === "soumis_sgg"
                               ? "secondary"
-                              : initiative.statut === "valide_sgg"
+                              : initiative.statut === "consolide_sgg"
                                 ? "default"
                                 : "default"
                         }
-                        className={`text-[10px] ${initiative.statut === "inscrit_ptg"
+                        className={`text-[10px] ${initiative.statut === "soumis_sgpr"
                           ? "bg-status-success/10 text-status-success border-status-success/20"
                           : ""
                           }`}
                       >
-                        {STATUT_PTM_LABELS[initiative.statut]}
+                        {STATUT_PTM_LABELS[initiative.statut as StatutPTM] || initiative.statut}
                       </Badge>
                     </div>
                   </div>
@@ -242,45 +311,68 @@ export default function PTMSaisie() {
                     )}
                   </div>
 
-                  {/* Bouton action */}
-                  <Button
-                    variant={
-                      initiative.statut === "brouillon" || !initiative.date_soumission
-                        ? "default"
-                        : "outline"
-                    }
-                    size="sm"
-                    className="w-full"
-                    disabled={initiative.statut === "inscrit_ptg"}
-                    onClick={() => handleSelectInitiative(initiative.id)}
-                  >
-                    {!initiative.date_soumission ? (
-                      <>
-                        <FileEdit className="h-4 w-4 mr-2" />
-                        Créer/Compléter
-                      </>
-                    ) : initiative.statut === "brouillon" ? (
-                      <>
-                        <FileEdit className="h-4 w-4 mr-2" />
-                        Continuer
-                      </>
-                    ) : initiative.statut === "soumis_sgg" ? (
-                      <>
-                        <Clock className="h-4 w-4 mr-2" />
-                        En attente SGG
-                      </>
-                    ) : initiative.statut === "inscrit_ptg" ? (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Inscrit PTG
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Consulter
-                      </>
+                  {/* Boutons action */}
+                  <div className="space-y-2">
+                    <Button
+                      variant={
+                        initiative.statut === "brouillon" || !initiative.date_soumission
+                          ? "default"
+                          : "outline"
+                      }
+                      size="sm"
+                      className="w-full"
+                      disabled={initiative.statut === "soumis_sgpr"}
+                      onClick={() => handleSelectInitiative(initiative.id)}
+                    >
+                      {!initiative.date_soumission ? (
+                        <>
+                          <FileEdit className="h-4 w-4 mr-2" />
+                          Créer/Compléter
+                        </>
+                      ) : initiative.statut === "brouillon" ? (
+                        <>
+                          <FileEdit className="h-4 w-4 mr-2" />
+                          Continuer
+                        </>
+                      ) : initiative.statut === "soumis_sg" ? (
+                        <>
+                          <Clock className="h-4 w-4 mr-2" />
+                          En attente SG
+                        </>
+                      ) : initiative.statut === "soumis_sgg" ? (
+                        <>
+                          <Clock className="h-4 w-4 mr-2" />
+                          En attente SGG
+                        </>
+                      ) : initiative.statut === "soumis_sgpr" ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Transmis SGPR
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Consulter
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Bouton "Transmettre au SG" — visible uniquement sur brouillon complétés */}
+                    {initiative.statut === "brouillon" && (initiative.completude ?? 0) >= 70 && permissions.canTransmettre() && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/30"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTransmettre(initiative.id, initiative.intitule);
+                        }}
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        📤 Transmettre au SG
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

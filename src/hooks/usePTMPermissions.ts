@@ -1,20 +1,51 @@
 /**
- * SGG Digital — Hook Permissions PTM/PTG
- * Gestion des permissions sur le Plan Technique de Mise en œuvre
+ * SGG Digital — Hook Permissions PTM/PTG Hiérarchique
+ * Gestion des permissions multi-niveaux: Direction → SG → SGG → PM → SGPR
  */
 
 import { useMemo } from 'react';
 import { useDemoUser } from '@/hooks/useDemoUser';
+import type { NiveauHierarchique } from '@/hooks/usePTMWorkflow';
 
 export type PermissionPTM = 'R' | 'W' | 'V' | 'none';
 
 export interface PTMPermissions {
   currentRole: string;
-  getPermission: (action: 'saisie' | 'validation_sgg' | 'inscription_ptg') => PermissionPTM;
+  niveau: NiveauHierarchique;
+  getPermission: (action: 'saisie' | 'consolidation' | 'transmission' | 'validation') => PermissionPTM;
   canSaisir: () => boolean;
-  canValiderSGG: () => boolean;
-  canInscrirePTG: () => boolean;
+  canConsolider: () => boolean;
+  canTransmettre: () => boolean;
+  canValider: () => boolean;
+  canRejeter: () => boolean;
   isReadOnly: () => boolean;
+}
+
+// Mapping rôle → niveau hiérarchique
+function getNiveauFromRole(roleId: string): NiveauHierarchique {
+  switch (roleId) {
+    case 'directeur-cgi':
+    case 'directeur-dgpn':
+    case 'directeur-direction':
+      return 'direction';
+    case 'sg-ministere':
+    case 'sg-ministere-fp':
+      return 'sg_ministere';
+    case 'sgg-admin':
+    case 'sgg-directeur':
+      return 'sgg';
+    case 'premier-ministre':
+      return 'pm';
+    case 'sgpr':
+      return 'sgpr';
+    case 'president':
+    case 'vice-president':
+      return 'president';
+    case 'ministre':
+      return 'sg_ministere'; // Ministre voit le niveau SG
+    default:
+      return 'direction';
+  }
 }
 
 export function usePTMPermissions(): PTMPermissions {
@@ -25,98 +56,126 @@ export function usePTMPermissions(): PTMPermissions {
     return demoUser.id;
   }, [demoUser]);
 
+  const niveau = useMemo(() => getNiveauFromRole(currentRole), [currentRole]);
+
   return useMemo(() => {
     // Permission matrix: action × role
-    // Actions: saisie, validation_sgg, inscription_ptg
-    // Roles:
-    //   - sgg-admin: W all (Write/approve all actions)
-    //   - sgg-directeur: V validation_sgg only (can validate SGG decisions)
-    //   - sgpr: V inscription_ptg only (can register PTG)
-    //   - ministre/sg-ministere: W saisie only (can write PTM entries)
-    //   - premier-ministre, president, vice-president: R all (Read only)
-    //   - others: R all (Read only)
-
+    // Actions: saisie (remplir), consolidation (fusionner), transmission (pousser), validation (accepter/rejeter)
     const permMatrix: Record<string, Record<string, PermissionPTM>> = {
+      // Directions — remplissent et transmettent au SG
+      'directeur-cgi': {
+        saisie: 'W',
+        consolidation: 'none',
+        transmission: 'W',
+        validation: 'none',
+      },
+      'directeur-dgpn': {
+        saisie: 'W',
+        consolidation: 'none',
+        transmission: 'W',
+        validation: 'none',
+      },
+      'directeur-direction': {
+        saisie: 'W',
+        consolidation: 'none',
+        transmission: 'W',
+        validation: 'none',
+      },
+      // SG Ministère — consolide, valide/rejette, transmet au SGG
+      'sg-ministere': {
+        saisie: 'W',
+        consolidation: 'W',
+        transmission: 'W',
+        validation: 'V',
+      },
+      'sg-ministere-fp': {
+        saisie: 'W',
+        consolidation: 'W',
+        transmission: 'W',
+        validation: 'V',
+      },
+      // Ministre — même vue que SG
+      'ministre': {
+        saisie: 'W',
+        consolidation: 'R',
+        transmission: 'R',
+        validation: 'R',
+      },
+      // SGG — consolide les ministères, transmet au PM
       'sgg-admin': {
         saisie: 'W',
-        validation_sgg: 'W',
-        inscription_ptg: 'W',
+        consolidation: 'W',
+        transmission: 'W',
+        validation: 'W',
       },
       'sgg-directeur': {
         saisie: 'R',
-        validation_sgg: 'V',
-        inscription_ptg: 'R',
+        consolidation: 'W',
+        transmission: 'W',
+        validation: 'V',
       },
-      'sgpr': {
-        saisie: 'R',
-        validation_sgg: 'R',
-        inscription_ptg: 'V',
-      },
+      // PM — consolide et transmet au SGPR
       'premier-ministre': {
         saisie: 'R',
-        validation_sgg: 'R',
-        inscription_ptg: 'R',
+        consolidation: 'W',
+        transmission: 'W',
+        validation: 'R',
       },
+      // SGPR — reçoit pour le Président
+      'sgpr': {
+        saisie: 'R',
+        consolidation: 'R',
+        transmission: 'R',
+        validation: 'R',
+      },
+      // Président — lecture seule
       'president': {
         saisie: 'R',
-        validation_sgg: 'R',
-        inscription_ptg: 'R',
+        consolidation: 'R',
+        transmission: 'R',
+        validation: 'R',
       },
       'vice-president': {
         saisie: 'R',
-        validation_sgg: 'R',
-        inscription_ptg: 'R',
-      },
-      'ministre': {
-        saisie: 'W',
-        validation_sgg: 'R',
-        inscription_ptg: 'R',
-      },
-      'sg-ministere': {
-        saisie: 'W',
-        validation_sgg: 'R',
-        inscription_ptg: 'R',
+        consolidation: 'R',
+        transmission: 'R',
+        validation: 'R',
       },
     };
 
     const defaultPerms: Record<string, PermissionPTM> = {
       saisie: 'R',
-      validation_sgg: 'R',
-      inscription_ptg: 'R',
+      consolidation: 'R',
+      transmission: 'R',
+      validation: 'R',
     };
 
     const getPermission = (
-      action: 'saisie' | 'validation_sgg' | 'inscription_ptg'
+      action: 'saisie' | 'consolidation' | 'transmission' | 'validation'
     ): PermissionPTM => {
       return permMatrix[currentRole]?.[action] || defaultPerms[action];
     };
 
-    const canSaisir = (): boolean => {
-      const p = getPermission('saisie');
-      return p === 'W';
-    };
-
-    const canValiderSGG = (): boolean => {
-      const p = getPermission('validation_sgg');
+    const canSaisir = (): boolean => getPermission('saisie') === 'W';
+    const canConsolider = (): boolean => getPermission('consolidation') === 'W';
+    const canTransmettre = (): boolean => getPermission('transmission') === 'W';
+    const canValider = (): boolean => {
+      const p = getPermission('validation');
       return p === 'V' || p === 'W';
     };
-
-    const canInscrirePTG = (): boolean => {
-      const p = getPermission('inscription_ptg');
-      return p === 'V' || p === 'W';
-    };
-
-    const isReadOnly = (): boolean => {
-      return !canSaisir() && !canValiderSGG() && !canInscrirePTG();
-    };
+    const canRejeter = (): boolean => canValider();
+    const isReadOnly = (): boolean => !canSaisir() && !canConsolider() && !canTransmettre() && !canValider();
 
     return {
       currentRole,
+      niveau,
       getPermission,
       canSaisir,
-      canValiderSGG,
-      canInscrirePTG,
+      canConsolider,
+      canTransmettre,
+      canValider,
+      canRejeter,
       isReadOnly,
     };
-  }, [currentRole]);
+  }, [currentRole, niveau]);
 }

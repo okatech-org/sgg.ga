@@ -1,6 +1,6 @@
 /**
  * SGG Digital — Tableau de Bord Suivi PTM/PTG 2026
- * Monitoring des initiatives gouvernementales: programmation, soumissions, validations, inscriptions PTG
+ * Monitoring hiérarchique: Direction → SG → SGG → PM → SGPR
  */
 
 import { useState, useMemo } from "react";
@@ -47,72 +47,79 @@ import {
   Cell,
 } from "recharts";
 import { INITIATIVES_PTM, MINISTERES_PTM, getPTMStats, getSuiviMinisteres } from "@/data/ptmData";
-import { RUBRIQUE_SHORT_LABELS, STATUT_PTM_LABELS, RUBRIQUE_COLORS, STATUT_PTM_COLORS } from "@/types/ptm";
+import { RUBRIQUE_SHORT_LABELS, STATUT_PTM_LABELS, RUBRIQUE_COLORS } from "@/types/ptm";
+import type { StatutPTM } from "@/types/ptm";
 
-const STATUT_COLORS: Record<string, string> = {
-  brouillon: '#9CA3AF',
-  soumis_sgg: '#3B82F6',
-  valide_sgg: '#F59E0B',
-  inscrit_ptg: '#10B981',
-  rejete: '#EF4444',
-};
+// Couleurs pour les 7 statuts principaux du workflow hiérarchique
+const HEATMAP_STATUTS: { key: StatutPTM; label: string; bg: string }[] = [
+  { key: 'brouillon', label: 'Brouillon', bg: 'bg-gray-300 text-gray-900' },
+  { key: 'soumis_sg', label: 'Soumis SG', bg: 'bg-sky-400 text-white' },
+  { key: 'consolide_sg', label: 'Consolidé SG', bg: 'bg-blue-500 text-white' },
+  { key: 'soumis_sgg', label: 'Soumis SGG', bg: 'bg-indigo-500 text-white' },
+  { key: 'consolide_sgg', label: 'Consolidé SGG', bg: 'bg-violet-500 text-white' },
+  { key: 'soumis_pm', label: 'Soumis PM', bg: 'bg-amber-500 text-white' },
+  { key: 'soumis_sgpr', label: 'Soumis SGPR', bg: 'bg-green-500 text-white' },
+];
 
-const HEATMAP_STATUT_COLORS: Record<string, string> = {
-  brouillon: 'bg-gray-300 text-gray-900',
-  soumis_sgg: 'bg-blue-400 text-white',
-  valide_sgg: 'bg-amber-400 text-white',
-  inscrit_ptg: 'bg-green-500 text-white',
-  rejete: 'bg-red-500 text-white',
-};
+const REJECT_STATUTS: StatutPTM[] = ['rejete_sg', 'rejete_sgg', 'rejete'];
 
 export default function PTMSuivi() {
   const [annee] = useState(2026);
 
-  // KPI Calculations
+  // KPI Calculations — hierarchical
   const kpis = useMemo(() => {
     const stats = getPTMStats();
-    const suivi = getSuiviMinisteres();
 
-    const tauxInscriptionPTG = stats.tauxInscriptionPTG;
-    const initiativesInscrites = stats.parStatut.inscrit_ptg;
-    const initiativesRejetees = stats.parStatut.rejete;
-    const initiativesEnAttente = stats.parStatut.soumis_sgg;
+    const transmisesPM = INITIATIVES_PTM.filter(i =>
+      ['soumis_pm', 'soumis_sgpr'].includes(i.statut)
+    ).length;
+
+    const enCoursChaine = INITIATIVES_PTM.filter(i =>
+      ['soumis_sg', 'consolide_sg', 'soumis_sgg', 'consolide_sgg'].includes(i.statut)
+    ).length;
+
+    const rejetees = INITIATIVES_PTM.filter(i =>
+      i.statut.startsWith('rejete')
+    ).length;
+
+    const tauxTransmission = stats.totalInitiatives > 0
+      ? Math.round((transmisesPM / stats.totalInitiatives) * 100) : 0;
 
     return {
-      tauxInscriptionPTG,
-      initiativesInscrites,
-      initiativesRejetees,
-      initiativesEnAttente,
+      tauxTransmission,
+      transmisesPM,
+      enCoursChaine,
+      rejetees,
       totalInitiatives: stats.totalInitiatives,
       parRubrique: stats.parRubrique,
     };
   }, []);
 
-  // Data for Progression par Rubrique chart (3 bars per rubrique)
+  // Progression par Rubrique chart
   const progressionData = useMemo(() => {
     const initiatives = INITIATIVES_PTM.reduce((acc, init) => {
       if (!acc[init.rubrique]) {
-        acc[init.rubrique] = { total: 0, soumises: 0, inscrites: 0 };
+        acc[init.rubrique] = { total: 0, enCours: 0, transmises: 0 };
       }
       acc[init.rubrique].total++;
-      if (init.statut !== 'brouillon' && init.statut !== 'rejete') {
-        acc[init.rubrique].soumises++;
+      if (!['brouillon', 'rejete_sg', 'rejete_sgg', 'rejete'].includes(init.statut)) {
+        acc[init.rubrique].enCours++;
       }
-      if (init.statut === 'inscrit_ptg') {
-        acc[init.rubrique].inscrites++;
+      if (['soumis_pm', 'soumis_sgpr'].includes(init.statut)) {
+        acc[init.rubrique].transmises++;
       }
       return acc;
-    }, {} as Record<string, { total: number; soumises: number; inscrites: number }>);
+    }, {} as Record<string, { total: number; enCours: number; transmises: number }>);
 
     return Object.entries(initiatives).map(([rubrique, data]) => ({
       nom: RUBRIQUE_SHORT_LABELS[rubrique as keyof typeof RUBRIQUE_SHORT_LABELS] || rubrique,
       total: data.total,
-      soumises: data.soumises,
-      inscrites: data.inscrites,
+      enCours: data.enCours,
+      transmises: data.transmises,
     }));
   }, []);
 
-  // Data for distribution pie chart
+  // Distribution pie chart
   const distributionData = useMemo(() => {
     return Object.entries(kpis.parRubrique).map(([rubrique, count]) => ({
       name: RUBRIQUE_SHORT_LABELS[rubrique as keyof typeof RUBRIQUE_SHORT_LABELS] || rubrique,
@@ -121,39 +128,36 @@ export default function PTMSuivi() {
     }));
   }, [kpis.parRubrique]);
 
-  // Heatmap data: Ministères × Statuts
+  // Heatmap data: Ministères × Statuts hiérarchiques
   const heatmapData = useMemo(() => {
-    const suivi = getSuiviMinisteres();
-    return suivi.map((min) => {
-      const ministereInits = INITIATIVES_PTM.filter((i) => i.ministereId === min.ministereId);
-      const statutCounts: Record<string, number> = {
-        brouillon: 0,
-        soumis_sgg: 0,
-        valide_sgg: 0,
-        inscrit_ptg: 0,
-        rejete: 0,
-      };
+    return MINISTERES_PTM.map((min) => {
+      const ministereInits = INITIATIVES_PTM.filter((i) => i.ministereId === min.id);
+      const counts: Record<string, number> = {};
+
+      // Initialize all statuts to 0
+      HEATMAP_STATUTS.forEach(s => { counts[s.key] = 0; });
+      counts['rejete'] = 0;
 
       ministereInits.forEach((init) => {
-        statutCounts[init.statut]++;
+        if (REJECT_STATUTS.includes(init.statut)) {
+          counts['rejete'] = (counts['rejete'] || 0) + 1;
+        } else {
+          counts[init.statut] = (counts[init.statut] || 0) + 1;
+        }
       });
 
       return {
-        ministereNom: min.ministereNom,
-        ministereSigle: min.ministereSigle,
-        ...statutCounts,
+        ministereNom: min.nom,
+        ministereSigle: min.sigle,
+        counts,
       };
     });
   }, []);
 
-  // Ministères en retard (high brouillon or low soumission rate)
+  // Ministères en retard
   const ministeresEnRetard = useMemo(() => {
     const suivi = getSuiviMinisteres();
     return suivi
-      .map((min) => ({
-        ...min,
-        tauxSoumission: min.tauxSoumission,
-      }))
       .filter((m) => m.tauxSoumission < 50 || m.totalInitiatives === 0)
       .sort((a, b) => a.tauxSoumission - b.tauxSoumission);
   }, []);
@@ -169,11 +173,11 @@ export default function PTMSuivi() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <ClipboardList className="h-6 w-6 text-government-gold" />
-            Suivi de la Programmation — PTM/PTG {annee}
+            Suivi Hiérarchique PTM — {annee}
             <InfoButton pageId="ptm-suivi" />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Tableau de bord de pilotage des initiatives gouvernementales et inscriptions au PTG
+            Tableau de bord de la chaîne Direction → SG → SGG → PM → SGPR
           </p>
         </div>
 
@@ -183,10 +187,10 @@ export default function PTMSuivi() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Taux d'Inscription PTG</p>
-                  <p className="text-3xl font-bold">{kpis.tauxInscriptionPTG}%</p>
+                  <p className="text-xs text-muted-foreground">Taux Transmission PM</p>
+                  <p className="text-3xl font-bold">{kpis.tauxTransmission}%</p>
                   <p className="text-xs text-muted-foreground">
-                    {kpis.initiativesInscrites}/{kpis.totalInitiatives} initiatives
+                    {kpis.transmisesPM}/{kpis.totalInitiatives} initiatives
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-status-success flex items-center justify-center">
@@ -200,9 +204,9 @@ export default function PTMSuivi() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Initiatives Soumises</p>
-                  <p className="text-3xl font-bold">{kpis.initiativesEnAttente}</p>
-                  <p className="text-xs text-muted-foreground">en attente SGG</p>
+                  <p className="text-xs text-muted-foreground">En Cours de Chaîne</p>
+                  <p className="text-3xl font-bold">{kpis.enCoursChaine}</p>
+                  <p className="text-xs text-muted-foreground">SG → SGG</p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-status-info flex items-center justify-center">
                   <TrendingUp className="h-6 w-6 text-white" />
@@ -216,8 +220,8 @@ export default function PTMSuivi() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">Initiatives Rejetées</p>
-                  <p className="text-3xl font-bold text-status-danger">{kpis.initiativesRejetees}</p>
-                  <p className="text-xs text-muted-foreground">non retenues</p>
+                  <p className="text-3xl font-bold text-status-danger">{kpis.rejetees}</p>
+                  <p className="text-xs text-muted-foreground">à corriger</p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-status-danger flex items-center justify-center">
                   <XCircle className="h-6 w-6 text-white" />
@@ -230,9 +234,9 @@ export default function PTMSuivi() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Initiatives par Rubrique</p>
+                  <p className="text-xs text-muted-foreground">Total Initiatives</p>
                   <p className="text-3xl font-bold">{kpis.totalInitiatives}</p>
-                  <p className="text-xs text-muted-foreground">3 rubriques PTM</p>
+                  <p className="text-xs text-muted-foreground">2 ministères, 4 directions</p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-government-navy flex items-center justify-center">
                   <BarChart3 className="h-6 w-6 text-white" />
@@ -242,7 +246,7 @@ export default function PTMSuivi() {
           </Card>
         </div>
 
-        {/* Charts Row 1 */}
+        {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Progression par Rubrique */}
           <Card className="shadow-gov">
@@ -253,12 +257,12 @@ export default function PTMSuivi() {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={progressionData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" domain={[0, 15]} />
+                  <XAxis type="number" domain={[0, 'auto']} />
                   <YAxis type="category" dataKey="nom" width={120} tick={{ fontSize: 11 }} />
                   <RechartsTooltip />
                   <Bar dataKey="total" name="Total" fill="#9CA3AF" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="soumises" name="Soumises" fill="#3B82F6" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="inscrites" name="Inscrites PTG" fill="#10B981" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="enCours" name="En cours de chaîne" fill="#3B82F6" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="transmises" name="Transmises PM/SGPR" fill="#10B981" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -293,38 +297,39 @@ export default function PTMSuivi() {
           </Card>
         </div>
 
-        {/* Heatmap: Ministères × Statuts */}
+        {/* Heatmap: Ministères × Statuts Hiérarchiques */}
         <Card className="shadow-gov">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Heatmap Ministères × Statuts</CardTitle>
+            <CardTitle className="text-base">Heatmap Ministères × Statuts Hiérarchiques</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <div className="min-w-[900px]">
                 {/* Header Row */}
-                <div className="grid grid-cols-[150px_repeat(5,1fr)] gap-0.5 mb-1">
+                <div className={`grid grid-cols-[150px_repeat(${HEATMAP_STATUTS.length + 1},1fr)] gap-0.5 mb-1`}>
                   <div className="text-xs font-medium text-muted-foreground p-1">Ministère</div>
-                  {['Brouillon', 'Soumis', 'Validé', 'Inscrit PTG', 'Rejeté'].map((label, i) => (
-                    <div key={i} className="text-[10px] font-medium text-center text-muted-foreground p-1">
-                      {label}
+                  {HEATMAP_STATUTS.map((s) => (
+                    <div key={s.key} className="text-[10px] font-medium text-center text-muted-foreground p-1">
+                      {s.label}
                     </div>
                   ))}
+                  <div className="text-[10px] font-medium text-center text-muted-foreground p-1">Rejeté</div>
                 </div>
 
                 {/* Data Rows */}
                 {heatmapData.map((row) => (
-                  <div key={row.ministereSigle} className="grid grid-cols-[150px_repeat(5,1fr)] gap-0.5 mb-0.5">
+                  <div key={row.ministereSigle} className={`grid grid-cols-[150px_repeat(${HEATMAP_STATUTS.length + 1},1fr)] gap-0.5 mb-0.5`}>
                     <div className="text-[10px] font-medium p-1 truncate">{row.ministereSigle}</div>
-                    {(['brouillon', 'soumis_sgg', 'valide_sgg', 'inscrit_ptg', 'rejete'] as const).map((statut) => {
-                      const count = (row as Record<string, number | string>)[statut] as number;
+                    {HEATMAP_STATUTS.map((s) => {
+                      const count = row.counts[s.key] || 0;
                       return (
-                        <TooltipProvider key={statut}>
+                        <TooltipProvider key={s.key}>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div
                                 className={cn(
                                   "h-8 rounded-sm text-[10px] font-bold flex items-center justify-center cursor-default",
-                                  HEATMAP_STATUT_COLORS[statut] || 'bg-muted'
+                                  count > 0 ? s.bg : 'bg-muted/30 text-muted-foreground'
                                 )}
                               >
                                 {count}
@@ -332,12 +337,31 @@ export default function PTMSuivi() {
                             </TooltipTrigger>
                             <TooltipContent>
                               <p className="text-xs font-medium">{row.ministereSigle}</p>
-                              <p className="text-xs">{STATUT_PTM_LABELS[statut]}: {count} initiatives</p>
+                              <p className="text-xs">{s.label}: {count} initiatives</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       );
                     })}
+                    {/* Rejeté column */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={cn(
+                              "h-8 rounded-sm text-[10px] font-bold flex items-center justify-center cursor-default",
+                              (row.counts['rejete'] || 0) > 0 ? 'bg-red-500 text-white' : 'bg-muted/30 text-muted-foreground'
+                            )}
+                          >
+                            {row.counts['rejete'] || 0}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs font-medium">{row.ministereSigle}</p>
+                          <p className="text-xs">Rejeté: {row.counts['rejete'] || 0} initiatives</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 ))}
               </div>
@@ -345,12 +369,16 @@ export default function PTMSuivi() {
 
             {/* Legend */}
             <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t">
-              {(['brouillon', 'soumis_sgg', 'valide_sgg', 'inscrit_ptg', 'rejete'] as const).map((statut) => (
-                <div key={statut} className="flex items-center gap-1.5">
-                  <div className={cn("h-3 w-3 rounded-sm", HEATMAP_STATUT_COLORS[statut])} />
-                  <span className="text-[10px] text-muted-foreground">{STATUT_PTM_LABELS[statut]}</span>
+              {HEATMAP_STATUTS.map((s) => (
+                <div key={s.key} className="flex items-center gap-1.5">
+                  <div className={cn("h-3 w-3 rounded-sm", s.bg)} />
+                  <span className="text-[10px] text-muted-foreground">{s.label}</span>
                 </div>
               ))}
+              <div className="flex items-center gap-1.5">
+                <div className="h-3 w-3 rounded-sm bg-red-500" />
+                <span className="text-[10px] text-muted-foreground">Rejeté</span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -361,7 +389,7 @@ export default function PTMSuivi() {
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2 text-status-danger">
                 <AlertTriangle className="h-4 w-4" />
-                Ministères en Retard (Taux de Soumission {'<'} 50%)
+                Ministères en Retard (Taux de Transmission {'<'} 50%)
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -369,10 +397,10 @@ export default function PTMSuivi() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Ministère</TableHead>
-                    <TableHead>Total initiatives</TableHead>
+                    <TableHead>Total</TableHead>
                     <TableHead>Brouillons</TableHead>
-                    <TableHead>Soumises</TableHead>
-                    <TableHead className="text-right">Taux soumission</TableHead>
+                    <TableHead>Transmis</TableHead>
+                    <TableHead className="text-right">Taux</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>

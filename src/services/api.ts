@@ -626,6 +626,8 @@ export interface InitiativePTMApi {
     ministere_id: string;
     ministere_nom?: string;
     ministere_sigle?: string;
+    direction_id?: string;
+    direction_nom?: string;
     annee: number;
     rubrique: 'projet_texte_legislatif' | 'politique_generale' | 'missions_conferences';
     numero: number;
@@ -638,7 +640,7 @@ export interface InitiativePTMApi {
     date_transmission_sgg?: string;
     observations?: string;
     programme_pag_id?: string;
-    statut: 'brouillon' | 'soumis_sgg' | 'valide_sgg' | 'inscrit_ptg' | 'rejete';
+    statut: string; // Hierarchical statuses: brouillon, soumis_sg, consolide_sg, soumis_sgg, etc.
     soumis_par?: string;
     soumis_par_nom?: string;
     date_soumission?: string;

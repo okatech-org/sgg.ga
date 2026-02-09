@@ -8,7 +8,17 @@
 // =============================================================================
 
 export type RubriquePTM = 'projet_texte_legislatif' | 'politique_generale' | 'missions_conferences';
-export type StatutPTM = 'brouillon' | 'soumis_sgg' | 'valide_sgg' | 'inscrit_ptg' | 'rejete';
+export type StatutPTM =
+  | 'brouillon'          // Direction remplit
+  | 'soumis_sg'          // Poussé au SG du ministère
+  | 'consolide_sg'       // SG consolide les directions
+  | 'soumis_sgg'         // SG pousse au SGG
+  | 'consolide_sgg'      // SGG consolide les ministères
+  | 'soumis_pm'          // SGG pousse au Chef du Gouvernement
+  | 'soumis_sgpr'        // PM pousse au SGPR/Président
+  | 'rejete_sg'          // Rejeté par le SG
+  | 'rejete_sgg'         // Rejeté par le SGG
+  | 'rejete';            // Rejeté (legacy)
 export type CadrageStrategique = 'sept_priorites' | 'pag' | 'pncd' | 'pap';
 export type PermissionPTM = 'R' | 'W' | 'V' | 'none';
 
@@ -26,6 +36,10 @@ export interface InitiativePTM {
   ministereId: string;
   ministereNom: string;
   ministereSigle: string;
+
+  /** Direction / Entité sous tutelle qui a créé l'initiative */
+  directionId: string;
+  directionNom: string;
 
   // ===== COLONNES PRINCIPALES (10 colonnes) =====
 
@@ -68,42 +82,28 @@ export interface InitiativePTM {
   /** Col 10 — Nom Programme PAG (pour affichage) */
   programmePAGNom: string | null;
 
-  // ===== WORKFLOW VALIDATION =====
+  // ===== WORKFLOW HIÉRARCHIQUE =====
 
-  /** Statut de validation */
+  /** Statut dans la chaîne Direction → SG → SGG → PM → SGPR */
   statut: StatutPTM;
 
-  /** Soumis par (User ID) */
+  /** Transmis par (User ID) — dernière personne ayant transmis */
   soumisParId: string | null;
-
-  /** Soumis par (User Nom) */
   soumisParNom: string | null;
-
-  /** Date de soumission au SGG */
   dateSoumission: string | null;
 
-  /** Validé SGG par (User ID) */
+  /** Validé SGG par (legacy, conservé pour compatibilité) */
   valideSGGParId: string | null;
-
-  /** Validé SGG par (User Nom) */
   valideSGGParNom: string | null;
-
-  /** Date de validation SGG */
   dateValidationSGG: string | null;
-
-  /** Commentaire SGG (remarques, demandes de modifications) */
   commentaireSGG: string | null;
 
-  /** Inscrit PTG par (User ID) */
+  /** Inscrit PTG (legacy) */
   inscritPTGParId: string | null;
-
-  /** Inscrit PTG par (User Nom) */
   inscritPTGParNom: string | null;
-
-  /** Date d'inscription PTG */
   dateInscriptionPTG: string | null;
 
-  /** Motif de rejet (si statut = rejete) */
+  /** Motif de rejet */
   motifRejet: string | null;
 
   // ===== LIEN VERS REPORTING =====
@@ -319,17 +319,27 @@ export const RUBRIQUE_COLORS: Record<RubriquePTM, string> = {
 
 export const STATUT_PTM_LABELS: Record<StatutPTM, string> = {
   brouillon: 'Brouillon',
-  soumis_sgg: 'Soumis au SGG',
-  valide_sgg: 'Validé SGG',
-  inscrit_ptg: 'Inscrit au PTG',
+  soumis_sg: 'Transmis au SG',
+  consolide_sg: 'Consolidé SG',
+  soumis_sgg: 'Transmis au SGG',
+  consolide_sgg: 'Consolidé SGG',
+  soumis_pm: 'Transmis au PM',
+  soumis_sgpr: 'Transmis au SGPR',
+  rejete_sg: 'Rejeté par SG',
+  rejete_sgg: 'Rejeté par SGG',
   rejete: 'Rejeté',
 };
 
 export const STATUT_PTM_COLORS: Record<StatutPTM, string> = {
   brouillon: 'bg-muted text-muted-foreground border-muted',
+  soumis_sg: 'bg-sky-100/60 text-sky-700 border-sky-200 dark:bg-sky-900/20 dark:text-sky-400 dark:border-sky-800',
+  consolide_sg: 'bg-indigo-100/60 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800',
   soumis_sgg: 'bg-status-info/10 text-status-info border-status-info/20',
-  valide_sgg: 'bg-status-warning/10 text-status-warning border-status-warning/20',
-  inscrit_ptg: 'bg-status-success/10 text-status-success border-status-success/20',
+  consolide_sgg: 'bg-violet-100/60 text-violet-700 border-violet-200 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-800',
+  soumis_pm: 'bg-amber-100/60 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800',
+  soumis_sgpr: 'bg-status-success/10 text-status-success border-status-success/20',
+  rejete_sg: 'bg-orange-100/60 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800',
+  rejete_sgg: 'bg-status-danger/10 text-status-danger border-status-danger/20',
   rejete: 'bg-status-danger/10 text-status-danger border-status-danger/20',
 };
 

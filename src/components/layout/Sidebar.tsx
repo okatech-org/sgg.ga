@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Download,
   FileSpreadsheet,
+  Layers,
   Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -72,9 +73,9 @@ const navigation: NavSection[] = [
     items: [
       { name: "Matrice PTM", href: "/ptm/matrice", icon: FileSpreadsheet, moduleKey: "ptmptg" },
       { name: "Saisie PTM", href: "/ptm/saisie", icon: FileEdit, moduleKey: "ptmptg" },
+      { name: "Consolidation PTM", href: "/ptm/consolidation", icon: Layers, moduleKey: "ptmptg" },
       { name: "Validation SGG", href: "/ptm/validation", icon: CheckCircle2, moduleKey: "ptmptg" },
       { name: "Suivi Programmation", href: "/ptm/suivi", icon: ClipboardList, moduleKey: "ptmptg" },
-      { name: "Cohérence PTM↔PAG", href: "/ptm/coherence", icon: Link2, moduleKey: "ptmptg" },
     ],
   },
   {

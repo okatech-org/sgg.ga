@@ -6,7 +6,7 @@ FTP_HOST = "ftp.cluster029.hosting.ovh.net"
 FTP_USER = "franciq"
 FTP_PASS = "Detsadid82"
 LOCAL_DIR = "dist"
-REMOTE_DIR = "www/digital"
+REMOTE_DIR = "sgg"
 
 def upload_files():
     try:

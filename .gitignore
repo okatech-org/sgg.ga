@@ -41,3 +41,12 @@ coverage/
 
 # Build artifacts
 *.tsbuildinfo
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
+# Docker
+*.tar
+docker-compose.override.yml

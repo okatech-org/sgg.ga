@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
+import { useTranslation } from "@/i18n";
 
 // Validation schemas
 const emailSchema = z.string().email("Adresse email invalide");
@@ -18,6 +19,7 @@ const fullNameSchema = z.string().min(2, "Le nom doit contenir au moins 2 caract
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signIn, signUp, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -63,9 +65,9 @@ export default function Auth() {
 
     if (error) {
       if (error.message.includes("Invalid login credentials")) {
-        setError("Email ou mot de passe incorrect");
+        setError(t('auth.invalidCredentials'));
       } else if (error.message.includes("Email not confirmed")) {
-        setError("Veuillez confirmer votre email avant de vous connecter");
+        setError(t('auth.emailNotConfirmed'));
       } else {
         setError(error.message);
       }
@@ -86,12 +88,12 @@ export default function Auth() {
 
     if (error) {
       if (error.message.includes("User already registered")) {
-        setError("Un compte existe déjà avec cet email");
+        setError(t('auth.emailExists'));
       } else {
         setError(error.message);
       }
     } else {
-      setSuccess("Compte créé ! Vérifiez votre email pour confirmer votre inscription.");
+      setSuccess(t('auth.accountCreated'));
       setActiveTab("login");
       setPassword("");
     }
@@ -114,31 +116,31 @@ export default function Auth() {
         <div className="flex items-center gap-4">
           <img src="/emblem_gabon.png" alt="Emblème du Gabon" className="h-[60px] w-[60px] object-contain" />
           <div className="flex flex-col items-start justify-center">
-            <span className="text-[10px] uppercase font-semibold tracking-wider text-white/70 leading-tight w-full mb-1">Présidence de la République</span>
-            <span className="font-serif font-black text-[13.5px] uppercase leading-none tracking-normal text-white w-full">Secrétariat Général</span>
-            <span className="font-serif font-black text-[12.5px] uppercase leading-none tracking-[0.2em] text-white w-full">du Gouvernement</span>
+            <span className="text-[10px] uppercase font-semibold tracking-wider text-white/70 leading-tight w-full mb-1">{t('sidebar.presidency')}</span>
+            <span className="font-serif font-black text-[13.5px] uppercase leading-none tracking-normal text-white w-full">{t('sidebar.sggFull')}</span>
+            <span className="font-serif font-black text-[12.5px] uppercase leading-none tracking-[0.2em] text-white w-full">{t('sidebar.sggSub')}</span>
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-center justify-center p-4" id="main-content">
         <Card className="w-full max-w-md shadow-2xl">
           <CardHeader className="text-center pb-2">
             <div className="flex justify-center mb-4">
               <img src="/emblem_gabon.png" alt="Emblème du Gabon" className="h-20 w-20 object-contain" />
             </div>
-            <CardTitle className="text-2xl">SGG Digital</CardTitle>
+            <CardTitle className="text-2xl">{t('auth.platformName')}</CardTitle>
             <CardDescription>
-              Plateforme Numérique du Secrétariat Général du Gouvernement
+              {t('auth.platformDesc')}
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Connexion</TabsTrigger>
-                <TabsTrigger value="signup">Inscription</TabsTrigger>
+                <TabsTrigger value="login">{t('auth.loginAction')}</TabsTrigger>
+                <TabsTrigger value="signup">{t('auth.signupAction')}</TabsTrigger>
               </TabsList>
 
               {error && (
@@ -158,11 +160,11 @@ export default function Auth() {
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('auth.email')}</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="vous@ministere.ga"
+                      placeholder={t('auth.emailPlaceholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -170,7 +172,7 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Mot de passe</Label>
+                    <Label htmlFor="password">{t('auth.password')}</Label>
                     <Input
                       id="password"
                       type="password"
@@ -189,10 +191,10 @@ export default function Auth() {
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Connexion...
+                        {t('auth.loginLoading')}
                       </>
                     ) : (
-                      "Se connecter"
+                      t('auth.login')
                     )}
                   </Button>
                 </form>
@@ -201,11 +203,11 @@ export default function Auth() {
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Nom complet</Label>
+                    <Label htmlFor="fullName">{t('auth.fullName')}</Label>
                     <Input
                       id="fullName"
                       type="text"
-                      placeholder="Jean DUPONT"
+                      placeholder={t('auth.namePlaceholder')}
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       required
@@ -213,11 +215,11 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signupEmail">Email</Label>
+                    <Label htmlFor="signupEmail">{t('auth.email')}</Label>
                     <Input
                       id="signupEmail"
                       type="email"
-                      placeholder="vous@ministere.ga"
+                      placeholder={t('auth.emailPlaceholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -225,7 +227,7 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signupPassword">Mot de passe</Label>
+                    <Label htmlFor="signupPassword">{t('auth.password')}</Label>
                     <Input
                       id="signupPassword"
                       type="password"
@@ -236,7 +238,7 @@ export default function Auth() {
                       disabled={loading}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Minimum 6 caractères
+                      {t('auth.passwordMinLength')}
                     </p>
                   </div>
                   <Button
@@ -247,16 +249,16 @@ export default function Auth() {
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Création...
+                        {t('auth.signupLoading')}
                       </>
                     ) : (
-                      "Créer un compte"
+                      t('auth.register')
                     )}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
-                    Les nouveaux comptes reçoivent le rôle "Citoyen" par défaut.
+                    {t('auth.defaultRoleNote')}
                     <br />
-                    Contactez l'administrateur SGG pour un accès étendu.
+                    {t('auth.contactAdmin')}
                   </p>
                 </form>
               </TabsContent>
@@ -268,7 +270,7 @@ export default function Auth() {
                 className="text-muted-foreground"
                 onClick={() => navigate("/demo")}
               >
-                Accéder à la démo sans compte
+                {t('auth.demoAccess')}
               </Button>
             </div>
           </CardContent>
@@ -278,7 +280,7 @@ export default function Auth() {
       {/* Footer */}
       <footer className="p-6 text-center">
         <p className="text-sm text-white/60">
-          © 2026 Secrétariat Général du Gouvernement
+          {t('footer.copyright', { year: '2026' })}
         </p>
       </footer>
     </div>

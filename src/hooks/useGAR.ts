@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { gar } from '@/lib/api';
 import { garApi } from '@/services/api';
+import { garLogger } from '@/services/logger';
 import type {
   PrioritePresidentielle,
 } from '@/types';
@@ -236,8 +237,77 @@ const PRIORITE_CODE_MAP: Record<string, PrioritePresidentielle> = {
 };
 
 /**
+ * Shared cache for GAR dashboard data to prevent duplicate API calls
+ * when multiple components use useGARDashboard simultaneously.
+ */
+let _garDashboardCache: { data: DashboardStats; timestamp: number } | null = null;
+let _garDashboardPromise: Promise<DashboardStats> | null = null;
+const GAR_CACHE_TTL = 30_000; // 30 seconds
+
+async function _fetchGARDashboard(): Promise<DashboardStats> {
+  // Return cached data if still fresh
+  if (_garDashboardCache && Date.now() - _garDashboardCache.timestamp < GAR_CACHE_TTL) {
+    return _garDashboardCache.data;
+  }
+
+  // Reuse in-flight promise if one exists
+  if (_garDashboardPromise) {
+    return _garDashboardPromise;
+  }
+
+  _garDashboardPromise = (async () => {
+    try {
+      const prioritiesResponse = await garApi.getPrioritiesPublic();
+
+      if (prioritiesResponse.success && prioritiesResponse.data && prioritiesResponse.data.length > 0) {
+        const apiPriorities = prioritiesResponse.data;
+
+        const mappedPriorities = apiPriorities.map((p: any) => ({
+          code: PRIORITE_CODE_MAP[p.priorite] || p.priorite,
+          name: p.titre,
+          progress: Number(p.taux_execution_moyen) || 0,
+          target: 75,
+          budgetAlloue: Number(p.budget_alloue) || 0,
+          budgetConsomme: 0,
+          objectifsAtteints: Number(p.objectifs_atteints) || 0,
+          objectifsTotal: Number(p.nb_objectifs_actifs) || 0,
+          color: p.couleur || '#6366f1',
+        }));
+
+        const totalProgress = mappedPriorities.length > 0
+          ? Math.round(mappedPriorities.reduce((acc: number, p: any) => acc + p.progress, 0) / mappedPriorities.length)
+          : 0;
+
+        const result: DashboardStats = {
+          totalProgress: totalProgress || MOCK_DASHBOARD_STATS.totalProgress,
+          priorities: mappedPriorities.length > 0 ? mappedPriorities : MOCK_DASHBOARD_STATS.priorities,
+          ministryStats: MOCK_DASHBOARD_STATS.ministryStats,
+          recentActivity: [],
+        };
+
+        _garDashboardCache = { data: result, timestamp: Date.now() };
+        return result;
+      } else {
+        garLogger.warn('API GAR non disponible, utilisation des données mock');
+        _garDashboardCache = { data: MOCK_DASHBOARD_STATS, timestamp: Date.now() };
+        return MOCK_DASHBOARD_STATS;
+      }
+    } catch (err) {
+      garLogger.warn('API GAR non disponible, fallback mock', { error: String(err) });
+      _garDashboardCache = { data: MOCK_DASHBOARD_STATS, timestamp: Date.now() };
+      return MOCK_DASHBOARD_STATS;
+    } finally {
+      _garDashboardPromise = null;
+    }
+  })();
+
+  return _garDashboardPromise;
+}
+
+/**
  * Hook pour récupérer les données du dashboard GAR
  * Essaie d'abord l'API réelle, puis fallback sur les données mock
+ * Utilise un cache partagé pour éviter les appels API dupliqués
  */
 export function useGARDashboard() {
   const [data, setData] = useState<DashboardStats | null>(null);
@@ -249,44 +319,9 @@ export function useGARDashboard() {
     setError(null);
 
     try {
-      // Essayer d'abord l'API publique pour les priorités
-      const prioritiesResponse = await garApi.getPrioritiesPublic();
-
-      if (prioritiesResponse.success && prioritiesResponse.data && prioritiesResponse.data.length > 0) {
-        // Convertir les données API en format DashboardStats
-        const apiPriorities = prioritiesResponse.data;
-
-        const mappedPriorities = apiPriorities.map((p: any) => ({
-          code: PRIORITE_CODE_MAP[p.priorite] || p.priorite,
-          name: p.titre,
-          progress: Number(p.taux_execution_moyen) || 0,
-          target: 75, // Cible par défaut
-          budgetAlloue: Number(p.budget_alloue) || 0,
-          budgetConsomme: 0, // Sera calculé quand il y aura des objectifs
-          objectifsAtteints: Number(p.objectifs_atteints) || 0,
-          objectifsTotal: Number(p.nb_objectifs_actifs) || 0,
-          color: p.couleur || '#6366f1',
-        }));
-
-        // Calculer le taux d'exécution global
-        const totalProgress = mappedPriorities.length > 0
-          ? Math.round(mappedPriorities.reduce((acc: number, p: any) => acc + p.progress, 0) / mappedPriorities.length)
-          : 0;
-
-        // Utiliser les données mock pour ministryStats (pas encore connecté)
-        setData({
-          totalProgress: totalProgress || MOCK_DASHBOARD_STATS.totalProgress,
-          priorities: mappedPriorities.length > 0 ? mappedPriorities : MOCK_DASHBOARD_STATS.priorities,
-          ministryStats: MOCK_DASHBOARD_STATS.ministryStats,
-          recentActivity: [],
-        });
-      } else {
-        // Fallback sur les données mock
-        console.warn('API GAR non disponible, utilisation des données mock');
-        setData(MOCK_DASHBOARD_STATS);
-      }
+      const result = await _fetchGARDashboard();
+      setData(result);
     } catch (err) {
-      console.warn('API GAR non disponible, utilisation des données mock:', err);
       setData(MOCK_DASHBOARD_STATS);
     } finally {
       setLoading(false);

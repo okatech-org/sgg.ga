@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { authLogger } from '@/services/logger';
 
 export type AppRole = "admin_sgg" | "sg_ministere" | "sgpr" | "citoyen";
 
@@ -29,7 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Role-based access configuration
 const roleModuleAccess: Record<AppRole, string[]> = {
-  admin_sgg: ["dashboard", "gar", "nominations", "egop", "journalOfficiel", "documents", "rapports", "formation", "parametres", "institutions", "cycleLegislatif"],
+  admin_sgg: ["dashboard", "gar", "nominations", "egop", "journalOfficiel", "documents", "rapports", "formation", "parametres", "institutions", "cycleLegislatif", "matriceReporting", "ptmptg"],
   sg_ministere: ["dashboard", "gar", "nominations", "journalOfficiel", "documents", "rapports"],
   sgpr: ["dashboard", "gar", "nominations", "egop", "journalOfficiel", "documents", "rapports"],
   citoyen: ["journalOfficiel"],
@@ -67,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRole(roleResult.data.role as AppRole);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      authLogger.error('Erreur chargement données utilisateur', { error: String(error) });
     }
   };
 

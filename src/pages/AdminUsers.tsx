@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/services/logger';
 import { useAuth, AppRole } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -8,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Search, Shield, Users, Building2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -121,7 +122,7 @@ export default function AdminUsers() {
 
       setUsers(usersWithRoles);
     } catch (error) {
-      console.error("Error fetching users:", error);
+      logger.error('Erreur chargement utilisateurs', { error: String(error) });
       toast.error("Erreur lors du chargement des utilisateurs");
     } finally {
       setLoading(false);
@@ -144,7 +145,7 @@ export default function AdminUsers() {
 
       toast.success(`Rôle mis à jour: ${roleLabels[newRole]}`);
     } catch (error) {
-      console.error("Error updating role:", error);
+      logger.error('Erreur mise à jour rôle', { error: String(error) });
       toast.error("Erreur lors de la mise à jour du rôle");
     } finally {
       setUpdating(null);
@@ -170,7 +171,7 @@ export default function AdminUsers() {
       setInstitutionValue("");
       toast.success("Institution mise à jour");
     } catch (error) {
-      console.error("Error updating institution:", error);
+      logger.error('Erreur mise à jour institution', { error: String(error) });
       toast.error("Erreur lors de la mise à jour de l'institution");
     } finally {
       setUpdating(null);
@@ -403,6 +404,9 @@ export default function AdminUsers() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Modifier l'institution</DialogTitle>
+              <DialogDescription>
+                Sélectionnez l'institution à attribuer à cet utilisateur.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">

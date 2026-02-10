@@ -1,0 +1,882 @@
+openapi: "3.1.0"
+info:
+  title: SGG Digital API
+  description: |
+    API du Secrétariat Général du Gouvernement du Gabon — Plateforme digitale.
+    
+    ## Modules
+    
+    | Module | Description |
+    |--------|-------------|
+    | **Auth** | Authentification JWT (login, register, profil) |
+    | **GAR** | Gestion Axée sur les Résultats — PAG 2026 |
+    | **Reporting** | Matrice de reporting mensuel des ministères |
+    | **Nominations** | Gestion des nominations ministérielles |
+    | **Législatif** | Cycle législatif (textes de loi, promulgation) |
+    | **e-GOP** | Conseil des Ministres (ordres du jour, PV) |
+    | **JO** | Journal Officiel de la République |
+    | **PTM** | Programme de Transformation du Monde rural |
+    | **Institutions** | Référentiel des institutions gouvernementales |
+    | **Monitoring** | Réception des événements de monitoring frontend |
+    
+    ## Authentification
+    
+    Toutes les routes protégées nécessitent un JWT Bearer token :
+    ```
+    Authorization: Bearer <token>
+    ```
+    
+    ## Environnements
+    
+    | Environnement | URL |
+    |---------------|-----|
+    | Production | `https://api.sgg.ga` |
+    | Staging | `https://staging-api.sgg.ga` |
+    | Développement | `http://localhost:8080` |
+    
+  version: "2.1.0"
+  contact:
+    name: OKA Tech
+    email: dev@okatech.ga
+  license:
+    name: Propriétaire
+    identifier: UNLICENSED
+
+servers:
+  - url: https://api.sgg.ga
+    description: Production
+  - url: https://staging-api.sgg.ga
+    description: Staging
+  - url: http://localhost:8080
+    description: Développement local
+
+tags:
+  - name: Health
+    description: Vérification de santé du service
+  - name: Auth
+    description: Authentification et gestion des sessions
+  - name: Users
+    description: Gestion des utilisateurs
+  - name: GAR
+    description: Gestion Axée sur les Résultats — PAG 2026
+  - name: Reporting
+    description: Matrice de reporting mensuel
+  - name: Nominations
+    description: Nominations ministérielles
+  - name: Législatif
+    description: Cycle législatif
+  - name: e-GOP
+    description: Conseil des Ministres
+  - name: Journal Officiel
+    description: Journal Officiel de la République
+  - name: PTM
+    description: Programme de Transformation du Monde rural
+  - name: Institutions
+    description: Référentiel des institutions
+  - name: Monitoring
+    description: Monitoring frontend
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenu via POST /api/auth/login
+
+  schemas:
+    # ── Common ────────────────────────────────────────────────────────────
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "NOT_FOUND"
+            message:
+              type: string
+              example: "Ressource non trouvée"
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 150
+        totalPages:
+          type: integer
+          example: 8
+
+    # ── Auth ──────────────────────────────────────────────────────────────
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "admin@sgg.ga"
+        password:
+          type: string
+          format: password
+          example: "SecureP@ss123"
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              description: JWT token
+            user:
+              $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+          example: "Jean-Pierre NZOGHE"
+        role:
+          $ref: '#/components/schemas/AppRole'
+        institution_id:
+          type: string
+          format: uuid
+        is_active:
+          type: boolean
+
+    AppRole:
+      type: string
+      enum:
+        - admin_sgg
+        - directeur_sgg
+        - sg_ministere
+        - sgpr
+        - premier_ministre
+        - ministre
+        - assemblee
+        - senat
+        - conseil_etat
+        - cour_constitutionnelle
+        - dgjo
+        - citoyen
+
+    # ── GAR ───────────────────────────────────────────────────────────────
+    Priority:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: "P1"
+        priorite:
+          type: integer
+          example: 1
+        titre:
+          type: string
+          example: "Infrastructure et connectivité"
+        description:
+          type: string
+        couleur:
+          type: string
+          example: "#1e40af"
+        nb_objectifs_actifs:
+          type: integer
+        taux_execution_moyen:
+          type: number
+          format: float
+
+    Objectif:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: "P1-O1"
+        titre:
+          type: string
+          example: "Construction de 500km de routes"
+        priorite_id:
+          type: string
+          format: uuid
+        ministere_id:
+          type: string
+          format: uuid
+        annee:
+          type: integer
+          example: 2026
+        statut:
+          type: string
+          enum: [planifie, en_cours, atteint, en_retard, abandonne]
+        taux_execution:
+          type: number
+          format: float
+        budget_prevu:
+          type: number
+          format: float
+        budget_decaisse:
+          type: number
+          format: float
+
+    # ── Reporting ─────────────────────────────────────────────────────────
+    RapportMensuel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        programme_id:
+          type: string
+          format: uuid
+        ministere_id:
+          type: string
+          format: uuid
+        annee:
+          type: integer
+          example: 2026
+        mois:
+          type: integer
+          example: 1
+        statut_validation:
+          type: string
+          enum: [brouillon, soumis, valide_sgg, valide_sgpr, rejete]
+        activites_realisees:
+          type: string
+        budget_md_fcfa:
+          type: number
+        engage_md_fcfa:
+          type: number
+        decaisse_md_fcfa:
+          type: number
+        pct_avancement_physique:
+          type: number
+        observations_contraintes:
+          type: string
+        soumis_par_id:
+          type: string
+          format: uuid
+        valide_sgg_par_id:
+          type: string
+          format: uuid
+        valide_sgpr_par_id:
+          type: string
+          format: uuid
+
+    ReportingStats:
+      type: object
+      properties:
+        total_rapports:
+          type: integer
+        brouillons:
+          type: integer
+        soumis:
+          type: integer
+        valides_sgg:
+          type: integer
+        valides_sgpr:
+          type: integer
+        rejetes:
+          type: integer
+        budget_total:
+          type: number
+        moy_execution_financiere:
+          type: number
+
+    # ── Monitoring ────────────────────────────────────────────────────────
+    MonitoringEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [error, performance, navigation]
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: object
+        url:
+          type: string
+        userAgent:
+          type: string
+
+    MonitoringPayload:
+      type: object
+      required: [events, app, version]
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonitoringEvent'
+        app:
+          type: string
+          example: "sgg-digital"
+        version:
+          type: string
+          example: "2.1.0"
+
+paths:
+  # ── Health ──────────────────────────────────────────────────────────────
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Vérification de santé basique
+      security: []
+      responses:
+        '200':
+          description: Service en bonne santé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: "healthy"
+                      timestamp:
+                        type: string
+                        format: date-time
+                      service:
+                        type: string
+                      version:
+                        type: string
+
+  /api/health/detailed:
+    get:
+      tags: [Health]
+      summary: Vérification de santé détaillée (DB + Redis)
+      security: []
+      responses:
+        '200':
+          description: Tous les services sont opérationnels
+        '503':
+          description: Un ou plusieurs services sont dégradés
+
+  /api/health/ready:
+    get:
+      tags: [Health]
+      summary: Readiness check (Kubernetes/Cloud Run)
+      security: []
+      responses:
+        '200':
+          description: Service prêt
+        '503':
+          description: Service non prêt
+
+  # ── Auth ────────────────────────────────────────────────────────────────
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Connexion utilisateur
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Identifiants incorrects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Inscription d'un nouvel utilisateur
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, full_name, role]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                full_name:
+                  type: string
+                role:
+                  $ref: '#/components/schemas/AppRole'
+      responses:
+        '201':
+          description: Compte créé
+        '409':
+          description: Email déjà existant
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Profil de l'utilisateur connecté
+      responses:
+        '200':
+          description: Profil utilisateur
+        '401':
+          description: Non authentifié
+
+  # ── GAR ─────────────────────────────────────────────────────────────────
+  /api/gar/public/priorities:
+    get:
+      tags: [GAR]
+      summary: Priorités PAG (accès public)
+      security: []
+      responses:
+        '200':
+          description: Liste des priorités
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Priority'
+
+  /api/gar/dashboard:
+    get:
+      tags: [GAR]
+      summary: Tableau de bord GAR
+      parameters:
+        - name: annee
+          in: query
+          schema:
+            type: integer
+            default: 2026
+      responses:
+        '200':
+          description: Données du tableau de bord
+
+  /api/gar/objectifs:
+    get:
+      tags: [GAR]
+      summary: Liste des objectifs avec filtres
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: annee
+          in: query
+          schema:
+            type: integer
+        - name: ministere_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: priorite_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: statut
+          in: query
+          schema:
+            type: string
+            enum: [planifie, en_cours, atteint, en_retard, abandonne]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste paginée des objectifs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Objectif'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      tags: [GAR]
+      summary: Créer un objectif
+      description: "Requiert permission `gar:write`"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Objectif'
+      responses:
+        '201':
+          description: Objectif créé
+        '403':
+          description: Permission insuffisante
+
+  /api/gar/objectifs/{id}:
+    get:
+      tags: [GAR]
+      summary: Détail d'un objectif
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Objectif avec indicateurs et sous-objectifs
+        '404':
+          description: Objectif non trouvé
+
+    patch:
+      tags: [GAR]
+      summary: Modifier un objectif
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Objectif'
+      responses:
+        '200':
+          description: Objectif mis à jour
+        '404':
+          description: Objectif non trouvé
+
+  # ── Reporting ───────────────────────────────────────────────────────────
+  /api/reporting/matrice:
+    get:
+      tags: [Reporting]
+      summary: Matrice complète de reporting
+      parameters:
+        - name: annee
+          in: query
+          schema:
+            type: integer
+        - name: mois
+          in: query
+          schema:
+            type: integer
+        - name: ministere_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: statut
+          in: query
+          schema:
+            type: string
+            enum: [brouillon, soumis, valide_sgg, valide_sgpr, rejete]
+      responses:
+        '200':
+          description: Matrice avec données enrichies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RapportMensuel'
+
+  /api/reporting/stats:
+    get:
+      tags: [Reporting]
+      summary: Statistiques globales de reporting
+      parameters:
+        - name: annee
+          in: query
+          schema:
+            type: integer
+        - name: mois
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Statistiques agrégées
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ReportingStats'
+
+  /api/reporting/rapports/{id}/submit:
+    post:
+      tags: [Reporting]
+      summary: Soumettre un rapport
+      description: "Change le statut de 'brouillon' à 'soumis'. Requiert permission `reporting:write`."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activites_realisees:
+                  type: string
+                budget_md_fcfa:
+                  type: number
+                pct_avancement_physique:
+                  type: number
+      responses:
+        '200':
+          description: Rapport soumis
+        '400':
+          description: Le rapport ne peut pas être soumis depuis son état actuel
+
+  /api/reporting/rapports/{id}/draft:
+    put:
+      tags: [Reporting]
+      summary: Sauvegarder un brouillon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Brouillon enregistré
+        '404':
+          description: Rapport non trouvé
+
+  /api/reporting/rapports/{id}/validate-sgg:
+    patch:
+      tags: [Reporting]
+      summary: Valider un rapport (étape SGG)
+      description: "Rôles autorisés : `admin_sgg`, `directeur_sgg`"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                commentaire:
+                  type: string
+      responses:
+        '200':
+          description: Rapport validé par le SGG
+        '400':
+          description: Le rapport doit être en statut 'soumis'
+
+  /api/reporting/rapports/{id}/validate-sgpr:
+    patch:
+      tags: [Reporting]
+      summary: Valider et publier (étape SGPR)
+      description: "Rôles autorisés : `admin_sgg`, `sgpr`, `premier_ministre`"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                commentaire:
+                  type: string
+      responses:
+        '200':
+          description: Rapport validé et publié par le SGPR
+
+  /api/reporting/rapports/{id}/reject:
+    patch:
+      tags: [Reporting]
+      summary: Rejeter un rapport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [motif]
+              properties:
+                motif:
+                  type: string
+                  description: Motif obligatoire du rejet
+      responses:
+        '200':
+          description: Rapport rejeté
+        '400':
+          description: Motif manquant ou état invalide
+
+  /api/reporting/rapports/batch-validate-sgg:
+    post:
+      tags: [Reporting]
+      summary: Validation en masse (SGG)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rapportIds]
+              properties:
+                rapportIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Nombre de rapports validés
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+
+  /api/reporting/suivi:
+    get:
+      tags: [Reporting]
+      summary: Suivi du remplissage par ministère
+      parameters:
+        - name: annee
+          in: query
+          schema:
+            type: integer
+        - name: mois
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: État de remplissage par ministère
+
+  # ── Monitoring ──────────────────────────────────────────────────────────
+  /api/monitoring/events:
+    post:
+      tags: [Monitoring]
+      summary: Recevoir les événements de monitoring frontend
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoringPayload'
+      responses:
+        '200':
+          description: Événements reçus
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  received:
+                    type: integer
+                  errors:
+                    type: integer
+                  performance:
+                    type: integer
+
+  /api/monitoring/status:
+    get:
+      tags: [Monitoring]
+      summary: Statut du service monitoring
+      security: []
+      responses:
+        '200':
+          description: Service actif

@@ -1,6 +1,6 @@
 /**
  * SGG Digital — Données Mock PTM/PTG 2026
- * Workflow hiérarchique: Direction → SG Ministère → SGG → PM → SGPR
+ * Workflow hiérarchique: Direction → SG Ministère → SGG → VPG → SGPR
  * Démo: 2 ministères (Éco Numérique + Fonction Publique) avec directions
  */
 
@@ -336,7 +336,7 @@ export const INITIATIVES_PTM: InitiativePTM[] = [
     programmePAGNom: null,
     statut: 'soumis_sgpr',
     soumisParId: 'premier-ministre',
-    soumisParNom: 'Premier Ministre',
+    soumisParNom: 'Vice-Président du Gouvernement',
     dateSoumission: '2026-02-05',
     valideSGGParId: 'sgg-admin',
     valideSGGParNom: 'Admin SGG',

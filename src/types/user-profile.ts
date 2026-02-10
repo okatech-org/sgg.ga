@@ -144,7 +144,7 @@ export const ROLE_DISPLAY_LABELS: Record<string, string> = {
   'sgg-directeur': 'Directeur SGG',
   'sg-ministere': 'Secrétaire Général de Ministère',
   'sgpr': 'Secrétariat Général de la Présidence',
-  'premier-ministre': 'Premier Ministre',
+  'premier-ministre': 'Vice-Président du Gouvernement',
   'ministre': 'Ministre',
   'assemblee': 'Assemblée Nationale',
   'senat': 'Sénat',
@@ -152,7 +152,7 @@ export const ROLE_DISPLAY_LABELS: Record<string, string> = {
   'cour-constitutionnelle': 'Cour Constitutionnelle',
   'dgjo': 'Direction du Journal Officiel',
   'citoyen': 'Citoyen',
-  'vice-president': 'Vice-Président',
+  'vice-president': 'Vice-Président de la République',
   'president': 'Président de la République',
   'professionnel-droit': 'Professionnel du Droit',
 };

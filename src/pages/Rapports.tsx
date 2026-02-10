@@ -132,7 +132,7 @@ const rapports: Rapport[] = [
     type: "special",
     periode: "2025-2026",
     dateGeneration: "2026-02-05",
-    auteur: "Cabinet du Premier Ministre",
+    auteur: "Cabinet du Vice-Président du Gouvernement",
     statut: "planifie",
     format: "pdf",
     taille: "-",
@@ -613,8 +613,8 @@ export default function Rapports() {
                             ministere.conformite >= 90
                               ? "bg-status-success/10 text-status-success"
                               : ministere.conformite >= 75
-                              ? "bg-status-warning/10 text-status-warning"
-                              : "bg-status-danger/10 text-status-danger"
+                                ? "bg-status-warning/10 text-status-warning"
+                                : "bg-status-danger/10 text-status-danger"
                           )}
                         >
                           {ministere.conformite}% conformité

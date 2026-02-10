@@ -4,6 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/services/logger';
 import {
     garApi,
     institutionsApi,
@@ -484,7 +485,7 @@ export function usePTMInitiatives(filters?: {
                     return { data: response.data as InitiativePTMApi[], pagination: response.pagination };
                 }
             } catch (err) {
-                console.warn('API PTM non disponible, utilisation des données mock');
+                logger.warn('API PTM non disponible, utilisation des données mock');
             }
             // Fallback: convertir les données mock camelCase → snake_case
             const { INITIATIVES_PTM } = await import('@/data/ptmData');

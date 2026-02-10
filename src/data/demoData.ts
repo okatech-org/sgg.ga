@@ -193,7 +193,7 @@ export const sgprData = {
       type: "decret" as const,
       statut: "en_attente" as const,
       dateReception: "2026-02-02",
-      emetteur: "Premier Ministre",
+      emetteur: "Vice-Président du Gouvernement",
     },
     {
       id: "dos-002",
@@ -323,7 +323,7 @@ export const juridictionnelData = {
         statut: "a_examiner" as const,
         dateReception: "2026-02-01",
         deadline: "2026-02-15",
-        demandeur: "Premier Ministre",
+        demandeur: "Vice-Président du Gouvernement",
       },
       {
         id: "avis-002",

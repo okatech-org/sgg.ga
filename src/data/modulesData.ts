@@ -7,7 +7,7 @@ export const modulesData = {
         title: "Gestion Axée sur les Résultats (GAR)",
         shortDescription: "Pilotage stratégique de l'action publique et suivi du Plan National de Développement.",
         fullDescription: "La Gestion Axée sur les Résultats (GAR) marque le passage d'une administration de moyens à une culture de la performance. Ce module offre une vue panoramique et temps réel sur l'avancement des projets prioritaires de l'État, assurant que chaque ressource investie se traduit par un impact concret et mesurable pour les populations gabonaises.",
-        sggRole: "Véritable tour de contrôle de l'action gouvernementale, le SGG utilise cet outil pour certifier les indicateurs de performance et alerter le Premier Ministre sur les points de blocage. Nous garantissons l'alignement strict de l'exécution administrative sur la vision stratégique définie par le Chef de l'État.",
+        sggRole: "Véritable tour de contrôle de l'action gouvernementale, le SGG utilise cet outil pour certifier les indicateurs de performance et alerter le Vice-Président du Gouvernement sur les points de blocage. Nous garantissons l'alignement strict de l'exécution administrative sur la vision stratégique définie par le Chef de l'État.",
         features: [
             "Tableaux de bord stratégiques et décisionnels",
             "Suivi en temps réel des indicateurs du PAG",

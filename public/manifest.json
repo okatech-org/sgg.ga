@@ -1,0 +1,51 @@
+{
+    "name": "SGG Digital",
+    "short_name": "SGG Digital",
+    "description": "Plateforme de digitalisation du Secrétariat Général du Gouvernement du Gabon",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0A1628",
+    "theme_color": "#1B3A5C",
+    "orientation": "any",
+    "lang": "fr",
+    "dir": "ltr",
+    "categories": [
+        "government",
+        "productivity"
+    ],
+    "icons": [
+        {
+            "src": "/emblem_gabon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/emblem_gabon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Tableau de bord",
+            "short_name": "Dashboard",
+            "url": "/dashboard",
+            "description": "Accéder au tableau de bord principal"
+        },
+        {
+            "name": "Matrice de Reporting",
+            "short_name": "Reporting",
+            "url": "/reporting/matrice",
+            "description": "Consulter la matrice de reporting PAG 2026"
+        },
+        {
+            "name": "Journal Officiel",
+            "short_name": "JO",
+            "url": "/journal-officiel",
+            "description": "Accéder au Journal Officiel numérique"
+        }
+    ]
+}

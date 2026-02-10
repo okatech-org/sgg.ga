@@ -1091,7 +1091,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   directeur_sgg: 'Directeur SGG',
   sg_ministere: 'Secretaire General Ministere',
   sgpr: 'SGPR',
-  premier_ministre: 'Premier Ministre',
+  premier_ministre: 'Vice-Président du Gouvernement',
   ministre: 'Ministre',
   assemblee: 'Assemblee Nationale',
   senat: 'Senat',

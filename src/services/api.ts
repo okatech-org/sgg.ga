@@ -5,6 +5,8 @@
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+import { apiLogger } from '@/services/logger';
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -80,6 +82,9 @@ export function isAuthenticated(): boolean {
 // HTTP CLIENT
 // ============================================================================
 
+// Track endpoints that have already failed to reduce console noise
+const _failedEndpoints = new Set<string>();
+
 async function fetchApi<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -109,9 +114,16 @@ async function fetchApi<T>(
             window.dispatchEvent(new CustomEvent('auth:logout'));
         }
 
+        // Clear failed endpoint on success
+        _failedEndpoints.delete(endpoint);
+
         return data;
     } catch (error) {
-        console.error('API Error:', error);
+        // Log only once per endpoint to reduce console noise
+        if (!_failedEndpoints.has(endpoint)) {
+            _failedEndpoints.add(endpoint);
+            apiLogger.warn('API non disponible', { endpoint, error: String(error) });
+        }
         return {
             success: false,
             error: {

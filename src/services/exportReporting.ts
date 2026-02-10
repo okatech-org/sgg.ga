@@ -5,6 +5,7 @@
 
 import type { MatriceReportingRow } from '@/types/reporting';
 import { STATUT_PROGRAMME_LABELS, STATUT_VALIDATION_LABELS } from '@/types/reporting';
+import { exportLogger } from '@/services/logger';
 
 // =============================================================================
 // CSV Export (natif, pas de dépendance)
@@ -117,11 +118,11 @@ export async function exportToExcel(
       XLSX.writeFile(wb, `matrice_reporting_${MOIS_LABELS[mois - 1]}_${annee}.xlsx`);
     } else {
       // Fallback: export as CSV with xlsx extension info
-      console.warn('[Export] xlsx non disponible, export CSV en fallback');
+      exportLogger.warn('xlsx non disponible, export CSV en fallback');
       exportToCSV(rows, mois, annee);
     }
   } catch {
-    console.warn('[Export] Erreur export Excel, fallback CSV');
+    exportLogger.warn('Erreur export Excel, fallback CSV');
     exportToCSV(rows, mois, annee);
   }
 }
@@ -174,11 +175,11 @@ export async function exportToPDF(
 
       doc.save(`matrice_reporting_${MOIS_LABELS[mois - 1]}_${annee}.pdf`);
     } else {
-      console.warn('[Export] jsPDF non disponible, fallback CSV');
+      exportLogger.warn('jsPDF non disponible, fallback CSV');
       exportToCSV(rows, mois, annee);
     }
   } catch {
-    console.warn('[Export] Erreur export PDF, fallback CSV');
+    exportLogger.warn('Erreur export PDF, fallback CSV');
     exportToCSV(rows, mois, annee);
   }
 }

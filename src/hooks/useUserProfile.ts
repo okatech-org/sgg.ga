@@ -99,7 +99,6 @@ export function useUserProfile() {
           .eq('id', user.id);
 
         // Avatar URL is derived from storage path
-        console.log('Avatar uploaded:', urlData.publicUrl);
 
         toast.success('Avatar mis a jour');
       }

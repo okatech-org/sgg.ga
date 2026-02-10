@@ -334,7 +334,7 @@ function CourConstitutionnelleView({ data }: { data: typeof juridictionnelData.c
                   <p className="text-xs text-muted-foreground">Contrôle de conformité</p>
                 </div>
                 <div className="p-2 rounded bg-muted/30">
-                  <p className="text-sm font-medium">Premier Ministre</p>
+                  <p className="text-sm font-medium">Vice-Président du Gouvernement</p>
                   <p className="text-xs text-muted-foreground">Contrôle de conformité</p>
                 </div>
                 <div className="p-2 rounded bg-muted/30">

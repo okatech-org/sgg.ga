@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/services/logger';
 
 // Types pour les catégories de rôles
 export type DemoCategory =
@@ -275,7 +276,7 @@ export function useDemoUser() {
       try {
         setDemoUser(JSON.parse(stored));
       } catch (e) {
-        console.error("Failed to parse demo user", e);
+        logger.error('Failed to parse demo user', { error: String(e) });
       }
     }
   }, []);

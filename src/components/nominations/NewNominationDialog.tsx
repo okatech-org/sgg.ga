@@ -31,19 +31,19 @@ const formSchema = z.object({
   prenom: z.string().min(2, "Le prénom est requis"),
   dateNaissance: z.string().min(1, "La date de naissance est requise"),
   email: z.string().email("Email invalide"),
-  
+
   // Poste
   poste: z.string().min(2, "Le poste est requis"),
   grade: z.string().min(1, "Le grade est requis"),
   direction: z.string().min(2, "La direction est requise"),
   ministere: z.string().min(1, "Le ministère est requis"),
-  
+
   // Documents
   cvUploaded: z.boolean(),
   acteNaissanceUploaded: z.boolean(),
   diplomesUploaded: z.boolean(),
   casierUploaded: z.boolean(),
-  
+
   // Confirmation
   confirmDelai: z.boolean().refine((val) => val === true, {
     message: "Vous devez confirmer le respect du délai de 30 jours",
@@ -82,7 +82,7 @@ const grades = [
 export function NewNominationDialog({ open, onOpenChange }: NewNominationDialogProps) {
   const [step, setStep] = useState(1);
   const { toast } = useToast();
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -103,7 +103,6 @@ export function NewNominationDialog({ open, onOpenChange }: NewNominationDialogP
   });
 
   const onSubmit = (data: FormValues) => {
-    console.log("Nomination submitted:", data);
     toast({
       title: "Nomination soumise",
       description: "Le dossier a été transmis au SGG pour contrôle de recevabilité.",
@@ -329,7 +328,7 @@ export function NewNominationDialog({ open, onOpenChange }: NewNominationDialogP
                     <div>
                       <p className="text-sm font-medium">Délai réglementaire</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Conformément à l'article 5 du décret n°0273/PR, la proposition 
+                        Conformément à l'article 5 du décret n°0273/PR, la proposition
                         doit être soumise au moins 30 jours avant le Conseil des Ministres.
                       </p>
                     </div>

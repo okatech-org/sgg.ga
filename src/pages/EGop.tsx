@@ -63,7 +63,7 @@ const conseilsInterministeriels: ConseilInterministeriel[] = [
     date: "2026-02-10",
     heure: "09:00",
     lieu: "Salle du Conseil, Cité de la Démocratie",
-    president: "Premier Ministre",
+    president: "Vice-Président du Gouvernement",
     statut: "programme",
     participantsConfirmes: 12,
     totalParticipants: 15,
@@ -87,7 +87,7 @@ const conseilsInterministeriels: ConseilInterministeriel[] = [
     date: "2026-01-28",
     heure: "09:00",
     lieu: "Salle du Conseil, Cité de la Démocratie",
-    president: "Premier Ministre",
+    president: "Vice-Président du Gouvernement",
     statut: "termine",
     participantsConfirmes: 14,
     totalParticipants: 14,
@@ -208,14 +208,14 @@ function ConseilCard({ conseil }: { conseil: ConseilInterministeriel }) {
         </div>
 
         <h3 className="font-semibold text-sm mb-2 line-clamp-2">{conseil.titre}</h3>
-        
+
         <div className="space-y-2 text-xs text-muted-foreground mb-4">
           <div className="flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5" />
-            <span>{new Date(conseil.date).toLocaleDateString("fr-FR", { 
-              weekday: "long", 
-              day: "numeric", 
-              month: "long" 
+            <span>{new Date(conseil.date).toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "numeric",
+              month: "long"
             })} à {conseil.heure}</span>
           </div>
           <div className="flex items-center gap-2">
@@ -265,14 +265,14 @@ function ReunionCard({ reunion }: { reunion: ReunionInterministerielle }) {
         </div>
 
         <h3 className="font-semibold text-sm mb-2 line-clamp-2">{reunion.objet}</h3>
-        
+
         <div className="space-y-2 text-xs text-muted-foreground mb-3">
           <div className="flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5" />
-            <span>{new Date(reunion.date).toLocaleDateString("fr-FR", { 
-              weekday: "short", 
-              day: "numeric", 
-              month: "short" 
+            <span>{new Date(reunion.date).toLocaleDateString("fr-FR", {
+              weekday: "short",
+              day: "numeric",
+              month: "short"
             })} à {reunion.heure}</span>
           </div>
           <div className="flex items-center gap-2">

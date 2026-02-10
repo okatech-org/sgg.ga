@@ -1,6 +1,6 @@
 /**
  * SGG Digital - Section Dashboard Exécutif
- * Pour: Président, Vice-Président, Premier Ministre, Ministre, SG Ministère
+ * Pour: Président, Vice-Président de la République, Vice-Président du Gouvernement, Ministre, SG Ministère
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

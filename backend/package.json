@@ -16,7 +16,9 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx src/scripts/migrate.ts",
     "db:seed": "tsx src/scripts/seed.ts",
-    "db:reset": "tsx src/scripts/reset.ts"
+    "db:reset": "tsx src/scripts/reset.ts",
+    "db:migrate-data": "tsx src/scripts/migrate-data.ts",
+    "db:migrate-data:dry": "tsx src/scripts/migrate-data.ts --dry-run"
   },
   "keywords": [
     "sgg",
@@ -50,6 +52,7 @@
     "pg": "^8.11.3",
     "uuid": "^9.0.1",
     "winston": "^3.11.0",
+    "ws": "^8.19.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -61,7 +64,9 @@
     "@types/multer": "^1.4.11",
     "@types/node": "^20.10.5",
     "@types/pg": "^8.10.9",
+    "@types/supertest": "^6.0.3",
     "@types/uuid": "^9.0.7",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "@vitest/coverage-v8": "^1.1.0",

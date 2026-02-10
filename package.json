@@ -10,7 +10,10 @@
     "lint": "bunx eslint .",
     "preview": "bunx --bun vite preview",
     "test": "bunx vitest run",
-    "test:watch": "bunx vitest"
+    "test:watch": "bunx vitest",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:headed": "npx playwright test --headed"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -71,7 +74,9 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",

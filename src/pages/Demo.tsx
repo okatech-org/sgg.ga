@@ -1,7 +1,8 @@
 /**
  * SGG Digital — Page Comptes de Démonstration
- * UX améliorée : recherche, filtres par catégorie, cartes adaptatives,
- * textes non tronqués, animations de feedback, responsive complet
+ * Layout en flux schématisant le processus SGG :
+ * Présidence → Gouvernement → SGG → Ministères/Directions → Institutions → Public
+ * Cartes compactes avec bouton "i" pour détails
  */
 
 import { useState, useMemo } from "react";
@@ -9,7 +10,11 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Crown,
   Building2,
@@ -21,16 +26,16 @@ import {
   GraduationCap,
   FileText,
   ArrowLeft,
-  Search,
   LogIn,
   Shield,
   Landmark,
   Gavel,
   Settings,
   Eye,
-  ChevronRight,
+  Info,
   Sparkles,
-  X,
+  ArrowDown,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,358 +44,392 @@ import { cn } from "@/lib/utils";
 interface DemoAccount {
   id: string;
   title: string;
+  shortTitle?: string;
   role: string;
   institution: string;
   email?: string;
   description: string;
   icon: React.ElementType;
-  category: DemoCategory;
+  flowLevel: FlowLevel;
   intensity: number;
   access: string[];
-  /** ID du ministère rattaché (pour sg-ministere / ministre) */
   ministereId?: string;
 }
 
-type DemoCategory = "executif" | "presidence" | "legislatif" | "juridictionnel" | "administratif" | "public";
+type FlowLevel =
+  | "presidence"      // Président, VP de la République
+  | "gouvernement"    // VPG, Ministres
+  | "sgg"             // SGG admin/directeur
+  | "ministeres"      // SG Ministères
+  | "directions"      // Directions sous tutelle
+  | "institutions"    // Assemblée, Sénat, Conseil d'État, CC, DGJO, SGPR
+  | "public";         // Citoyens, Professionnels
 
 // ─── DATA ───────────────────────────────────────────────────────────────────
 
 const demoAccounts: DemoAccount[] = [
+  // ═══ PRÉSIDENCE ═══
   {
     id: "president",
-    title: "President de la Republique",
-    role: "Autorite Supreme",
-    institution: "Presidence de la Republique",
-    description: "Destinataire des dossiers, autorite supreme. Vision globale de tous les indicateurs de performance et pilotage strategique.",
+    title: "Président de la République",
+    shortTitle: "Président",
+    role: "Autorité Suprême",
+    institution: "Présidence de la République",
+    description: "Destinataire des dossiers, autorité suprême. Vision globale de tous les indicateurs de performance et pilotage stratégique.",
     icon: Crown,
-    category: "executif",
+    flowLevel: "presidence",
     intensity: 5,
-    access: ["Tableau de Bord Executif", "Nominations", "Decisions"],
+    access: ["Tableau de Bord Exécutif", "Nominations", "Décisions"],
   },
   {
     id: "vice-president",
-    title: "Vice-President de la Republique",
-    role: "Vice-Presidence",
-    institution: "Presidence de la Republique",
-    description: "Peut presider le Conseil des Ministres. Acces aux rapports de synthese et suivi des priorites presidentielles.",
+    title: "Vice-Président de la République",
+    shortTitle: "VP République",
+    role: "Vice-Présidence de la République",
+    institution: "Présidence de la République",
+    description: "Peut présider le Conseil des Ministres. Accès aux rapports de synthèse et suivi des priorités présidentielles.",
     icon: Crown,
-    category: "executif",
+    flowLevel: "presidence",
     intensity: 5,
     access: ["Conseil des Ministres", "Tableau de Bord"],
   },
+  // ═══ GOUVERNEMENT ═══
   {
     id: "premier-ministre",
-    title: "Premier Ministre",
+    title: "Vice-Président du Gouvernement",
+    shortTitle: "VPG",
     role: "Chef du Gouvernement",
-    institution: "Primature",
-    description: "Coordonne l'action des ministres, preside les conseils interministeriels. Suivi operationnel du PAG.",
+    institution: "Vice-Présidence du Gouvernement",
+    description: "Coordonne l'action des ministres, préside les conseils interministériels. Suivi opérationnel du PAG. Consolide le PTM et transmet au SGPR.",
     icon: Building2,
-    category: "executif",
+    flowLevel: "gouvernement",
     intensity: 4,
-    access: ["Conseils Interministeriels", "Coordination", "Reporting"],
+    access: ["Conseils Interministériels", "Coordination", "Reporting", "PTM Consolidation"],
   },
   {
     id: "ministre",
     title: "Ministre Sectoriel",
+    shortTitle: "Ministre",
     role: "Membre du Gouvernement",
-    institution: "Ministere (ex: Economie)",
+    institution: "Ministère (ex: Économie)",
     description: "Propose les textes et nominations. Consultation des matrices de reporting et suivi sectoriel.",
     icon: Briefcase,
-    category: "executif",
+    flowLevel: "gouvernement",
     intensity: 4,
     access: ["Propositions", "Nominations", "Reporting GAR", "Matrice Reporting"],
   },
-  {
-    id: "sg-ministere",
-    title: "SG Min. Énergie et Eau",
-    role: "Interface Operationnelle",
-    institution: "Ministère de l'Énergie et de l'Eau",
-    ministereId: "min-energie",
-    description: "SG du Ministère de l'Énergie — pilote de 2 programmes PAG (Électricité & Eau Potable). Saisie des rapports mensuels.",
-    icon: Users,
-    category: "executif",
-    intensity: 4,
-    access: ["Saisie GAR", "Suivi Nominations", "Documents", "Matrice Reporting"],
-  },
-  {
-    id: "sg-ministere",
-    title: "SG Min. Santé",
-    role: "Interface Operationnelle",
-    institution: "Ministère de la Santé",
-    ministereId: "min-sante",
-    description: "SG du Ministère de la Santé — pilote du programme CSU et co-responsable sur le programme Eau Potable.",
-    icon: Users,
-    category: "executif",
-    intensity: 4,
-    access: ["Saisie GAR", "Suivi Nominations", "Documents", "Matrice Reporting"],
-  },
-  {
-    id: "sg-ministere",
-    title: "SG Min. Défense",
-    role: "Interface Operationnelle",
-    institution: "Ministère de la Défense Nationale",
-    ministereId: "min-defense",
-    description: "SG du Ministère de la Défense — co-responsable sur les programmes Routes et Justice & Sécurité.",
-    icon: Users,
-    category: "executif",
-    intensity: 4,
-    access: ["Saisie GAR", "Suivi Nominations", "Documents", "Matrice Reporting"],
-  },
-  // ===== PERSONAS PTM — Directions sous tutelle =====
-  {
-    id: "directeur-cgi",
-    title: "Dir. CGI (Éco Numérique)",
-    role: "Direction sous tutelle",
-    institution: "Centre Gabonais d'Informatique",
-    ministereId: "min-numerique",
-    description: "Directeur du CGI — remplit la matrice PTM pour sa direction et la transmet au SG du ministère.",
-    icon: Users,
-    category: "executif",
-    intensity: 3,
-    access: ["Saisie PTM", "Matrice PTM Direction"],
-  },
-  {
-    id: "directeur-dgpn",
-    title: "Dir. DGPN (Éco Numérique)",
-    role: "Direction sous tutelle",
-    institution: "Direction Générale de la Programmation Numérique",
-    ministereId: "min-numerique",
-    description: "Directeur de la DGPN — saisit les initiatives numériques et les transmet au SG.",
-    icon: Users,
-    category: "executif",
-    intensity: 3,
-    access: ["Saisie PTM", "Matrice PTM Direction"],
-  },
-  {
-    id: "sg-ministere-fp",
-    title: "SG Min. Fonction Publique",
-    role: "Interface Opérationnelle",
-    institution: "Ministère de la Fonction Publique",
-    ministereId: "min-fonction-publique",
-    description: "SG du Ministère de la Fonction Publique — consolide les matrices des directions (DGFP, ENAP) et transmet au SGG.",
-    icon: Users,
-    category: "executif",
-    intensity: 4,
-    access: ["Consolidation PTM", "Saisie GAR", "Documents", "Matrice Reporting"],
-  },
-  {
-    id: "sgpr",
-    title: "SGPR",
-    role: "Secretariat General Presidence",
-    institution: "Presidence de la Republique",
-    description: "Coordination strategique, transmission des dossiers. Validation des matrices de reporting au niveau SGPR.",
-    icon: Shield,
-    category: "presidence",
-    intensity: 5,
-    access: ["Lecture Complete", "Arbitrages", "Decisions Presidentielles", "Matrice SGPR"],
-  },
-  {
-    id: "assemblee",
-    title: "Assemblee Nationale",
-    role: "Chambre Legislative",
-    institution: "Parlement",
-    description: "Reception et examen des projets de loi. Suivi du cycle legislatif complet.",
-    icon: Landmark,
-    category: "legislatif",
-    intensity: 4,
-    access: ["Projets de Loi", "Suivi Legislatif"],
-  },
-  {
-    id: "senat",
-    title: "Senat",
-    role: "Chambre Haute",
-    institution: "Parlement",
-    description: "Reception des projets de loi adoptes par l'Assemblee. Examen en seconde lecture.",
-    icon: Landmark,
-    category: "legislatif",
-    intensity: 4,
-    access: ["Projets de Loi", "Suivi Legislatif"],
-  },
-  {
-    id: "conseil-etat",
-    title: "Conseil d'Etat",
-    role: "Juridiction Administrative",
-    institution: "Conseil d'Etat",
-    description: "Avis consultatifs sur les projets de textes legislatifs et reglementaires.",
-    icon: Gavel,
-    category: "juridictionnel",
-    intensity: 4,
-    access: ["Consultation Textes", "Avis Juridiques"],
-  },
-  {
-    id: "cour-constitutionnelle",
-    title: "Cour Constitutionnelle",
-    role: "Controle Constitutionnel",
-    institution: "Cour Constitutionnelle",
-    description: "Controle de constitutionnalite des lois et ordonnances. Garant de la constitutionnalite.",
-    icon: Scale,
-    category: "juridictionnel",
-    intensity: 3,
-    access: ["Controle Constitutionnel", "Textes"],
-  },
+  // ═══ SGG (centre du processus) ═══
   {
     id: "sgg-admin",
     title: "Administrateur SGG",
-    role: "Admin Systeme",
+    shortTitle: "Admin SGG",
+    role: "Admin Système",
     institution: "SGG — DCSI",
     email: "admin.systeme@sgg.ga",
-    description: "Configuration complete de la plateforme. Acces a tous les modules, gestion des utilisateurs et des roles.",
+    description: "Configuration complète de la plateforme. Accès à tous les modules, gestion des utilisateurs et des rôles.",
     icon: Settings,
-    category: "administratif",
+    flowLevel: "sgg",
     intensity: 5,
     access: ["Configuration", "Tous Modules", "Administration", "Matrice Admin"],
   },
   {
     id: "sgg-directeur",
     title: "Directeur SGG",
+    shortTitle: "Dir. SGG",
     role: "Direction",
     institution: "SGG",
     email: "jp.nzoghe@sgg.ga",
-    description: "Lecture et edition sur perimetre. Validation des rapports ministeriels et suivi des indicateurs.",
+    description: "Lecture et édition sur périmètre. Validation des rapports ministériels, consolidation PTM des ministères et suivi des indicateurs.",
     icon: GraduationCap,
-    category: "administratif",
+    flowLevel: "sgg",
     intensity: 4,
-    access: ["Lecture", "Edition Perimetre", "Validation", "Matrice Validation"],
+    access: ["Lecture", "Édition Périmètre", "Validation", "Matrice Validation", "Consolidation PTM"],
+  },
+  // ═══ SG MINISTÈRES ═══
+  {
+    id: "sg-ministere",
+    title: "SG Min. Énergie et Eau",
+    shortTitle: "SG Énergie",
+    role: "Interface Opérationnelle",
+    institution: "Ministère de l'Énergie et de l'Eau",
+    ministereId: "min-energie",
+    description: "SG du Ministère de l'Énergie — pilote de 2 programmes PAG (Électricité & Eau Potable). Saisie des rapports mensuels. Consolide les PTM de ses directions.",
+    icon: Users,
+    flowLevel: "ministeres",
+    intensity: 4,
+    access: ["Saisie GAR", "Consolidation PTM", "Suivi Nominations", "Documents"],
+  },
+  {
+    id: "sg-ministere",
+    title: "SG Min. Santé",
+    shortTitle: "SG Santé",
+    role: "Interface Opérationnelle",
+    institution: "Ministère de la Santé",
+    ministereId: "min-sante",
+    description: "SG du Ministère de la Santé — pilote du programme CSU et co-responsable sur le programme Eau Potable.",
+    icon: Users,
+    flowLevel: "ministeres",
+    intensity: 4,
+    access: ["Saisie GAR", "Suivi Nominations", "Documents", "Matrice Reporting"],
+  },
+  {
+    id: "sg-ministere",
+    title: "SG Min. Défense",
+    shortTitle: "SG Défense",
+    role: "Interface Opérationnelle",
+    institution: "Ministère de la Défense Nationale",
+    ministereId: "min-defense",
+    description: "SG du Ministère de la Défense — co-responsable sur les programmes Routes et Justice & Sécurité.",
+    icon: Users,
+    flowLevel: "ministeres",
+    intensity: 4,
+    access: ["Saisie GAR", "Suivi Nominations", "Documents", "Matrice Reporting"],
+  },
+  {
+    id: "sg-ministere-fp",
+    title: "SG Min. Fonction Publique",
+    shortTitle: "SG Fonc. Pub.",
+    role: "Interface Opérationnelle",
+    institution: "Ministère de la Fonction Publique",
+    ministereId: "min-fonction-publique",
+    description: "SG du Ministère de la Fonction Publique — consolide les matrices des directions (DGFP, ENAP) et transmet au SGG.",
+    icon: Users,
+    flowLevel: "ministeres",
+    intensity: 4,
+    access: ["Consolidation PTM", "Saisie GAR", "Documents", "Matrice Reporting"],
+  },
+  // ═══ DIRECTIONS SOUS TUTELLE ═══
+  {
+    id: "directeur-cgi",
+    title: "Dir. CGI (Éco Numérique)",
+    shortTitle: "Dir. CGI",
+    role: "Direction sous tutelle",
+    institution: "Centre Gabonais d'Informatique",
+    ministereId: "min-numerique",
+    description: "Directeur du CGI — remplit la matrice PTM pour sa direction et la transmet au SG du ministère.",
+    icon: Layers,
+    flowLevel: "directions",
+    intensity: 3,
+    access: ["Saisie PTM", "Matrice PTM Direction"],
+  },
+  {
+    id: "directeur-dgpn",
+    title: "Dir. DGPN (Éco Numérique)",
+    shortTitle: "Dir. DGPN",
+    role: "Direction sous tutelle",
+    institution: "Dir. Générale Programmation Numérique",
+    ministereId: "min-numerique",
+    description: "Directeur de la DGPN — saisit les initiatives numériques et les transmet au SG.",
+    icon: Layers,
+    flowLevel: "directions",
+    intensity: 3,
+    access: ["Saisie PTM", "Matrice PTM Direction"],
+  },
+  // ═══ INSTITUTIONS ═══
+  {
+    id: "sgpr",
+    title: "SGPR",
+    shortTitle: "SGPR",
+    role: "Secrétariat Général Présidence",
+    institution: "Présidence de la République",
+    description: "Coordination stratégique, transmission des dossiers. Validation des matrices de reporting au niveau SGPR.",
+    icon: Shield,
+    flowLevel: "institutions",
+    intensity: 5,
+    access: ["Lecture Complète", "Arbitrages", "Décisions Présidentielles", "Matrice SGPR"],
+  },
+  {
+    id: "assemblee",
+    title: "Assemblée Nationale",
+    shortTitle: "Assemblée",
+    role: "Chambre Législative",
+    institution: "Parlement",
+    description: "Réception et examen des projets de loi. Suivi du cycle législatif complet.",
+    icon: Landmark,
+    flowLevel: "institutions",
+    intensity: 4,
+    access: ["Projets de Loi", "Suivi Législatif"],
+  },
+  {
+    id: "senat",
+    title: "Sénat",
+    shortTitle: "Sénat",
+    role: "Chambre Haute",
+    institution: "Parlement",
+    description: "Réception des projets de loi adoptés par l'Assemblée. Examen en seconde lecture.",
+    icon: Landmark,
+    flowLevel: "institutions",
+    intensity: 4,
+    access: ["Projets de Loi", "Suivi Législatif"],
+  },
+  {
+    id: "conseil-etat",
+    title: "Conseil d'État",
+    shortTitle: "Conseil d'État",
+    role: "Juridiction Administrative",
+    institution: "Conseil d'État",
+    description: "Avis consultatifs sur les projets de textes législatifs et réglementaires.",
+    icon: Gavel,
+    flowLevel: "institutions",
+    intensity: 4,
+    access: ["Consultation Textes", "Avis Juridiques"],
+  },
+  {
+    id: "cour-constitutionnelle",
+    title: "Cour Constitutionnelle",
+    shortTitle: "Cour Const.",
+    role: "Contrôle Constitutionnel",
+    institution: "Cour Constitutionnelle",
+    description: "Contrôle de constitutionnalité des lois et ordonnances. Garant de la constitutionnalité.",
+    icon: Scale,
+    flowLevel: "institutions",
+    intensity: 3,
+    access: ["Contrôle Constitutionnel", "Textes"],
   },
   {
     id: "dgjo",
     title: "Direction Journal Officiel",
+    shortTitle: "DGJO",
     role: "Publication",
-    institution: "DGJO (rattachee SGG)",
+    institution: "DGJO (rattachée SGG)",
     email: "direction@jo.ga",
-    description: "Publication et gestion du Journal Officiel. Consolidation des textes legislatifs et reglementaires.",
+    description: "Publication et gestion du Journal Officiel. Consolidation des textes législatifs et réglementaires.",
     icon: BookOpen,
-    category: "administratif",
+    flowLevel: "institutions",
     intensity: 5,
     access: ["Publication JO", "Consolidation Textes", "Archives"],
   },
+  // ═══ PUBLIC ═══
   {
     id: "citoyen",
     title: "Citoyen",
-    role: "Acces Public",
+    shortTitle: "Citoyen",
+    role: "Accès Public",
     institution: "Grand Public",
-    description: "Consultation du Journal Officiel et recherche de textes publies. Acces en lecture libre.",
+    description: "Consultation du Journal Officiel et recherche de textes publiés. Accès en lecture libre.",
     icon: Globe,
-    category: "public",
+    flowLevel: "public",
     intensity: 2,
     access: ["Journal Officiel", "Recherche Textes"],
   },
   {
     id: "professionnel-droit",
     title: "Professionnel du Droit",
-    role: "Acces Public",
+    shortTitle: "Pro. Droit",
+    role: "Accès Public",
     institution: "Avocats, Notaires, Juristes",
-    description: "Consultation avancee des textes juridiques avec filtres et recherche full-text. Acces API.",
+    description: "Consultation avancée des textes juridiques avec filtres et recherche full-text. Accès API.",
     icon: FileText,
-    category: "public",
+    flowLevel: "public",
     intensity: 2,
-    access: ["Journal Officiel", "Recherche Avancee", "API"],
+    access: ["Journal Officiel", "Recherche Avancée", "API"],
   },
 ];
 
-const categoryConfig: Record<DemoCategory, {
+// Flow level config — ordered to show the process chain
+const flowConfig: Record<FlowLevel, {
   label: string;
+  sublabel: string;
   color: string;
-  bgColor: string;
-  borderColor: string;
+  accent: string;
+  bgCard: string;
+  borderCard: string;
   icon: React.ElementType;
-  description: string;
 }> = {
-  executif: {
-    label: "Executif",
-    color: "bg-government-navy text-white",
-    bgColor: "bg-government-navy/5",
-    borderColor: "border-government-navy/20",
-    icon: Crown,
-    description: "Gouvernement et ministeres",
-  },
   presidence: {
-    label: "Presidence",
-    color: "bg-amber-500 text-white",
-    bgColor: "bg-amber-50",
-    borderColor: "border-amber-200",
-    icon: Shield,
-    description: "Coordination strategique",
+    label: "Présidence",
+    sublabel: "Destinataire final",
+    color: "bg-amber-600 text-white",
+    accent: "bg-amber-600",
+    bgCard: "bg-amber-50 dark:bg-amber-950/20",
+    borderCard: "border-amber-200 dark:border-amber-800/40",
+    icon: Crown,
   },
-  legislatif: {
-    label: "Legislatif",
-    color: "bg-blue-600 text-white",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
-    icon: Landmark,
-    description: "Parlement et chambres",
+  gouvernement: {
+    label: "Gouvernement",
+    sublabel: "Chef du Gouvernement & Ministres",
+    color: "bg-government-navy text-white",
+    accent: "bg-government-navy",
+    bgCard: "bg-blue-50 dark:bg-blue-950/20",
+    borderCard: "border-blue-200 dark:border-blue-800/40",
+    icon: Building2,
   },
-  juridictionnel: {
-    label: "Juridictionnel",
-    color: "bg-emerald-600 text-white",
-    bgColor: "bg-emerald-50",
-    borderColor: "border-emerald-200",
-    icon: Gavel,
-    description: "Juridictions et controle",
-  },
-  administratif: {
-    label: "Administratif SGG",
+  sgg: {
+    label: "SGG",
+    sublabel: "Centre de coordination",
     color: "bg-indigo-600 text-white",
-    bgColor: "bg-indigo-50",
-    borderColor: "border-indigo-200",
+    accent: "bg-indigo-600",
+    bgCard: "bg-indigo-50 dark:bg-indigo-950/20",
+    borderCard: "border-indigo-200 dark:border-indigo-800/40",
     icon: Settings,
-    description: "Equipe technique SGG",
+  },
+  ministeres: {
+    label: "SG Ministères",
+    sublabel: "Consolident les directions → poussent au SGG",
+    color: "bg-sky-600 text-white",
+    accent: "bg-sky-600",
+    bgCard: "bg-sky-50 dark:bg-sky-950/20",
+    borderCard: "border-sky-200 dark:border-sky-800/40",
+    icon: Users,
+  },
+  directions: {
+    label: "Directions",
+    sublabel: "Remplissent la matrice PTM → poussent au SG",
+    color: "bg-teal-600 text-white",
+    accent: "bg-teal-600",
+    bgCard: "bg-teal-50 dark:bg-teal-950/20",
+    borderCard: "border-teal-200 dark:border-teal-800/40",
+    icon: Layers,
+  },
+  institutions: {
+    label: "Institutions",
+    sublabel: "Parlement, Juridictions, SGPR, DGJO",
+    color: "bg-emerald-600 text-white",
+    accent: "bg-emerald-600",
+    bgCard: "bg-emerald-50 dark:bg-emerald-950/20",
+    borderCard: "border-emerald-200 dark:border-emerald-800/40",
+    icon: Landmark,
   },
   public: {
-    label: "Acces Public",
+    label: "Accès Public",
+    sublabel: "Citoyens & Professionnels",
     color: "bg-gray-600 text-white",
-    bgColor: "bg-gray-50",
-    borderColor: "border-gray-200",
+    accent: "bg-gray-600",
+    bgCard: "bg-gray-50 dark:bg-gray-950/20",
+    borderCard: "border-gray-200 dark:border-gray-700/40",
     icon: Eye,
-    description: "Citoyens et professionnels",
   },
 };
+
+const FLOW_ORDER: FlowLevel[] = [
+  "presidence",
+  "gouvernement",
+  "sgg",
+  "ministeres",
+  "directions",
+  "institutions",
+  "public",
+];
 
 // ─── COMPONENT ──────────────────────────────────────────────────────────────
 
 export default function Demo() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState<DemoCategory | "all">("all");
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  // Filtered accounts
-  const filteredAccounts = useMemo(() => {
-    let accounts = demoAccounts;
-
-    if (activeCategory !== "all") {
-      accounts = accounts.filter((a) => a.category === activeCategory);
-    }
-
-    if (search.trim()) {
-      const q = search.toLowerCase().trim();
-      accounts = accounts.filter(
-        (a) =>
-          a.title.toLowerCase().includes(q) ||
-          a.role.toLowerCase().includes(q) ||
-          a.institution.toLowerCase().includes(q) ||
-          a.description.toLowerCase().includes(q) ||
-          a.access.some((acc) => acc.toLowerCase().includes(q))
-      );
-    }
-
-    return accounts;
-  }, [search, activeCategory]);
-
-  // Group by category
-  const groupedAccounts = useMemo(() => {
-    const categories = Object.keys(categoryConfig) as DemoCategory[];
-    return categories
-      .map((cat) => ({
-        category: cat,
-        config: categoryConfig[cat],
-        accounts: filteredAccounts.filter((a) => a.category === cat),
+  const flowGroups = useMemo(() => {
+    return FLOW_ORDER
+      .map((level) => ({
+        level,
+        config: flowConfig[level],
+        accounts: demoAccounts.filter((a) => a.flowLevel === level),
       }))
       .filter((g) => g.accounts.length > 0);
-  }, [filteredAccounts]);
+  }, []);
 
   const handleDemoAccess = (account: DemoAccount) => {
-    setLoadingId(account.ministereId || account.id);
+    const key = account.ministereId || account.id;
+    setLoadingId(key);
     sessionStorage.setItem(
       "demoUser",
       JSON.stringify({
@@ -400,14 +439,12 @@ export default function Demo() {
         institution: account.institution,
         email: account.email,
         access: account.access,
-        category: account.category,
+        category: account.flowLevel,
         ministereId: account.ministereId || undefined,
       })
     );
-
-    // Slight delay for visual feedback
     setTimeout(() => {
-      switch (account.category) {
+      switch (account.flowLevel) {
         case "public":
           navigate("/journal-officiel");
           break;
@@ -417,26 +454,23 @@ export default function Demo() {
     }, 400);
   };
 
-  const totalCount = demoAccounts.length;
-  const filteredCount = filteredAccounts.length;
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-background dark:from-gray-950 dark:to-background">
-      {/* ── HEADER ────────────────────────────────────────────────── */}
+      {/* ── HEADER ─────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 border-b bg-white/90 dark:bg-gray-950/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate("/")}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <img
               src="/emblem_gabon.png"
-              alt="Embleme du Gabon"
+              alt="Emblème du Gabon"
               className="h-8 w-8 object-contain shrink-0"
             />
             <div className="hidden sm:flex flex-col leading-none">
               <span className="text-[9px] uppercase font-semibold tracking-wider text-muted-foreground">
-                Presidence de la Republique
+                Présidence de la République
               </span>
               <span className="font-serif font-bold text-xs uppercase text-foreground">
                 SGG Digital
@@ -445,334 +479,228 @@ export default function Demo() {
           </div>
           <Badge className="bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400">
             <Sparkles className="h-3 w-3 mr-1" />
-            Mode Demo
+            Mode Démo
           </Badge>
         </div>
       </header>
 
-      {/* ── HERO ──────────────────────────────────────────────────── */}
+      {/* ── HERO (compact) ─────────────────────────────────── */}
       <section className="relative overflow-hidden bg-government-navy text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTAgNDAgTDQwIDAiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9IjAuMDUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJ1cmwoI2cpIi8+PC9zdmc+')] opacity-50" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
-            Comptes de Demonstration
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-8">
+          <h1 className="text-xl sm:text-2xl font-bold mb-2">
+            Comptes de Démonstration
           </h1>
-          <p className="text-white/70 max-w-2xl text-sm sm:text-base leading-relaxed">
-            Explorez SGG Digital selon differents profils. Chaque compte offre
-            une vue adaptee au role institutionnel avec des donnees fictives.
+          <p className="text-white/70 max-w-2xl text-sm leading-relaxed">
+            Choisissez un profil pour explorer SGG Digital. Les comptes sont organisés selon le processus gouvernemental — du sommet de l'État jusqu'au citoyen.
           </p>
-          <div className="flex flex-wrap gap-2 mt-5">
-            {Object.entries(categoryConfig).map(([key, cfg]) => {
-              const count = demoAccounts.filter((a) => a.category === key).length;
-              return (
-                <div
-                  key={key}
-                  className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1 text-xs text-white/80"
-                >
-                  <cfg.icon className="h-3 w-3" />
-                  <span>{cfg.label}</span>
-                  <span className="bg-white/20 rounded-full px-1.5 text-[10px] font-semibold">{count}</span>
-                </div>
-              );
-            })}
-          </div>
         </div>
       </section>
 
-      {/* ── FILTERS ───────────────────────────────────────────────── */}
-      <div className="sticky top-14 z-40 bg-white/90 dark:bg-gray-950/90 backdrop-blur-md border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher un compte, role, institution..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9 text-sm"
-              />
-              {search && (
-                <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted"
-                  onClick={() => setSearch("")}
-                >
-                  <X className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-
-            {/* Category pills */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-              <button
-                onClick={() => setActiveCategory("all")}
-                className={cn(
-                  "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
-                  activeCategory === "all"
-                    ? "bg-government-navy text-white shadow-sm"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                )}
-              >
-                Tous ({totalCount})
-              </button>
-              {(Object.entries(categoryConfig) as [DemoCategory, typeof categoryConfig[DemoCategory]][]).map(
-                ([key, cfg]) => {
-                  const count = demoAccounts.filter((a) => a.category === key).length;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setActiveCategory(key)}
-                      className={cn(
-                        "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5",
-                        activeCategory === key
-                          ? cn(cfg.color, "shadow-sm")
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      )}
-                    >
-                      <cfg.icon className="h-3 w-3" />
-                      {cfg.label} ({count})
-                    </button>
-                  );
-                }
-              )}
-            </div>
-          </div>
-
-          {/* Active filters info */}
-          {(search || activeCategory !== "all") && (
-            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-              <span>
-                {filteredCount} resultat{filteredCount > 1 ? "s" : ""}
-                {filteredCount < totalCount && ` sur ${totalCount}`}
-              </span>
-              {(search || activeCategory !== "all") && (
-                <button
-                  onClick={() => {
-                    setSearch("");
-                    setActiveCategory("all");
-                  }}
-                  className="text-government-navy hover:underline font-medium"
-                >
-                  Reinitialiser
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── ACCOUNTS GRID ─────────────────────────────────────────── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {filteredCount === 0 ? (
-          <div className="text-center py-16">
-            <Search className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-lg font-medium text-muted-foreground">Aucun compte trouve</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">
-              Essayez un autre terme de recherche ou categorie.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              onClick={() => {
-                setSearch("");
-                setActiveCategory("all");
-              }}
-            >
-              Voir tous les comptes
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {groupedAccounts.map((group) => (
-              <section key={group.category}>
-                {/* Section header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold",
-                      group.config.color
-                    )}
-                  >
-                    <group.config.icon className="h-4 w-4" />
-                    {group.config.label}
+      {/* ── FLOW CHAIN ─────────────────────────────────────── */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <div className="space-y-2">
+          {flowGroups.map((group, groupIndex) => {
+            const isCenter = group.level === "sgg";
+            return (
+              <div key={group.level}>
+                {/* Arrow connector between levels */}
+                {groupIndex > 0 && (
+                  <div className="flex justify-center py-1">
+                    <div className="flex flex-col items-center">
+                      <ArrowDown className="h-5 w-5 text-muted-foreground/40" />
+                    </div>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {group.config.description} — {group.accounts.length} compte{group.accounts.length > 1 ? "s" : ""}
-                  </span>
-                </div>
+                )}
 
-                {/* Cards grid */}
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {group.accounts.map((account) => {
-                    const accountKey = account.ministereId || account.id;
-                    const isLoading = loadingId === accountKey;
-
-                    return (
-                      <Card
-                        key={accountKey}
-                        className={cn(
-                          "group relative overflow-hidden transition-all duration-300 cursor-pointer border",
-                          group.config.borderColor,
-                          isLoading
-                            ? "ring-2 ring-government-gold scale-[0.98] opacity-80"
-                            : "hover:shadow-lg hover:border-government-gold/40 hover:-translate-y-0.5"
-                        )}
-                        onClick={() => !loadingId && handleDemoAccess(account)}
-                      >
-                        {/* Category accent bar */}
-                        <div
-                          className={cn(
-                            "absolute top-0 left-0 right-0 h-1 transition-all",
-                            group.config.color.replace("text-white", ""),
-                            "group-hover:h-1.5"
-                          )}
-                        />
-
-                        <CardContent className="p-4 pt-5">
-                          {/* Top row: icon + title + intensity */}
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={cn(
-                                "shrink-0 flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
-                                group.config.bgColor,
-                                "group-hover:scale-105"
-                              )}
-                            >
-                              <account.icon className="h-5 w-5 text-foreground/70" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-sm leading-tight text-foreground">
-                                {account.title}
-                              </h3>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {account.institution}
-                              </p>
-                            </div>
-                            {/* Intensity stars */}
-                            <div className="shrink-0 flex gap-px">
-                              {[1, 2, 3, 4, 5].map((i) => (
-                                <span
-                                  key={i}
-                                  className={cn(
-                                    "text-[10px] leading-none",
-                                    i <= account.intensity
-                                      ? "text-amber-500"
-                                      : "text-gray-300 dark:text-gray-700"
-                                  )}
-                                >
-                                  ★
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Role badge */}
-                          <div className="mt-2.5">
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-[10px] font-medium",
-                                group.config.borderColor
-                              )}
-                            >
-                              {account.role}
-                            </Badge>
-                          </div>
-
-                          {/* Description — never truncated */}
-                          <p className="text-xs text-muted-foreground mt-2.5 leading-relaxed">
-                            {account.description}
-                          </p>
-
-                          {/* Access badges — wrap freely, never truncated */}
-                          <div className="flex flex-wrap gap-1 mt-3">
-                            {account.access.map((acc) => (
-                              <span
-                                key={acc}
-                                className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
-                              >
-                                {acc}
-                              </span>
-                            ))}
-                          </div>
-
-                          {/* Email if available */}
-                          {account.email && (
-                            <p className="text-[10px] text-muted-foreground/60 mt-2 truncate">
-                              {account.email}
-                            </p>
-                          )}
-
-                          {/* CTA Button */}
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className={cn(
-                              "w-full mt-3 h-9 text-xs font-medium transition-all",
-                              "bg-government-navy hover:bg-government-navy/90 text-white",
-                              "group-hover:shadow-sm"
-                            )}
-                            disabled={!!loadingId}
-                          >
-                            {isLoading ? (
-                              <span className="flex items-center gap-2">
-                                <span className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Connexion...
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-2">
-                                <LogIn className="h-3.5 w-3.5" />
-                                Se connecter
-                                <ChevronRight className="h-3 w-3 ml-auto opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                              </span>
-                            )}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
-
-        {/* ── LEGEND ────────────────────────────────────────────────── */}
-        <div className="mt-10 p-5 rounded-xl bg-muted/40 border">
-          <h3 className="font-semibold text-sm mb-3">Legende — Intensite de Relation avec le SGG</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-muted-foreground">
-            {[
-              { stars: 5, label: "Tres etroite" },
-              { stars: 4, label: "Frequente" },
-              { stars: 3, label: "Reguliere" },
-              { stars: 2, label: "Occasionnelle" },
-            ].map(({ stars, label }) => (
-              <div key={stars} className="flex items-center gap-2">
-                <div className="flex gap-px">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <span
-                      key={i}
-                      className={cn(
-                        "text-xs",
-                        i <= stars ? "text-amber-500" : "text-gray-300 dark:text-gray-700"
-                      )}
-                    >
-                      ★
+                {/* Level section */}
+                <div
+                  className={cn(
+                    "rounded-xl border p-4 transition-all",
+                    isCenter
+                      ? "ring-2 ring-indigo-400/50 shadow-lg shadow-indigo-100 dark:shadow-indigo-950/30"
+                      : "",
+                    group.config.bgCard,
+                    group.config.borderCard
+                  )}
+                >
+                  {/* Level header */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold", group.config.color)}>
+                      <group.config.icon className="h-3.5 w-3.5" />
+                      {group.config.label}
+                    </div>
+                    <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                      {group.config.sublabel}
                     </span>
-                  ))}
+                    {isCenter && (
+                      <Badge className="ml-auto bg-indigo-100 text-indigo-700 border-indigo-200 text-[10px] dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700">
+                        Centre du processus
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Cards grid */}
+                  <div className={cn(
+                    "grid gap-2",
+                    group.accounts.length <= 2
+                      ? "grid-cols-1 sm:grid-cols-2 max-w-lg mx-auto"
+                      : group.accounts.length <= 4
+                        ? "grid-cols-2 sm:grid-cols-4"
+                        : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
+                  )}>
+                    {group.accounts.map((account) => {
+                      const accountKey = account.ministereId || account.id;
+                      const isLoading = loadingId === accountKey;
+
+                      return (
+                        <CompactCard
+                          key={`${accountKey}-${account.title}`}
+                          account={account}
+                          accent={group.config.accent}
+                          isLoading={isLoading}
+                          disabled={!!loadingId}
+                          onConnect={() => handleDemoAccess(account)}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-                <span>{label}</span>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* Footer note */}
+        {/* Footer */}
         <p className="text-center text-xs text-muted-foreground/50 mt-8 pb-4">
-          SGG Digital — Mode Demonstration — Les donnees affichees sont fictives
+          SGG Digital — Mode Démonstration — Les données affichées sont fictives
         </p>
       </main>
     </div>
+  );
+}
+
+// ─── COMPACT CARD WITH INFO BUTTON ──────────────────────────────────────────
+
+function CompactCard({
+  account,
+  accent,
+  isLoading,
+  disabled,
+  onConnect,
+}: {
+  account: DemoAccount;
+  accent: string;
+  isLoading: boolean;
+  disabled: boolean;
+  onConnect: () => void;
+}) {
+  const Icon = account.icon;
+
+  return (
+    <Card
+      className={cn(
+        "group relative overflow-hidden transition-all duration-200 cursor-pointer border",
+        isLoading
+          ? "ring-2 ring-government-gold scale-[0.97] opacity-80"
+          : "hover:shadow-md hover:border-government-gold/40 hover:-translate-y-0.5"
+      )}
+      onClick={() => !disabled && onConnect()}
+    >
+      {/* Accent bar */}
+      <div className={cn("absolute top-0 left-0 right-0 h-0.5", accent, "group-hover:h-1 transition-all")} />
+
+      <CardContent className="p-3 pt-3">
+        <div className="flex items-center gap-2.5">
+          {/* Icon */}
+          <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg bg-muted/60 group-hover:scale-105 transition-transform">
+            <Icon className="h-4 w-4 text-foreground/70" />
+          </div>
+
+          {/* Title + role */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-xs leading-tight text-foreground truncate">
+              {account.shortTitle || account.title}
+            </h3>
+            <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+              {account.role}
+            </p>
+          </div>
+
+          {/* Info button */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className="shrink-0 p-1 rounded-full hover:bg-muted transition-colors"
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Plus d'informations"
+              >
+                <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-72 p-0"
+              side="top"
+              align="end"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 space-y-3">
+                <div>
+                  <h4 className="font-semibold text-sm">{account.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">{account.institution}</p>
+                  {account.email && (
+                    <p className="text-[10px] text-muted-foreground/60 mt-1">{account.email}</p>
+                  )}
+                </div>
+                <div>
+                  <Badge variant="outline" className="text-[10px] mb-2">{account.role}</Badge>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {account.description}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                    Accès aux modules
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {account.access.map((acc) => (
+                      <span
+                        key={acc}
+                        className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+                      >
+                        {acc}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Connect button */}
+        <Button
+          variant="default"
+          size="sm"
+          className={cn(
+            "w-full mt-2.5 h-7 text-[11px] font-medium transition-all",
+            "bg-government-navy hover:bg-government-navy/90 text-white",
+          )}
+          disabled={disabled}
+        >
+          {isLoading ? (
+            <span className="flex items-center gap-1.5">
+              <span className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Connexion...
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5">
+              <LogIn className="h-3 w-3" />
+              Se connecter
+            </span>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

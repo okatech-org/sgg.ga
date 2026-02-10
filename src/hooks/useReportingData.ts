@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { reportingLogger } from '@/services/logger';
 import type {
   RapportMensuel,
   ReportingStats,
@@ -94,7 +95,7 @@ export function useReportingProgrammes(
       const result = await simulateDelay(rows);
       setData(result);
     } catch (err) {
-      console.error('Erreur lors du chargement des programmes:', err);
+      reportingLogger.error('Erreur chargement programmes', { error: String(err) });
       setError('Erreur lors du chargement des programmes');
     } finally {
       setLoading(false);
@@ -189,7 +190,7 @@ export function useReportingStats(
       const result = await simulateDelay(stats);
       setData(result);
     } catch (err) {
-      console.error('Erreur lors du calcul des statistiques:', err);
+      reportingLogger.error('Erreur calcul statistiques', { error: String(err) });
       setError('Erreur lors du calcul des statistiques');
     } finally {
       setLoading(false);
@@ -231,7 +232,7 @@ export function useRapportForEdit(
       const result = await simulateDelay(rapport || null);
       setData(result);
     } catch (err) {
-      console.error('Erreur lors du chargement du rapport:', err);
+      reportingLogger.error('Erreur chargement rapport', { error: String(err) });
       setError('Erreur lors du chargement du rapport');
     } finally {
       setLoading(false);
@@ -268,7 +269,7 @@ export function useSuiviRemplissage(
       const result = await simulateDelay(suiviPeriode);
       setData(result);
     } catch (err) {
-      console.error('Erreur suivi remplissage:', err);
+      reportingLogger.error('Erreur suivi remplissage', { error: String(err) });
       setError('Erreur lors du chargement du suivi de remplissage');
     } finally {
       setLoading(false);
@@ -313,7 +314,7 @@ export function useReportingNotifications(
       const result = await simulateDelay(sorted);
       setData(result);
     } catch (err) {
-      console.error('Erreur notifications:', err);
+      reportingLogger.error('Erreur notifications', { error: String(err) });
       setError('Erreur lors du chargement des notifications');
     } finally {
       setLoading(false);

@@ -355,4 +355,66 @@
       transform: translateY(0);
     }
   }
+
+  /* Mobile compact mode — larger touch targets */
+  @media (max-width: 640px) {
+    .mobile-compact .stat-card {
+      @apply p-3;
+    }
+
+    .mobile-compact .neu-card {
+      @apply rounded-lg;
+    }
+
+    /* Touch-friendly: buttons and links minimum 44px */
+    button,
+    a,
+    [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Compact header for small screens */
+    .mobile-compact header {
+      @apply h-14;
+    }
+
+    /* Stack dashboard cards vertically */
+    .mobile-compact .grid {
+      @apply grid-cols-1;
+    }
+  }
+
+  /* Help mode visual feedback */
+  [data-help] {
+    position: relative;
+  }
+
+  /* Tutorial highlight animation */
+  @keyframes spotlightPulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(var(--government-gold) / 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 8px hsl(var(--government-gold) / 0);
+    }
+  }
+
+  .spotlight-pulse {
+    animation: spotlightPulse 2s ease-in-out infinite;
+  }
+
+  /* Smooth scrolling across the app */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Print-friendly: hide onboarding elements */
+  @media print {
+    .fixed,
+    [data-tutorial],
+    nav[aria-label] {
+      display: none !important;
+    }
+  }
 }

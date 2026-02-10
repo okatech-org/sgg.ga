@@ -44,7 +44,7 @@ export const PAGE_INFO_CONFIG: Record<string, PageInfoConfig> = {
       { role: "Administrateur SGG", niveau: "Admin" },
       { role: "Directeur SGG", niveau: "Validation" },
       { role: "SGPR", niveau: "Validation" },
-      { role: "Premier Ministre", niveau: "Lecture" },
+      { role: "Vice-Président du Gouvernement", niveau: "Lecture" },
       { role: "SG Ministère", niveau: "Écriture" },
       { role: "Ministre", niveau: "Lecture" },
       { role: "Citoyen", niveau: "Lecture" },
@@ -187,7 +187,7 @@ export const PAGE_INFO_CONFIG: Record<string, PageInfoConfig> = {
       { role: "Directeur SGG", niveau: "Lecture" },
       { role: "SGPR", niveau: "Lecture" },
       { role: "Ministre / SG Ministère", niveau: "Lecture" },
-      { role: "Président / PM", niveau: "Lecture" }
+      { role: "Président / VPG", niveau: "Lecture" }
     ],
     logique: [
       { titre: "3 Rubriques", contenu: "Projets de textes législatifs et réglementaires — Politique Générale — Missions, Conférences et Séminaires. Chaque initiative est classée dans une rubrique unique." },
@@ -267,7 +267,7 @@ export const PAGE_INFO_CONFIG: Record<string, PageInfoConfig> = {
     droitsAcces: [
       { role: "Administrateur SGG", niveau: "Admin" },
       { role: "Directeur SGG", niveau: "Lecture" },
-      { role: "SGPR / Président / PM", niveau: "Lecture" },
+      { role: "SGPR / Président / VPG", niveau: "Lecture" },
       { role: "Ministre / SG Ministère", niveau: "Lecture" }
     ],
     logique: [
@@ -291,7 +291,7 @@ export const PAGE_INFO_CONFIG: Record<string, PageInfoConfig> = {
       { etape: "Arbitrage", description: "Utiliser les données pour prioriser les actions correctives" }
     ],
     droitsAcces: [
-      { role: "Président / PM / SGPR", niveau: "Lecture" },
+      { role: "Président / VPG / SGPR", niveau: "Lecture" },
       { role: "Administrateur SGG", niveau: "Admin" },
       { role: "Directeur SGG", niveau: "Lecture" },
       { role: "Autres rôles exécutifs", niveau: "Lecture" }

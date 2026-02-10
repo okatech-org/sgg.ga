@@ -322,12 +322,12 @@ export function WelcomeGuide({
         <div className="mb-6 space-y-4">
             {/* Welcome Card */}
             <Card className="border-l-4 border-l-government-gold bg-gradient-to-r from-amber-50/80 to-background dark:from-amber-950/10 dark:to-background shadow-lg overflow-hidden">
-                <CardContent className="p-5">
-                    <div className="flex items-start justify-between">
+                <CardContent className="p-4 sm:p-5">
+                    <div className="flex items-start justify-between gap-3">
                         <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <Sparkles className="h-5 w-5 text-government-gold" />
-                                <h2 className="text-lg font-bold text-foreground">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <Sparkles className="h-5 w-5 text-government-gold shrink-0" />
+                                <h2 className="text-lg font-bold text-foreground leading-tight">
                                     {guide.greeting}
                                     {userName ? `, ${userName}` : ""}
                                 </h2>
@@ -336,16 +336,16 @@ export function WelcomeGuide({
                                 {guide.roleExplanation}
                             </p>
                             {institution && (
-                                <div className="flex items-center gap-1.5">
-                                    <Building2 className="h-3.5 w-3.5 text-muted-foreground/60" />
-                                    <span className="text-xs text-muted-foreground/70">{institution}</span>
+                                <div className="flex items-center gap-1.5 pt-1">
+                                    <Building2 className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+                                    <span className="text-xs text-muted-foreground/70 font-medium">{institution}</span>
                                 </div>
                             )}
                         </div>
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="shrink-0 -mt-1 -mr-1 text-muted-foreground/40 hover:text-muted-foreground"
+                            className="shrink-0 -mt-1 -mr-1 h-8 w-8 text-muted-foreground/40 hover:text-muted-foreground hover:bg-black/5"
                             onClick={() => setDismissed(true)}
                             title="Masquer le guide"
                         >

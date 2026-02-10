@@ -173,44 +173,69 @@ export function InteractiveTutorial() {
 
     // Calculate tooltip position
     const getTooltipStyle = (): React.CSSProperties => {
+        // Mobile-friendly width
+        const padding = 16;
+        const maxTooltipWidth = 380;
+        const viewportWidth = window.innerWidth;
+        const availableWidth = viewportWidth - (padding * 2);
+        const tooltipWidth = Math.min(maxTooltipWidth, availableWidth);
+
         if (!spotlight || step.position === "center") {
             return {
                 top: "50%",
                 left: "50%",
                 transform: "translate(-50%, -50%)",
+                width: tooltipWidth,
+                maxWidth: "90vw",
             };
         }
 
-        const padding = 16;
-        const tooltipWidth = 380;
+        const isMobile = viewportWidth < 768;
+
+        // Force center/bottom on mobile for better UX if target is small/offscreen
+        if (isMobile) {
+            return {
+                bottom: padding + 20, // Give space for bottom nav bar if any
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: tooltipWidth,
+                maxWidth: "90vw",
+                position: "fixed",
+            };
+        }
 
         switch (step.position) {
             case "right":
                 return {
                     top: Math.max(padding, spotlight.top),
                     left: spotlight.right + padding,
-                    maxWidth: tooltipWidth,
+                    width: tooltipWidth,
                 };
             case "bottom":
                 return {
                     top: spotlight.bottom + padding,
-                    left: Math.max(padding, Math.min(spotlight.left, window.innerWidth - tooltipWidth - padding)),
-                    maxWidth: tooltipWidth,
+                    left: Math.max(padding, Math.min(spotlight.left, viewportWidth - tooltipWidth - padding)),
+                    width: tooltipWidth,
                 };
             case "left":
                 return {
                     top: Math.max(padding, spotlight.top),
-                    right: window.innerWidth - spotlight.left + padding,
-                    maxWidth: tooltipWidth,
+                    right: viewportWidth - spotlight.left + padding,
+                    width: tooltipWidth,
                 };
             case "top":
                 return {
                     bottom: window.innerHeight - spotlight.top + padding,
                     left: Math.max(padding, spotlight.left),
-                    maxWidth: tooltipWidth,
+                    width: tooltipWidth,
                 };
             default:
-                return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
+                return {
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: tooltipWidth
+                };
         }
     };
 

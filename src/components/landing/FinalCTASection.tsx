@@ -83,41 +83,23 @@ export default function FinalCTASection() {
                 </div>
               </div>
 
-              {/* Right Content - Decorative */}
+              {/* Right Content - Illustrative Image */}
               <div className="hidden lg:flex items-center justify-center">
-                <div className="relative">
-                  {/* Central Emblem */}
-                  <motion.div
-                    className="h-40 w-40 rounded-full bg-an/10 border border-an/20 flex items-center justify-center backdrop-blur-sm"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-                  >
-                    <img src="/emblem_gabon.png" alt="Emblème du Gabon" className="h-20 w-20 object-contain" />
-                  </motion.div>
+                <div className="relative w-full max-w-md group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-an to-success rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                  <div className="relative">
+                    <img
+                      src="/gabonese_digital_governance.png"
+                      alt="Transformation digitale au Gabon"
+                      className="w-full h-auto rounded-xl shadow-2xl border border-white/10 object-cover transform transition-transform duration-500 hover:scale-[1.01]"
+                    />
 
-                  {/* Orbiting Elements */}
-                  <motion.div
-                    className="absolute -top-8 -right-8 h-20 w-20 rounded-xl glass flex items-center justify-center"
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <span className="text-2xl font-bold text-white">35</span>
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-4 -left-12 h-24 w-24 rounded-xl bg-an/20 backdrop-blur-sm border border-an/30 flex flex-col items-center justify-center"
-                    animate={{ y: [0, -8, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                  >
-                    <span className="text-2xl font-bold text-an-light">24/7</span>
-                    <span className="text-xs text-white/70">Disponible</span>
-                  </motion.div>
-                  <motion.div
-                    className="absolute top-1/2 -right-16 h-16 w-16 rounded-full bg-success/20 border border-success/30 flex items-center justify-center"
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                  >
-                    <CheckCircle2 className="h-8 w-8 text-success" />
-                  </motion.div>
+                    {/* Subtle overlay badge if needed, kept minimal */}
+                    <div className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+                      <span className="text-xs font-medium text-white/90">Disponible 24/7</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

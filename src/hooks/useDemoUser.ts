@@ -56,6 +56,9 @@ const roleCategoryMap: Record<string, DemoCategory> = {
   "sgg-admin": "administratif",
   "sgg-directeur": "administratif",
   "dgjo": "administratif",
+  // Directions sous tutelle
+  "directeur-cgi": "administratif",
+  "directeur-dgpn": "administratif",
   // Public
   "citoyen": "public",
   "professionnel-droit": "public",
@@ -122,6 +125,30 @@ const roleCapabilitiesMap: Record<string, RoleCapabilities> = {
     canRenderAvis: false,
     canControlConstitutionality: false,
     dashboardType: "executif",
+  },
+  "directeur-cgi": {
+    canValidateNominations: false,
+    canSignDecrees: false,
+    canSubmitGAR: true,
+    canPublishJO: false,
+    canManageUsers: false,
+    canViewArbitrages: false,
+    canSubmitBills: false,
+    canRenderAvis: false,
+    canControlConstitutionality: false,
+    dashboardType: "administratif",
+  },
+  "directeur-dgpn": {
+    canValidateNominations: false,
+    canSignDecrees: false,
+    canSubmitGAR: true,
+    canPublishJO: false,
+    canManageUsers: false,
+    canViewArbitrages: false,
+    canSubmitBills: false,
+    canRenderAvis: false,
+    canControlConstitutionality: false,
+    dashboardType: "administratif",
   },
   "sgpr": {
     canValidateNominations: true,
@@ -359,6 +386,10 @@ export function useDemoUser() {
       // Ministry roles
       "ministre": { dashboard: true, gar: true, nominations: true, egop: false, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false, matriceReporting: true, ptmptg: true },
       "sg-ministere": { dashboard: true, gar: true, nominations: true, egop: false, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false, matriceReporting: true, ptmptg: true },
+
+      // Directions sous tutelle
+      "directeur-cgi": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false, matriceReporting: false, ptmptg: true },
+      "directeur-dgpn": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: true, formation: false, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false, matriceReporting: false, ptmptg: true },
 
       // Legislative roles
       "assemblee": { dashboard: true, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: false, parametres: false, institutions: false, cycleLegislatif: true, adminUsers: false, matriceReporting: false, ptmptg: false },

@@ -5,8 +5,6 @@ import { ArrowRight, Lock, CheckCircle2, Shield } from "lucide-react";
 import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
 import { modulesData } from "@/data/modulesData";
-// import { FadeInUp } from "@/components/ui/motion"; // Temporarily removed for debugging
-// import { ImageWithSkeleton } from "@/components/landing/ImageWithSkeleton"; // Temporarily removed
 import NotFound from "./NotFound";
 
 const colorMap: Record<string, { bg: string, text: string, darkBg: string, darkText: string, iconBg: string }> = {

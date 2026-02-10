@@ -35,6 +35,8 @@ import auditRoutes from './routes/audit.js';
 import { auditMiddleware } from './services/auditTrail.js';
 import { tokenBucketRateLimit } from './services/rateLimiter.js';
 import workflowRoutes from './routes/workflow.js';
+import { authenticate } from './middleware/auth.js';
+import { neocortex, neocortexRoutes, neocortexMiddleware } from './neocortex/index.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 8080;
@@ -123,6 +125,26 @@ app.use('/api/auth/login', tokenBucketRateLimit({ maxTokens: 10, refillRate: 2, 
 app.use('/api/auth/register', tokenBucketRateLimit({ maxTokens: 5, refillRate: 1, refillInterval: 120 }));
 app.use('/api/auth/2fa', tokenBucketRateLimit({ maxTokens: 5, refillRate: 1, refillInterval: 30 }));
 
+// Audit trail middleware on write-heavy routes
+// NEXUS-OMEGA P1-7: Must be registered BEFORE route handlers
+app.use('/api/gar', auditMiddleware('gar'));
+app.use('/api/nominations', auditMiddleware('nominations'));
+app.use('/api/legislatif', auditMiddleware('legislatif'));
+app.use('/api/egop', auditMiddleware('egop'));
+app.use('/api/jo', auditMiddleware('jo'));
+app.use('/api/ptm', auditMiddleware('ptm'));
+app.use('/api/reporting', auditMiddleware('reporting'));
+
+// 🧠 NEOCORTEX — Auto-signal middleware (emits limbique signals on mutations)
+app.use('/api/gar', neocortexMiddleware('gar'));
+app.use('/api/nominations', neocortexMiddleware('nominations'));
+app.use('/api/legislatif', neocortexMiddleware('legislatif'));
+app.use('/api/egop', neocortexMiddleware('egop'));
+app.use('/api/jo', neocortexMiddleware('jo'));
+app.use('/api/ptm', neocortexMiddleware('ptm'));
+app.use('/api/institutions', neocortexMiddleware('institutions'));
+app.use('/api/workflows', neocortexMiddleware('workflows'));
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
@@ -136,17 +158,13 @@ app.use('/api/ptm', ptmRoutes);
 app.use('/api/reporting', reportingRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/auth/2fa', twoFactorRoutes);
-app.use('/api/audit', auditRoutes);
-app.use('/api/workflows', workflowRoutes);
 
-// Audit trail middleware on write-heavy routes
-app.use('/api/gar', auditMiddleware('gar'));
-app.use('/api/nominations', auditMiddleware('nominations'));
-app.use('/api/legislatif', auditMiddleware('legislatif'));
-app.use('/api/egop', auditMiddleware('egop'));
-app.use('/api/jo', auditMiddleware('jo'));
-app.use('/api/ptm', auditMiddleware('ptm'));
-app.use('/api/reporting', auditMiddleware('reporting'));
+// NEXUS-OMEGA P0-8: Secure audit & workflow routes with authenticate middleware
+app.use('/api/audit', authenticate, auditRoutes);
+app.use('/api/workflows', authenticate, workflowRoutes);
+
+// 🧠 NEOCORTEX API — System nervous digital
+app.use('/api/neocortex', authenticate, neocortexRoutes);
 
 // API Documentation endpoint
 app.get('/api/docs', (req: Request, res: Response) => {
@@ -170,8 +188,8 @@ app.get('/api/docs', (req: Request, res: Response) => {
 app.get('/', (req: Request, res: Response) => {
   res.json({
     name: 'SGG Digital API',
-    version: '2.1.0',
-    description: 'API du Secretariat General du Gouvernement - Gabon',
+    version: '3.0.0-nexus-omega',
+    description: 'API du Secretariat General du Gouvernement - Gabon (NEOCORTEX enabled)',
     documentation: '/api/docs',
     health: '/api/health',
     endpoints: {
@@ -185,6 +203,17 @@ app.get('/', (req: Request, res: Response) => {
       egop: '/api/egop',
       jo: '/api/jo',
       ptm: '/api/ptm',
+      audit: '/api/audit',
+      workflows: '/api/workflows',
+      neocortex: {
+        dashboard: '/api/neocortex/dashboard',
+        signaux: '/api/neocortex/signaux',
+        historique: '/api/neocortex/historique',
+        config: '/api/neocortex/config',
+        decision: '/api/neocortex/decision',
+        notifications: '/api/neocortex/notifications',
+        metriques: '/api/neocortex/metriques',
+      },
     },
   });
 });
@@ -309,6 +338,13 @@ async function startServer() {
       console.warn('⚠️ Cache invalidation listener failed:', cacheError);
     }
 
+    // 🧠 Start NEOCORTEX nervous system
+    try {
+      neocortex.start();
+    } catch (neoError) {
+      console.warn('⚠️ NEOCORTEX startup failed:', neoError);
+    }
+
     // Graceful shutdown
     const shutdown = async (signal: string) => {
       console.log(`\n${signal} received. Starting graceful shutdown...`);
@@ -325,6 +361,9 @@ async function startServer() {
 
           closeWebSocket();
           console.log('WebSocket server closed');
+
+          neocortex.stop();
+          console.log('NEOCORTEX stopped');
 
           process.exit(0);
         } catch (error) {

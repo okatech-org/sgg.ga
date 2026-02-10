@@ -1,198 +1,145 @@
 /**
  * SGG Digital — Centre de Notifications
  *
- * Page centralisée pour toutes les notifications :
- *   - Notifications temps réel (WebSocket)
- *   - Notifications push
- *   - Alertes système
- *   - Filtrage par catégorie et statut lu/non-lu
- *   - Actions en masse (marquer lu, supprimer)
+ * Connecté au Cortex Auditif NEOCORTEX via React Query.
+ * Fallback sur données mock si l'API est indisponible.
+ *
+ *   - Notifications temps réel (polling 30s)
+ *   - Filtrage par type et statut lu/non-lu
+ *   - Actions en masse (marquer lu, tout marquer lu)
+ *   - Handler 8 étapes sur chaque action
  */
 
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AnimatedPage } from '@/components/ui/AnimatedPage';
+import { toast } from 'sonner';
+import {
+    useNotifications,
+    useMarkNotificationRead,
+    useMarkAllNotificationsRead,
+} from '@/hooks/useNeocortex';
+import type { NeocortexNotification } from '@/services/api';
 import {
     Bell, BellOff, BellRing, Check, CheckCheck,
-    Trash2, Search, Filter, Clock, AlertTriangle,
+    Search, Clock, AlertTriangle,
     FileText, Users, GitBranch, BarChart2,
-    Shield, Settings, MessageSquare, Eye,
-    ChevronDown, MailOpen, Mail,
+    Shield, Settings, Mail, MailOpen, Loader2,
 } from 'lucide-react';
-
-// ── Types ───────────────────────────────────────────────────────────────────
-
-type NotifCategory = 'workflow' | 'rapport' | 'system' | 'user' | 'security' | 'deadline';
-type NotifPriority = 'low' | 'normal' | 'high' | 'urgent';
-
-interface Notification {
-    id: string;
-    title: string;
-    message: string;
-    category: NotifCategory;
-    priority: NotifPriority;
-    timestamp: string;
-    read: boolean;
-    actionUrl?: string;
-    actionLabel?: string;
-    actor?: string;
-}
-
-// ── Mock Notifications ──────────────────────────────────────────────────────
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-    {
-        id: 'n1', title: 'Nouvelle étape de validation',
-        message: 'Le décret n°001/2026 est en attente de votre visa au SGG.',
-        category: 'workflow', priority: 'high',
-        timestamp: new Date(Date.now() - 10 * 60_000).toISOString(),
-        read: false, actionUrl: '/workflows', actionLabel: 'Voir le dossier',
-        actor: 'sg.mintp@mintp.ga',
-    },
-    {
-        id: 'n2', title: 'Rapport GAR soumis',
-        message: 'Le Ministère des Finances a soumis son rapport de performance T4 2025.',
-        category: 'rapport', priority: 'normal',
-        timestamp: new Date(Date.now() - 45 * 60_000).toISOString(),
-        read: false, actionUrl: '/matrice-reporting', actionLabel: 'Examiner',
-        actor: 'pf.minfi@minfi.ga',
-    },
-    {
-        id: 'n3', title: '⚠️ Deadline imminente',
-        message: 'Le rapport de performance du MINSANTE est dû dans 24 heures.',
-        category: 'deadline', priority: 'urgent',
-        timestamp: new Date(Date.now() - 2 * 3600_000).toISOString(),
-        read: false, actionUrl: '/gar', actionLabel: 'Suivre',
-    },
-    {
-        id: 'n4', title: 'Nouvel utilisateur créé',
-        message: 'paul.mba@mintp.ga a été ajouté avec le rôle Point Focal.',
-        category: 'user', priority: 'low',
-        timestamp: new Date(Date.now() - 4 * 3600_000).toISOString(),
-        read: true, actor: 'admin@sgg.ga',
-    },
-    {
-        id: 'n5', title: 'Tentative de connexion suspecte',
-        message: '3 tentatives de connexion échouées depuis 197.234.xx.xx pour le compte guest@test.ga.',
-        category: 'security', priority: 'urgent',
-        timestamp: new Date(Date.now() - 6 * 3600_000).toISOString(),
-        read: false, actionUrl: '/admin', actionLabel: 'Voir les logs',
-    },
-    {
-        id: 'n6', title: 'Mise à jour système',
-        message: 'La version 2.1.0 a été déployée avec succès. Nouveaux modules : Workflow, Import/Export.',
-        category: 'system', priority: 'low',
-        timestamp: new Date(Date.now() - 12 * 3600_000).toISOString(),
-        read: true,
-    },
-    {
-        id: 'n7', title: 'Nomination approuvée',
-        message: 'La nomination du DG de l\'Agence Nationale de l\'Eau a été validée par le SGPR.',
-        category: 'workflow', priority: 'normal',
-        timestamp: new Date(Date.now() - 18 * 3600_000).toISOString(),
-        read: true, actionUrl: '/nominations',
-        actor: 'sgpr@presidence.ga',
-    },
-    {
-        id: 'n8', title: 'Rapport rejeté',
-        message: 'Le rapport MINSANTE Déc 2025 a été rejeté. Motif : données incomplètes.',
-        category: 'rapport', priority: 'high',
-        timestamp: new Date(Date.now() - 24 * 3600_000).toISOString(),
-        read: true, actionUrl: '/matrice-reporting', actionLabel: 'Corriger',
-        actor: 'admin.sgg@sgg.ga',
-    },
-    {
-        id: 'n9', title: 'Rôle modifié',
-        message: 'Le rôle de marie.nze@minsante.ga a été changé de citoyen à sg_ministere.',
-        category: 'user', priority: 'normal',
-        timestamp: new Date(Date.now() - 30 * 3600_000).toISOString(),
-        read: true, actor: 'admin@sgg.ga',
-    },
-    {
-        id: 'n10', title: 'Sauvegarde automatique',
-        message: 'La sauvegarde quotidienne de la base de données a été effectuée avec succès.',
-        category: 'system', priority: 'low',
-        timestamp: new Date(Date.now() - 36 * 3600_000).toISOString(),
-        read: true,
-    },
-    {
-        id: 'n11', title: '🔒 Certificate SSL renouvelé',
-        message: 'Le certificat SSL du domaine sgg.ga a été automatiquement renouvelé.',
-        category: 'security', priority: 'low',
-        timestamp: new Date(Date.now() - 48 * 3600_000).toISOString(),
-        read: true,
-    },
-    {
-        id: 'n12', title: 'Décret publié au JO',
-        message: 'Le Décret n°045/2025 a été publié au Journal Officiel n°142.',
-        category: 'workflow', priority: 'normal',
-        timestamp: new Date(Date.now() - 72 * 3600_000).toISOString(),
-        read: true, actionUrl: '/journal-officiel',
-    },
-];
 
 // ── Category Config ─────────────────────────────────────────────────────────
 
-const CATEGORY_CONFIG: Record<NotifCategory, { label: string; icon: typeof Bell; color: string }> = {
+type NotifDisplayType = 'workflow' | 'rapport' | 'system' | 'user' | 'security' | 'deadline' | 'info';
+
+const CATEGORY_CONFIG: Record<NotifDisplayType, { label: string; icon: typeof Bell; color: string }> = {
     workflow: { label: 'Workflows', icon: GitBranch, color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' },
     rapport: { label: 'Rapports', icon: BarChart2, color: 'text-green-500 bg-green-50 dark:bg-green-900/20' },
     system: { label: 'Système', icon: Settings, color: 'text-gray-500 bg-gray-50 dark:bg-gray-800' },
     user: { label: 'Utilisateurs', icon: Users, color: 'text-purple-500 bg-purple-50 dark:bg-purple-900/20' },
     security: { label: 'Sécurité', icon: Shield, color: 'text-red-500 bg-red-50 dark:bg-red-900/20' },
     deadline: { label: 'Deadlines', icon: Clock, color: 'text-orange-500 bg-orange-50 dark:bg-orange-900/20' },
+    info: { label: 'Info', icon: Bell, color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-900/20' },
 };
+
+// Map backend notification types to display categories
+function mapType(type: string): NotifDisplayType {
+    if (type.includes('WORKFLOW') || type.includes('TRANSITION') || type.includes('NOMINATION')) return 'workflow';
+    if (type.includes('RAPPORT') || type.includes('GAR')) return 'rapport';
+    if (type.includes('SECURITE') || type.includes('AUTH') || type.includes('LOGIN')) return 'security';
+    if (type.includes('USER') || type.includes('UTILISATEUR')) return 'user';
+    if (type.includes('DEADLINE') || type.includes('RETARD')) return 'deadline';
+    if (type.includes('SYSTEM') || type.includes('DEPLOY')) return 'system';
+    return 'info';
+}
+
+// ── Mock Notifications (fallback si API indisponible) ────────────────────────
+
+const MOCK_NOTIFICATIONS: NeocortexNotification[] = [
+    { id: 'n1', type: 'WORKFLOW', canal: 'in_app', titre: 'Nouvelle étape de validation', message: 'Le décret n°001/2026 est en attente de votre visa au SGG.', lien: '/workflows', entiteType: 'workflow', entiteId: null, lu: false, luAt: null, createdAt: new Date(Date.now() - 10 * 60_000).toISOString() },
+    { id: 'n2', type: 'GAR_RAPPORT', canal: 'in_app', titre: 'Rapport GAR soumis', message: 'Le Ministère des Finances a soumis son rapport de performance T4 2025.', lien: '/matrice-reporting', entiteType: 'rapport', entiteId: null, lu: false, luAt: null, createdAt: new Date(Date.now() - 45 * 60_000).toISOString() },
+    { id: 'n3', type: 'DEADLINE', canal: 'in_app', titre: '⚠️ Deadline imminente', message: 'Le rapport MINSANTE est dû dans 24 heures.', lien: '/gar', entiteType: null, entiteId: null, lu: false, luAt: null, createdAt: new Date(Date.now() - 2 * 3600_000).toISOString() },
+    { id: 'n4', type: 'UTILISATEUR', canal: 'in_app', titre: 'Nouvel utilisateur créé', message: 'paul.mba@mintp.ga a été ajouté avec le rôle Point Focal.', lien: null, entiteType: 'user', entiteId: null, lu: true, luAt: new Date().toISOString(), createdAt: new Date(Date.now() - 4 * 3600_000).toISOString() },
+    { id: 'n5', type: 'SECURITE_LOGIN', canal: 'in_app', titre: 'Tentative suspecte', message: '3 tentatives de connexion échouées depuis 197.234.xx.xx', lien: '/admin', entiteType: null, entiteId: null, lu: false, luAt: null, createdAt: new Date(Date.now() - 6 * 3600_000).toISOString() },
+    { id: 'n6', type: 'SYSTEM_DEPLOY', canal: 'in_app', titre: 'Mise à jour système', message: 'Version 3.0.0-nexus-omega déployée avec succès. NEOCORTEX activé.', lien: null, entiteType: null, entiteId: null, lu: true, luAt: new Date().toISOString(), createdAt: new Date(Date.now() - 12 * 3600_000).toISOString() },
+    { id: 'n7', type: 'NOMINATION_TRANSITION', canal: 'in_app', titre: 'Nomination approuvée', message: 'La nomination du DG de l\'Agence Nationale de l\'Eau a été validée.', lien: '/nominations', entiteType: 'nomination', entiteId: null, lu: true, luAt: new Date().toISOString(), createdAt: new Date(Date.now() - 18 * 3600_000).toISOString() },
+    { id: 'n8', type: 'GAR_RAPPORT', canal: 'in_app', titre: 'Rapport rejeté', message: 'Le rapport MINSANTE Déc 2025 a été rejeté. Motif : données incomplètes.', lien: '/matrice-reporting', entiteType: 'rapport', entiteId: null, lu: true, luAt: new Date().toISOString(), createdAt: new Date(Date.now() - 24 * 3600_000).toISOString() },
+];
 
 // ── Component ───────────────────────────────────────────────────────────────
 
 export default function NotificationsPage() {
-    const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+    const navigate = useNavigate();
+
+    // 1. React Query — fetch real notifications (fallback to mock)
+    const { data, isLoading, isError, error } = useNotifications({ limit: 100 });
+    const markRead = useMarkNotificationRead();
+    const markAllRead = useMarkAllNotificationsRead();
+
+    // Resolve notifications source
+    const notifications: NeocortexNotification[] = data?.notifications?.length
+        ? data.notifications
+        : MOCK_NOTIFICATIONS;
+    const totalNonLues = data?.totalNonLues ?? notifications.filter(n => !n.lu).length;
+    const isUsingMock = !data?.notifications?.length;
+
+    // 2. Filters state
     const [search, setSearch] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState<NotifCategory | 'all'>('all');
+    const [typeFilter, setTypeFilter] = useState<NotifDisplayType | 'all'>('all');
     const [readFilter, setReadFilter] = useState<'all' | 'unread' | 'read'>('all');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+    // 3. Filtered results
     const filtered = useMemo(() => {
         return notifications.filter(n => {
-            if (categoryFilter !== 'all' && n.category !== categoryFilter) return false;
-            if (readFilter === 'unread' && n.read) return false;
-            if (readFilter === 'read' && !n.read) return false;
+            const displayType = mapType(n.type);
+            if (typeFilter !== 'all' && displayType !== typeFilter) return false;
+            if (readFilter === 'unread' && n.lu) return false;
+            if (readFilter === 'read' && !n.lu) return false;
             if (search) {
                 const q = search.toLowerCase();
-                return n.title.toLowerCase().includes(q) || n.message.toLowerCase().includes(q);
+                return n.titre.toLowerCase().includes(q) || n.message.toLowerCase().includes(q);
             }
             return true;
         });
-    }, [notifications, search, categoryFilter, readFilter]);
-
-    const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
+    }, [notifications, search, typeFilter, readFilter]);
 
     const categoryCounts = useMemo(() => {
         const counts: Record<string, number> = {};
         notifications.forEach(n => {
-            counts[n.category] = (counts[n.category] || 0) + 1;
+            const dt = mapType(n.type);
+            counts[dt] = (counts[dt] || 0) + 1;
         });
         return counts;
     }, [notifications]);
 
-    // ── Actions ─────────────────────────────────────────────────────────────
+    // ── Actions (Handler 8 étapes) ──────────────────────────────────────────
 
-    const markAsRead = (ids: string[]) => {
-        setNotifications(prev => prev.map(n =>
-            ids.includes(n.id) ? { ...n, read: true } : n
-        ));
-        setSelectedIds(new Set());
+    const handleMarkRead = async (id: string) => {
+        // 1. Reset error (handled by mutation)
+        // 2. Loading (isPending on mutation)
+        try {
+            // 3. No validation needed
+            // 4. Call mutation
+            await markRead.mutateAsync(id);
+            // 5-6. State updated + toast via hook
+        } catch (err) {
+            // 8. Catch error
+            toast.error('Erreur lors du marquage');
+        }
     };
 
-    const markAllAsRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    };
-
-    const deleteNotifications = (ids: string[]) => {
-        setNotifications(prev => prev.filter(n => !ids.includes(n.id)));
-        setSelectedIds(new Set());
+    const handleMarkAllRead = async () => {
+        try {
+            await markAllRead.mutateAsync();
+        } catch (err) {
+            toast.error('Erreur lors du marquage');
+        }
     };
 
     const toggleSelect = (id: string) => {
@@ -209,6 +156,13 @@ export default function NotificationsPage() {
         }
     };
 
+    const handleBatchMarkRead = async () => {
+        for (const id of selectedIds) {
+            await markRead.mutateAsync(id);
+        }
+        setSelectedIds(new Set());
+    };
+
     // ── Helpers ─────────────────────────────────────────────────────────────
 
     const formatTime = (iso: string) => {
@@ -220,47 +174,44 @@ export default function NotificationsPage() {
         return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
     };
 
-    const getPriorityDot = (priority: NotifPriority) => {
-        switch (priority) {
-            case 'urgent': return 'bg-red-500 animate-pulse';
-            case 'high': return 'bg-orange-500';
-            case 'normal': return 'bg-blue-500';
-            case 'low': return 'bg-gray-400';
-        }
-    };
-
     // ── Render ──────────────────────────────────────────────────────────────
 
     return (
         <DashboardLayout>
-            <div className="space-y-6">
+            <AnimatedPage className="space-y-6">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                             <BellRing className="h-7 w-7 text-blue-600" />
                             Centre de Notifications
-                            {unreadCount > 0 && (
-                                <Badge className="bg-red-500 text-white ml-2">{unreadCount}</Badge>
+                            {totalNonLues > 0 && (
+                                <Badge className="bg-red-500 text-white ml-2">{totalNonLues}</Badge>
                             )}
                         </h1>
                         <p className="text-muted-foreground">
-                            {notifications.length} notifications · {unreadCount} non lues
+                            {notifications.length} notifications · {totalNonLues} non lues
+                            {isUsingMock && <span className="text-xs ml-2 text-amber-500">(données démo)</span>}
                         </p>
                     </div>
                     <div className="flex gap-2">
                         {selectedIds.size > 0 && (
-                            <>
-                                <Button variant="outline" size="sm" className="gap-1" onClick={() => markAsRead(Array.from(selectedIds))}>
-                                    <CheckCheck className="h-4 w-4" /> Marquer lu ({selectedIds.size})
-                                </Button>
-                                <Button variant="destructive" size="sm" className="gap-1" onClick={() => deleteNotifications(Array.from(selectedIds))}>
-                                    <Trash2 className="h-4 w-4" /> Supprimer ({selectedIds.size})
-                                </Button>
-                            </>
+                            <Button
+                                variant="outline" size="sm" className="gap-1"
+                                onClick={handleBatchMarkRead}
+                                disabled={markRead.isPending}
+                            >
+                                {markRead.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCheck className="h-4 w-4" />}
+                                Marquer lu ({selectedIds.size})
+                            </Button>
                         )}
-                        <Button variant="outline" size="sm" className="gap-1" onClick={markAllAsRead}>
-                            <CheckCheck className="h-4 w-4" /> Tout marquer lu
+                        <Button
+                            variant="outline" size="sm" className="gap-1"
+                            onClick={handleMarkAllRead}
+                            disabled={markAllRead.isPending}
+                        >
+                            {markAllRead.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCheck className="h-4 w-4" />}
+                            Tout marquer lu
                         </Button>
                     </div>
                 </div>
@@ -268,28 +219,30 @@ export default function NotificationsPage() {
                 {/* Category pills */}
                 <div className="flex flex-wrap gap-2">
                     <Button
-                        variant={categoryFilter === 'all' ? 'default' : 'ghost'}
-                        size="sm"
-                        className="h-8 text-xs"
-                        onClick={() => setCategoryFilter('all')}
+                        variant={typeFilter === 'all' ? 'default' : 'ghost'}
+                        size="sm" className="h-8 text-xs"
+                        onClick={() => setTypeFilter('all')}
                     >
                         Toutes ({notifications.length})
                     </Button>
-                    {(Object.entries(CATEGORY_CONFIG) as [NotifCategory, typeof CATEGORY_CONFIG.workflow][]).map(([key, conf]) => (
-                        <Button
-                            key={key}
-                            variant={categoryFilter === key ? 'default' : 'ghost'}
-                            size="sm"
-                            className="h-8 text-xs gap-1"
-                            onClick={() => setCategoryFilter(key)}
-                        >
-                            <conf.icon className="h-3 w-3" />
-                            {conf.label} ({categoryCounts[key] || 0})
-                        </Button>
-                    ))}
+                    {(Object.entries(CATEGORY_CONFIG) as [NotifDisplayType, typeof CATEGORY_CONFIG.workflow][]).map(([key, conf]) => {
+                        const count = categoryCounts[key] || 0;
+                        if (count === 0) return null;
+                        return (
+                            <Button
+                                key={key}
+                                variant={typeFilter === key ? 'default' : 'ghost'}
+                                size="sm" className="h-8 text-xs gap-1"
+                                onClick={() => setTypeFilter(key)}
+                            >
+                                <conf.icon className="h-3 w-3" />
+                                {conf.label} ({count})
+                            </Button>
+                        );
+                    })}
                 </div>
 
-                {/* Search and filters */}
+                {/* Search + read filter */}
                 <div className="flex gap-3">
                     <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -305,8 +258,7 @@ export default function NotificationsPage() {
                             <Button
                                 key={f}
                                 variant={readFilter === f ? 'default' : 'ghost'}
-                                size="sm"
-                                className="h-9 text-xs gap-1"
+                                size="sm" className="h-9 text-xs gap-1"
                                 onClick={() => setReadFilter(f)}
                             >
                                 {f === 'all' ? <Bell className="h-3 w-3" /> :
@@ -333,89 +285,131 @@ export default function NotificationsPage() {
                     <span className="text-xs text-muted-foreground">{filtered.length} résultats</span>
                 </div>
 
-                {/* Notification List */}
-                <div className="space-y-2">
-                    {filtered.map(notif => {
-                        const catConf = CATEGORY_CONFIG[notif.category];
-                        const CatIcon = catConf.icon;
-                        const isSelected = selectedIds.has(notif.id);
-
-                        return (
-                            <Card
-                                key={notif.id}
-                                className={`transition-all hover:shadow-md ${!notif.read ? 'border-l-4 border-l-blue-500 bg-blue-50/30 dark:bg-blue-950/10' : ''
-                                    } ${isSelected ? 'ring-2 ring-primary/30' : ''}`}
-                            >
+                {/* Loading state */}
+                {isLoading && (
+                    <div className="space-y-3">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <Card key={i}>
                                 <CardContent className="py-3 px-4">
                                     <div className="flex items-start gap-3">
-                                        {/* Checkbox */}
-                                        <button
-                                            onClick={() => toggleSelect(notif.id)}
-                                            className="mt-1"
-                                        >
-                                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground/40'
-                                                }`}>
-                                                {isSelected && <Check className="h-3 w-3 text-white" />}
-                                            </div>
-                                        </button>
-
-                                        {/* Priority dot */}
-                                        <div className={`w-2 h-2 rounded-full mt-2 ${getPriorityDot(notif.priority)}`} />
-
-                                        {/* Category icon */}
-                                        <div className={`p-2 rounded-lg ${catConf.color}`}>
-                                            <CatIcon className="h-4 w-4" />
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between gap-2">
-                                                <h3 className={`text-sm ${!notif.read ? 'font-semibold' : 'font-medium'}`}>
-                                                    {notif.title}
-                                                </h3>
-                                                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                                    {formatTime(notif.timestamp)}
-                                                </span>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notif.message}</p>
-                                            <div className="flex items-center gap-2 mt-2">
-                                                {notif.actor && (
-                                                    <span className="text-[10px] text-muted-foreground/70">{notif.actor}</span>
-                                                )}
-                                                {notif.actionUrl && (
-                                                    <Button variant="link" size="sm" className="h-auto p-0 text-xs">
-                                                        {notif.actionLabel || 'Voir'} →
-                                                    </Button>
-                                                )}
-                                                {!notif.read && (
-                                                    <button
-                                                        className="text-[10px] text-blue-500 hover:underline ml-auto"
-                                                        onClick={() => markAsRead([notif.id])}
-                                                    >
-                                                        Marquer lu
-                                                    </button>
-                                                )}
-                                            </div>
+                                        <Skeleton className="w-4 h-4 rounded" />
+                                        <Skeleton className="w-2 h-2 rounded-full mt-2" />
+                                        <Skeleton className="w-8 h-8 rounded-lg" />
+                                        <div className="flex-1 space-y-2">
+                                            <Skeleton className="h-4 w-3/4" />
+                                            <Skeleton className="h-3 w-full" />
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
-                        );
-                    })}
+                        ))}
+                    </div>
+                )}
 
-                    {filtered.length === 0 && (
-                        <Card>
-                            <CardContent className="py-12 text-center text-muted-foreground">
-                                <BellOff className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                                <p className="text-lg font-medium">Aucune notification</p>
-                                <p className="text-sm mt-1">
-                                    {readFilter === 'unread' ? 'Toutes les notifications ont été lues !' : 'Rien à afficher avec ces filtres.'}
-                                </p>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
-            </div>
+                {/* Error state */}
+                {isError && !isUsingMock && (
+                    <Card className="border-red-200 bg-red-50/50 dark:bg-red-950/10">
+                        <CardContent className="py-6 text-center">
+                            <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-red-500" />
+                            <p className="font-medium text-red-600">Erreur de chargement</p>
+                            <p className="text-sm text-muted-foreground mt-1">{(error as Error)?.message || 'Connexion au serveur impossible'}</p>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Notification List */}
+                {!isLoading && (
+                    <div className="space-y-2">
+                        {filtered.map(notif => {
+                            const displayType = mapType(notif.type);
+                            const catConf = CATEGORY_CONFIG[displayType];
+                            const CatIcon = catConf.icon;
+                            const isSelected = selectedIds.has(notif.id);
+
+                            return (
+                                <Card
+                                    key={notif.id}
+                                    className={`transition-all hover:shadow-md cursor-pointer ${!notif.lu ? 'border-l-4 border-l-blue-500 bg-blue-50/30 dark:bg-blue-950/10' : ''
+                                        } ${isSelected ? 'ring-2 ring-primary/30' : ''}`}
+                                >
+                                    <CardContent className="py-3 px-4">
+                                        <div className="flex items-start gap-3">
+                                            {/* Checkbox */}
+                                            <button onClick={() => toggleSelect(notif.id)} className="mt-1">
+                                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground/40'
+                                                    }`}>
+                                                    {isSelected && <Check className="h-3 w-3 text-white" />}
+                                                </div>
+                                            </button>
+
+                                            {/* Category icon */}
+                                            <div className={`p-2 rounded-lg shrink-0 ${catConf.color}`}>
+                                                <CatIcon className="h-4 w-4" />
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <h3 className={`text-sm ${!notif.lu ? 'font-semibold' : 'font-medium'}`}>
+                                                        {notif.titre}
+                                                    </h3>
+                                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                        {formatTime(notif.createdAt)}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notif.message}</p>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <Badge variant="outline" className="text-[10px] h-5">
+                                                        {catConf.label}
+                                                    </Badge>
+                                                    {notif.lien && (
+                                                        <Button
+                                                            variant="link" size="sm"
+                                                            className="h-auto p-0 text-xs"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(notif.lien!);
+                                                            }}
+                                                        >
+                                                            Voir →
+                                                        </Button>
+                                                    )}
+                                                    {!notif.lu && (
+                                                        <button
+                                                            className="text-[10px] text-blue-500 hover:underline ml-auto"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleMarkRead(notif.id);
+                                                            }}
+                                                        >
+                                                            {markRead.isPending ? 'Marquage...' : 'Marquer lu'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+
+                        {/* Empty state */}
+                        {filtered.length === 0 && (
+                            <Card>
+                                <CardContent className="py-12 text-center text-muted-foreground">
+                                    <BellOff className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                                    <p className="text-lg font-medium">Aucune notification</p>
+                                    <p className="text-sm mt-1">
+                                        {readFilter === 'unread'
+                                            ? 'Toutes les notifications ont été lues !'
+                                            : 'Rien à afficher avec ces filtres.'}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                )}
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

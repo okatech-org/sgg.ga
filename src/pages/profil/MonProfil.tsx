@@ -75,7 +75,7 @@ export default function MonProfil() {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl animate-fade-in">
+    <div className="container mx-auto px-4 py-8 max-w-5xl animate-page-enter">
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
@@ -122,9 +122,9 @@ export default function MonProfil() {
       </Card>
 
       {/* ── Info Grid ───────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 mb-6">
+      <div className="grid gap-4 sm:grid-cols-2 mb-6 stagger-children">
         {infoItems.map(({ icon: Icon, label, value }) => (
-          <Card key={label} className="border-government-navy/5">
+          <Card key={label} className="border-government-navy/5 card-hover">
             <CardContent className="flex items-center gap-4 py-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-government-gold/10">
                 <Icon className="h-5 w-5 text-government-gold" />
@@ -141,7 +141,7 @@ export default function MonProfil() {
       <Separator className="my-6" />
 
       {/* ── Stats Row ───────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-3 stagger-children">
         {/* Login count */}
         <Card className="border-government-navy/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

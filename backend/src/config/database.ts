@@ -1,9 +1,36 @@
 /**
  * SGG Digital - Database Configuration
  * Configuration for Google Cloud SQL PostgreSQL connection
+ * 
+ * NEXUS-OMEGA M4 — Sécurité renforcée :
+ * - Utilisateur applicatif sgg_app (pas postgres)
+ * - SSL obligatoire en production
+ * - Logging sécurisé (pas de secrets dans les logs)
  */
 
-import { Pool, PoolConfig, QueryResult } from 'pg';
+import { Pool, PoolConfig, QueryResult, QueryResultRow } from 'pg';
+
+// ── Validation de la configuration ────────────────────────────────────────
+if (!process.env.DATABASE_URL) {
+  console.error('❌ FATAL: DATABASE_URL is not defined. Set it in .env or Secret Manager.');
+  process.exit(1);
+}
+
+const dbUrl = new URL(process.env.DATABASE_URL);
+const dbUser = dbUrl.username;
+const dbHost = dbUrl.hostname;
+const dbName = dbUrl.pathname.slice(1).split('?')[0];
+const isProduction = process.env.NODE_ENV === 'production';
+
+// ── Avertissement sécurité ────────────────────────────────────────────────
+if (dbUser === 'postgres') {
+  console.warn('⚠️  SECURITY: Using superuser "postgres" — switch to "sgg_app" for production!');
+  console.warn('   Run: database/migrations/002_create_app_user.sql');
+}
+
+if (isProduction && !process.env.DATABASE_URL.includes('sslmode=require')) {
+  console.warn('⚠️  SECURITY: sslmode=require is recommended in production DATABASE_URL');
+}
 
 // Environment configuration
 const config: PoolConfig = {
@@ -17,18 +44,20 @@ const config: PoolConfig = {
   connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'),
 
   // SSL configuration for Cloud SQL
-  // SECURITY: rejectUnauthorized should be true in production to prevent MITM attacks
-  ssl: process.env.DATABASE_URL?.includes('35.195.248.19')
-    ? { rejectUnauthorized: process.env.NODE_ENV === 'production' }
-    : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false),
+  // Auto-detect: if DATABASE_URL contains sslmode=require, pg handles it
+  // Otherwise, enable SSL for known Cloud SQL IPs
+  ssl: process.env.DATABASE_URL?.includes('sslmode=require')
+    ? undefined // pg parses sslmode from connection string
+    : process.env.DATABASE_URL?.includes('35.195.248.19')
+      ? { rejectUnauthorized: isProduction }
+      : (isProduction ? { rejectUnauthorized: true } : false),
 
   // Application name for query identification
   application_name: 'sgg-digital-api',
 };
 
-// Log database connection info
-const dbName = process.env.DATABASE_URL?.split('/').pop()?.split('?')[0] || 'unknown';
-console.log(`📦 Database config: ${dbName} (SSL: ${config.ssl ? 'enabled' : 'disabled'})`);
+// Log database connection info (SANS MOT DE PASSE)
+console.log(`📦 Database: ${dbUser}@${dbHost}/${dbName} (SSL: ${config.ssl !== false ? 'enabled' : 'disabled'}, Pool: ${config.min}-${config.max})`);
 
 // Create the connection pool
 export const pool = new Pool(config);
@@ -54,7 +83,7 @@ pool.on('remove', () => {
 /**
  * Execute a query with automatic connection management
  */
-export async function query<T = any>(
+export async function query<T extends QueryResultRow = any>(
   text: string,
   params?: any[],
   userId?: string
@@ -68,7 +97,7 @@ export async function query<T = any>(
     }
 
     const start = Date.now();
-    const result = await client.query<T>(text, params);
+    const result = await client.query<T>(text, params as any[]);
     const duration = Date.now() - start;
 
     // Log slow queries

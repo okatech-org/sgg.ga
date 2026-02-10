@@ -290,7 +290,21 @@
 
 @layer utilities {
 
-  /* Animation utilities */
+  /* ═══════════════════════════════════════════════════════════════════════
+     🎬 ANIMATIONS SYSTÈME — Sprint 3 UX Polish
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* ── Page Transitions ─────────────────────────────────────────────────── */
+  .animate-page-enter {
+    animation: pageEnter 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Fade / Slide / Scale — base animations ───────────────────────────── */
   .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
   }
@@ -299,64 +313,137 @@
     animation: slideUp 0.5s ease-out forwards;
   }
 
+  .animate-slide-down {
+    animation: slideDown 0.4s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.4s ease-out forwards;
+  }
+
   .animate-scale-in {
     animation: scaleIn 0.3s ease-out forwards;
   }
 
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
   }
 
   @keyframes scaleIn {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
   }
 
-  /* Number animation for stats */
+  /* ── Stagger Children (listes, grilles) ────────────────────────────────── */
+  .stagger-children > * {
+    opacity: 0;
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+  .stagger-children > *:nth-child(1)  { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2)  { animation-delay: 50ms; }
+  .stagger-children > *:nth-child(3)  { animation-delay: 100ms; }
+  .stagger-children > *:nth-child(4)  { animation-delay: 150ms; }
+  .stagger-children > *:nth-child(5)  { animation-delay: 200ms; }
+  .stagger-children > *:nth-child(6)  { animation-delay: 250ms; }
+  .stagger-children > *:nth-child(7)  { animation-delay: 300ms; }
+  .stagger-children > *:nth-child(8)  { animation-delay: 350ms; }
+  .stagger-children > *:nth-child(n+9) { animation-delay: 400ms; }
+
+  /* ── Micro-interactions — cartes et boutons ────────────────────────────── */
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+  .card-hover:hover {
+    @apply shadow-md -translate-y-0.5;
+  }
+
+  .btn-press:active {
+    transform: scale(0.97);
+    transition: transform 0.1s;
+  }
+
+  /* ── Number / Counter animation ───────────────────────────────────────── */
   .animate-count {
     animation: countUp 1s ease-out;
   }
 
   @keyframes countUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* Mobile compact mode — larger touch targets */
+  /* ── Badge pulse (nouveaux éléments) ──────────────────────────────────── */
+  .badge-pulse {
+    animation: badgePulse 2s ease-in-out infinite;
+  }
+
+  @keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.15); }
+  }
+
+  /* ── État vide — illustration animation ───────────────────────────────── */
+  .animate-empty-state {
+    animation: emptyBounce 6s ease-in-out infinite;
+  }
+
+  @keyframes emptyBounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+
+  /* ── Loading shimmer (skeleton amélioré) ──────────────────────────────── */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted-foreground) / 0.08) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     ♿ ACCESSIBILITÉ — Focus Visible
+     ═══════════════════════════════════════════════════════════════════════ */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+    outline-style: solid;
+  }
+
+  /* Skip link */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100]
+           focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     📱 RESPONSIVE — Mobile / Tablette / Desktop
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Mobile (< 640px) — touch targets 44px, stack grids */
   @media (max-width: 640px) {
     .mobile-compact .stat-card {
       @apply p-3;
@@ -374,6 +461,24 @@
       min-width: 44px;
     }
 
+    /* Cards au lieu de tableaux */
+    .responsive-table {
+      @apply block;
+    }
+    .responsive-table thead {
+      @apply hidden;
+    }
+    .responsive-table tbody tr {
+      @apply block mb-3 p-4 rounded-lg border;
+    }
+    .responsive-table tbody td {
+      @apply block text-right py-1;
+    }
+    .responsive-table tbody td::before {
+      content: attr(data-label);
+      @apply float-left font-medium text-sm;
+    }
+
     /* Compact header for small screens */
     .mobile-compact header {
       @apply h-14;
@@ -384,6 +489,17 @@
       @apply grid-cols-1;
     }
   }
+
+  /* Tablette (768px-1023px) — layout 2 colonnes */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .tablet-2col {
+      @apply grid-cols-2;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     🎯 DIVERS
+     ═══════════════════════════════════════════════════════════════════════ */
 
   /* Help mode visual feedback */
   [data-help] {
@@ -407,6 +523,11 @@
   /* Smooth scrolling across the app */
   html {
     scroll-behavior: smooth;
+  }
+
+  /* Transitions fluides sur tout */
+  * {
+    @apply transition-colors duration-150;
   }
 
   /* Print-friendly: hide onboarding elements */

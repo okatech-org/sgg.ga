@@ -3,7 +3,20 @@ import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { authLogger } from '@/services/logger';
 
-export type AppRole = "admin_sgg" | "sg_ministere" | "sgpr" | "citoyen";
+// All 12 roles from backend auth.app_role enum (NEXUS-OMEGA P0-5)
+export type AppRole =
+  | "admin_sgg"
+  | "directeur_sgg"
+  | "sg_ministere"
+  | "sgpr"
+  | "premier_ministre"
+  | "ministre"
+  | "assemblee"
+  | "senat"
+  | "conseil_etat"
+  | "cour_constitutionnelle"
+  | "dgjo"
+  | "citoyen";
 
 interface Profile {
   id: string;
@@ -28,11 +41,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Role-based access configuration
+// All modules accessible in the platform
+const ALL_MODULES = ["dashboard", "gar", "nominations", "egop", "journalOfficiel", "documents", "rapports", "formation", "parametres", "institutions", "cycleLegislatif", "matriceReporting", "ptmptg", "monitoring", "admin"];
+
+// Role-based access configuration — all 12 roles (NEXUS-OMEGA aligned)
 const roleModuleAccess: Record<AppRole, string[]> = {
-  admin_sgg: ["dashboard", "gar", "nominations", "egop", "journalOfficiel", "documents", "rapports", "formation", "parametres", "institutions", "cycleLegislatif", "matriceReporting", "ptmptg"],
-  sg_ministere: ["dashboard", "gar", "nominations", "journalOfficiel", "documents", "rapports"],
-  sgpr: ["dashboard", "gar", "nominations", "egop", "journalOfficiel", "documents", "rapports"],
+  // SGG Central — full access
+  admin_sgg: ALL_MODULES,
+  directeur_sgg: ["dashboard", "gar", "nominations", "egop", "journalOfficiel", "documents", "rapports", "institutions", "cycleLegislatif", "matriceReporting", "ptmptg"],
+  // Presidency
+  sgpr: ["dashboard", "gar", "nominations", "egop", "journalOfficiel", "documents", "rapports", "cycleLegislatif", "ptmptg"],
+  premier_ministre: ["dashboard", "gar", "nominations", "egop", "journalOfficiel", "documents", "rapports", "cycleLegislatif", "ptmptg"],
+  // Government ministries
+  ministre: ["dashboard", "gar", "nominations", "journalOfficiel", "documents", "rapports", "ptmptg"],
+  sg_ministere: ["dashboard", "gar", "nominations", "journalOfficiel", "documents", "rapports", "ptmptg"],
+  // Parliament & Judiciary
+  assemblee: ["dashboard", "journalOfficiel", "documents", "cycleLegislatif"],
+  senat: ["dashboard", "journalOfficiel", "documents", "cycleLegislatif"],
+  conseil_etat: ["dashboard", "journalOfficiel", "documents", "cycleLegislatif"],
+  cour_constitutionnelle: ["dashboard", "journalOfficiel", "documents", "cycleLegislatif"],
+  // Journal Officiel direction
+  dgjo: ["dashboard", "journalOfficiel", "documents", "rapports"],
+  // Public
   citoyen: ["journalOfficiel"],
 };
 

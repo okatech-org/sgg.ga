@@ -145,10 +145,10 @@ class PushNotificationService {
             this.state.permission = permission;
 
             if (permission === 'granted') {
-                console.log('[Push] ✅ Permission accordée');
+                if (import.meta.env.DEV) console.log('[Push] Permission accordée');
                 await this.registerServiceWorker();
             } else if (permission === 'denied') {
-                console.warn('[Push] ❌ Permission refusée par l\'utilisateur');
+                if (import.meta.env.DEV) console.warn('[Push] Permission refusée');
             }
 
             return permission;
@@ -166,7 +166,7 @@ class PushNotificationService {
         try {
             const registration = await navigator.serviceWorker.ready;
             this.state.swRegistration = registration;
-            console.log('[Push] Service Worker prêt pour les notifications');
+            if (import.meta.env.DEV) console.log('[Push] Service Worker prêt');
         } catch (err) {
             console.error('[Push] Erreur enregistrement SW:', err);
         }
@@ -224,19 +224,19 @@ class PushNotificationService {
     async notify(payload: PushNotificationPayload): Promise<boolean> {
         // Check if notifications are enabled
         if (!this.isEnabled) {
-            console.log('[Push] Notifications désactivées');
+            if (import.meta.env.DEV) console.log('[Push] Notifications désactivées');
             return false;
         }
 
         // Check category preference
         if (!this.state.preferences.categories[payload.category]) {
-            console.log(`[Push] Catégorie "${payload.category}" désactivée`);
+            if (import.meta.env.DEV) console.log(`[Push] Catégorie "${payload.category}" désactivée`);
             return false;
         }
 
         // Check quiet hours (override for critical alerts)
         if (this.isQuietHours() && payload.category !== 'alerte_systeme') {
-            console.log('[Push] Heures de silence — notification ignorée');
+            if (import.meta.env.DEV) console.log('[Push] Heures de silence — notification ignorée');
             return false;
         }
 
@@ -278,7 +278,7 @@ class PushNotificationService {
                 });
             }
 
-            console.log(`[Push] ✅ Notification envoyée: "${payload.title}"`);
+            if (import.meta.env.DEV) console.log(`[Push] Notification envoyée: "${payload.title}"`);
             return true;
         } catch (err) {
             console.error('[Push] Erreur envoi notification:', err);

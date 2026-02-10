@@ -251,7 +251,7 @@ export function initPerformanceMonitoring(): void {
         });
     }
 
-    console.log('[Perf] ✅ Core Web Vitals monitoring initialized');
+    if (import.meta.env.DEV) console.log('[Perf] Core Web Vitals monitoring initialized');
 }
 
 /**

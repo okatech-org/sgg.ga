@@ -14,6 +14,7 @@ import { useDemoUser } from "@/hooks/useDemoUser";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useReportingStore } from "@/stores/reportingStore";
+import { useNotificationsCount, useNotifications, useMarkAllNotificationsRead } from "@/hooks/useNeocortex";
 import { GlobalSearch } from "./GlobalSearch";
 import { useTranslation } from "@/i18n";
 
@@ -32,11 +33,28 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const navigate = useNavigate();
   const { demoUser, clearDemoUser } = useDemoUser();
   const { user, profile, role, signOut } = useAuth();
-  const unreadCount = useReportingStore((s) => s.getUnreadNotificationsCount());
-  const notifications = useReportingStore((s) => s.notifications);
-  const markNotificationRead = useReportingStore((s) => s.markNotificationRead);
-  const markAllNotificationsRead = useReportingStore((s) => s.markAllNotificationsRead);
-  const recentNotifs = notifications.filter(n => !n.lue).slice(0, 3);
+  // NEOCORTEX notification system (primary) with reportingStore fallback
+  const { data: neoUnreadCount } = useNotificationsCount();
+  const { data: neoNotifData } = useNotifications({ limit: 5, nonLues: true });
+  const neoMarkAll = useMarkAllNotificationsRead();
+
+  // Fallback: use reportingStore if NEOCORTEX unavailable
+  const storeUnreadCount = useReportingStore((s) => s.getUnreadNotificationsCount());
+  const storeNotifications = useReportingStore((s) => s.notifications);
+  const storeMarkAllRead = useReportingStore((s) => s.markAllNotificationsRead);
+
+  // Resolve: prefer NEOCORTEX data
+  const unreadCount = neoUnreadCount ?? storeUnreadCount;
+  const recentNotifs = neoNotifData?.notifications?.slice(0, 3) || storeNotifications.filter(n => !n.lue).slice(0, 3);
+  const isNeoConnected = neoUnreadCount !== undefined;
+
+  const handleMarkAllRead = () => {
+    if (isNeoConnected) {
+      neoMarkAll.mutate();
+    } else {
+      storeMarkAllRead();
+    }
+  };
   const { t } = useTranslation();
 
   const handleLogout = async () => {
@@ -138,7 +156,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 <span>{t('header.notifications')}</span>
                 {unreadCount > 0 && (
                   <button
-                    onClick={() => markAllNotificationsRead()}
+                    onClick={handleMarkAllRead}
                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {t('header.markAllRead')}
@@ -147,13 +165,13 @@ export function Header({ onMenuToggle }: HeaderProps) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {recentNotifs.length > 0 ? (
-                recentNotifs.map((notif) => (
+                recentNotifs.map((notif: any) => (
                   <DropdownMenuItem
                     key={notif.id}
                     className="flex flex-col items-start gap-1 py-3 cursor-pointer"
-                    onClick={() => markNotificationRead(notif.id)}
+                    onClick={() => navigate('/notifications')}
                   >
-                    <span className="font-medium text-sm">{notif.titre}</span>
+                    <span className="font-medium text-sm">{notif.titre || notif.title}</span>
                     <span className="text-xs text-muted-foreground line-clamp-2">{notif.message}</span>
                   </DropdownMenuItem>
                 ))
@@ -161,6 +179,17 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 <div className="py-4 text-center text-sm text-muted-foreground">
                   {t('header.noNotifications')}
                 </div>
+              )}
+              {unreadCount > 3 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-center text-sm text-primary cursor-pointer justify-center"
+                    onClick={() => navigate('/notifications')}
+                  >
+                    Voir toutes les notifications ({unreadCount})
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

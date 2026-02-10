@@ -171,7 +171,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
                 setStatus('connected');
                 setLastError(null);
                 reconnectAttemptsRef.current = 0;
-                console.log('[WS Hook] ✅ Connected');
+                if (import.meta.env.DEV) console.log('[WS] Connected');
 
                 // Auto-subscribe to requested channels
                 for (const channel of channels) {
@@ -198,14 +198,14 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
                     pingTimerRef.current = null;
                 }
 
-                console.log(`[WS Hook] Disconnected (code: ${event.code})`);
+                if (import.meta.env.DEV) console.log(`[WS] Disconnected (code: ${event.code})`);
 
                 // Auto-reconnect with exponential backoff
                 if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts && event.code !== 1000) {
                     const delay = reconnectDelay * Math.pow(2, reconnectAttemptsRef.current);
                     reconnectAttemptsRef.current++;
                     setStatus('reconnecting');
-                    console.log(`[WS Hook] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+                    if (import.meta.env.DEV) console.log(`[WS] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
 
                     reconnectTimerRef.current = setTimeout(connect, delay);
                 }

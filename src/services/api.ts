@@ -778,6 +778,221 @@ export const healthApi = {
 };
 
 // ============================================================================
+// 🧠 NEOCORTEX API — Système nerveux digital
+// ============================================================================
+
+/** Types NEOCORTEX frontend */
+export interface NeocortexDashboard {
+    limbique: {
+        totalSignaux: number;
+        nonTraites: number;
+        derniere24h: number;
+        parType: Record<string, number>;
+    };
+    hippocampe: {
+        totalActions: number;
+        derniere24h: number;
+        parCategorie: Record<string, number>;
+        topActions: Array<{ action: string; count: number }>;
+        topUtilisateurs: Array<{ userId: string; email: string; count: number }>;
+    };
+    moteur: {
+        enAttente: number;
+        enCours: number;
+        terminees24h: number;
+        echouees24h: number;
+        parType: Array<{ type: string; count: number; statut: string }>;
+    };
+    timestamp: string;
+}
+
+export interface NeocortexNotification {
+    id: string;
+    type: string;
+    canal: string;
+    titre: string;
+    message: string;
+    lien: string | null;
+    entiteType: string | null;
+    entiteId: string | null;
+    lu: boolean;
+    luAt: string | null;
+    createdAt: string;
+}
+
+export interface HistoriqueAction {
+    id: string;
+    action: string;
+    categorie: string;
+    entiteType: string;
+    entiteId: string | null;
+    userId: string | null;
+    userEmail: string | null;
+    userRole: string | null;
+    details: Record<string, unknown>;
+    metadata: Record<string, unknown>;
+    correlationId: string | null;
+    durationMs: number | null;
+    createdAt: string;
+}
+
+export interface TransitionValidation {
+    autorise: boolean;
+    transitionsValides: string[];
+}
+
+export interface DecisionResult {
+    score: number;
+    decision: 'approve' | 'reject' | 'review';
+    details: Array<{ valeur: number; poids: number; label?: string }>;
+    seuils: { auto_approve: number; auto_reject: number };
+}
+
+export interface ConfigSysteme {
+    cle: string;
+    valeur: unknown;
+    description: string | null;
+    categorie?: string;
+    version: number;
+    updated_at?: string;
+}
+
+export interface MetriqueSysteme {
+    nom: string;
+    valeur: number;
+    unite: string;
+    periode: string;
+    dimensions: Record<string, unknown>;
+    created_at: string;
+}
+
+export const neocortexApi = {
+    /** Dashboard complet du système nerveux */
+    getDashboard: async (): Promise<ApiResponse<NeocortexDashboard>> =>
+        fetchApi<NeocortexDashboard>('/api/neocortex/dashboard'),
+
+    /** Signaux non traités */
+    getSignaux: async (limit = 50): Promise<ApiResponse<unknown[]>> =>
+        fetchApi(`/api/neocortex/signaux?limit=${limit}`),
+
+    /** Historique des actions avec filtres */
+    getHistorique: async (filters: {
+        entiteType?: string;
+        entiteId?: string;
+        userId?: string;
+        categorie?: string;
+        action?: string;
+        dateDebut?: string;
+        dateFin?: string;
+        page?: number;
+        limit?: number;
+    } = {}): Promise<ApiResponse<{
+        actions: HistoriqueAction[];
+        total: number;
+        page: number;
+        totalPages: number;
+    }>> => {
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([k, v]) => {
+            if (v !== undefined && v !== '') params.set(k, String(v));
+        });
+        return fetchApi(`/api/neocortex/historique?${params}`);
+    },
+
+    /** Timeline d'une entité spécifique */
+    getHistoriqueEntite: async (entiteType: string, entiteId: string): Promise<ApiResponse<HistoriqueAction[]>> =>
+        fetchApi(`/api/neocortex/historique/${entiteType}/${entiteId}`),
+
+    /** Lire toutes les configs ou par catégorie */
+    getConfig: async (categorie?: string): Promise<ApiResponse<ConfigSysteme[]>> => {
+        const params = categorie ? `?categorie=${categorie}` : '';
+        return fetchApi(`/api/neocortex/config${params}`);
+    },
+
+    /** Lire une config spécifique */
+    getConfigValue: async (cle: string): Promise<ApiResponse<{ cle: string; valeur: unknown }>> =>
+        fetchApi(`/api/neocortex/config/${cle}`),
+
+    /** Modifier une config */
+    updateConfig: async (cle: string, valeur: unknown, description?: string): Promise<ApiResponse<{ cle: string; valeur: unknown }>> =>
+        fetchApi(`/api/neocortex/config/${cle}`, {
+            method: 'PUT',
+            body: JSON.stringify({ valeur, description }),
+        }),
+
+    /** Valider une transition de workflow */
+    validateTransition: async (module: string, statutActuel: string, nouveauStatut: string): Promise<ApiResponse<TransitionValidation>> =>
+        fetchApi('/api/neocortex/decision/transition/validate', {
+            method: 'POST',
+            body: JSON.stringify({ module, statutActuel, nouveauStatut }),
+        }),
+
+    /** Évaluer un dossier pour auto-approbation */
+    evaluerAutoApprobation: async (data: {
+        module: string;
+        entiteId: string;
+        completude: number;
+        delai?: number;
+        historique?: number;
+        conformite: number;
+        urgence?: number;
+    }): Promise<ApiResponse<DecisionResult>> =>
+        fetchApi('/api/neocortex/decision/auto-approbation', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        }),
+
+    /** Mes notifications */
+    getNotifications: async (options: {
+        nonLues?: boolean;
+        type?: string;
+        limit?: number;
+        offset?: number;
+    } = {}): Promise<ApiResponse<{
+        notifications: NeocortexNotification[];
+        totalNonLues: number;
+    }>> => {
+        const params = new URLSearchParams();
+        if (options.nonLues) params.set('nonLues', 'true');
+        if (options.type) params.set('type', options.type);
+        if (options.limit) params.set('limit', String(options.limit));
+        if (options.offset) params.set('offset', String(options.offset));
+        return fetchApi(`/api/neocortex/notifications?${params}`);
+    },
+
+    /** Compteur de notifications non lues */
+    getNotificationsCount: async (): Promise<ApiResponse<{ nonLues: number }>> =>
+        fetchApi('/api/neocortex/notifications/count'),
+
+    /** Marquer une notification comme lue */
+    markNotificationRead: async (id: string): Promise<ApiResponse<{ success: boolean }>> =>
+        fetchApi(`/api/neocortex/notifications/${id}/lue`, { method: 'PATCH' }),
+
+    /** Marquer toutes les notifications comme lues */
+    markAllNotificationsRead: async (): Promise<ApiResponse<{ marquees: number }>> =>
+        fetchApi('/api/neocortex/notifications/lire-tout', { method: 'PATCH' }),
+
+    /** Poids adaptatifs pour un signal */
+    getPoidsAdaptatifs: async (signalType: string): Promise<ApiResponse<
+        Array<{ regle: string; poids: number; reussites: number; echecs: number }>
+    >> =>
+        fetchApi(`/api/neocortex/poids/${signalType}`),
+
+    /** Métriques du système */
+    getMetriques: async (filters: {
+        nom?: string;
+        periode?: string;
+        limit?: number;
+    } = {}): Promise<ApiResponse<MetriqueSysteme[]>> => {
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([k, v]) => {
+            if (v !== undefined) params.set(k, String(v));
+        });
+        return fetchApi(`/api/neocortex/metriques?${params}`);
+    },
+};
+
+// ============================================================================
 // EXPORT DEFAULT
 // ============================================================================
 
@@ -789,4 +1004,5 @@ export default {
     jo: joApi,
     ptm: ptmApi,
     health: healthApi,
+    neocortex: neocortexApi,
 };

@@ -110,10 +110,10 @@ async function loadLocaleTranslations(code: string): Promise<TranslationDict | n
         const module = await import(`./locales/${code}.json`);
         const dict = module.default || module;
         translations[code] = dict;
-        console.log(`[i18n] ✅ Locale "${code}" loaded dynamically`);
+        if (import.meta.env.DEV) console.log(`[i18n] Locale "${code}" loaded`);
         return dict;
     } catch (err) {
-        console.warn(`[i18n] ⚠️ Failed to load locale "${code}":`, err);
+        console.warn(`[i18n] Failed to load locale "${code}"`, err);
         return null;
     }
 }
@@ -220,7 +220,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
     const setLocale = useCallback(async (newLocale: string) => {
         if (!localeRegistry.has(newLocale)) {
-            console.warn(`[i18n] Locale "${newLocale}" not registered`);
+            if (import.meta.env.DEV) console.warn(`[i18n] Locale "${newLocale}" not registered`);
             return;
         }
 
@@ -231,7 +231,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
             setIsLoading(false);
 
             if (!loaded) {
-                console.warn(`[i18n] Could not load locale "${newLocale}", keeping "${locale}"`);
+                if (import.meta.env.DEV) console.warn(`[i18n] Could not load locale "${newLocale}"`);
                 return;
             }
         }
@@ -251,7 +251,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         if (!AVAILABLE_LOCALES.includes(config.code)) {
             AVAILABLE_LOCALES.push(config.code);
         }
-        console.log(`[i18n] ✅ Locale "${config.code}" (${config.label}) registered`);
+        if (import.meta.env.DEV) console.log(`[i18n] Locale "${config.code}" registered`);
     }, []);
 
     const t = useCallback(

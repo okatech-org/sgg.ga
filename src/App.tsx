@@ -752,9 +752,9 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* Workflow Builder */}
+          {/* Workflow Builder (distinct from /workflows admin page) */}
           <Route
-            path="/workflows"
+            path="/workflow-builder"
             element={
               <ProtectedRoute>
                 <WorkflowBuilderPage />
@@ -872,9 +872,9 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* Alert Center */}
+          {/* Alert Center (distinct from /alertes basic page) */}
           <Route
-            path="/alertes"
+            path="/centre-alertes"
             element={
               <ProtectedRoute>
                 <AlertCenterPage />
@@ -1252,9 +1252,9 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* Associations Registry */}
+          {/* Associations Registry (distinct from /associations NGO page) */}
           <Route
-            path="/associations"
+            path="/registre-associations"
             element={
               <ProtectedRoute>
                 <AssociationsRegistryPage />

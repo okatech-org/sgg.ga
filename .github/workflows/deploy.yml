@@ -9,183 +9,87 @@ on:
       environment:
         description: 'Target environment'
         required: true
-        default: 'staging'
+        default: 'production'
         type: choice
         options:
-          - staging
           - production
 
-env:
-  GCP_REGION: europe-west1
-  BACKEND_IMAGE: europe-west1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/sgg-digital/backend
-  FRONTEND_IMAGE: europe-west1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/sgg-digital/frontend
-
 jobs:
-  # ── Determine Environment ─────────────────────────────────────────────────
-  setup:
-    name: 🔧 Setup
+  # ── Build ─────────────────────────────────────────────────────────────────
+  build:
+    name: 🏗️ Build Production
     runs-on: ubuntu-latest
-    outputs:
-      environment: ${{ steps.env.outputs.environment }}
-      version: ${{ steps.version.outputs.version }}
-    steps:
-      - name: Determine environment
-        id: env
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "environment=production" >> $GITHUB_OUTPUT
-          else
-            echo "environment=staging" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set version
-        id: version
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          else
-            echo "version=sha-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
-          fi
-
-  # ── Build & Push Backend Docker Image ─────────────────────────────────────
-  build-backend:
-    name: 🐳 Build Backend
-    runs-on: ubuntu-latest
-    needs: setup
-    environment: ${{ needs.setup.outputs.environment }}
-    permissions:
-      contents: read
-      id-token: write
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
+      - uses: oven-sh/setup-bun@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          bun-version: latest
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Install dependencies
+        run: bun install
 
-      - name: Configure Docker for GCP Artifact Registry
-        run: gcloud auth configure-docker europe-west1-docker.pkg.dev
+      - name: Build production bundle
+        run: bun run build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://api.sgg.ga' }}
 
-      - name: Build and push backend
-        uses: docker/build-push-action@v5
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          context: .
-          file: Dockerfile.backend
-          push: true
-          tags: |
-            ${{ env.BACKEND_IMAGE }}:${{ needs.setup.outputs.version }}
-            ${{ env.BACKEND_IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          name: dist
+          path: dist/
+          retention-days: 3
 
-  # ── Build & Push Frontend Docker Image ────────────────────────────────────
-  build-frontend:
-    name: 🐳 Build Frontend
-    runs-on: ubuntu-latest
-    needs: setup
-    environment: ${{ needs.setup.outputs.environment }}
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Configure Docker for GCP Artifact Registry
-        run: gcloud auth configure-docker europe-west1-docker.pkg.dev
-
-      - name: Build and push frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: Dockerfile.frontend
-          push: true
-          build-args: |
-            VITE_API_URL=${{ vars.VITE_API_URL }}
-            VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
-            VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
-            VITE_POSTHOG_KEY=${{ secrets.VITE_POSTHOG_KEY }}
-            VITE_APP_VERSION=${{ needs.setup.outputs.version }}
-          tags: |
-            ${{ env.FRONTEND_IMAGE }}:${{ needs.setup.outputs.version }}
-            ${{ env.FRONTEND_IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # ── Deploy to Cloud Run ───────────────────────────────────────────────────
+  # ── Deploy to OVH via FTP ─────────────────────────────────────────────────
   deploy:
-    name: 🚀 Deploy (${{ needs.setup.outputs.environment }})
+    name: 🚀 Deploy to sgg.ntsagui.com
     runs-on: ubuntu-latest
-    needs: [setup, build-backend, build-frontend]
-    environment: ${{ needs.setup.outputs.environment }}
-    permissions:
-      id-token: write
+    needs: build
+    environment: production
 
     steps:
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          name: dist
+          path: dist/
 
-      - name: Deploy Backend to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: sgg-api-${{ needs.setup.outputs.environment }}
-          image: ${{ env.BACKEND_IMAGE }}:${{ needs.setup.outputs.version }}
-          region: ${{ env.GCP_REGION }}
-          env_vars: |
-            NODE_ENV=${{ needs.setup.outputs.environment }}
-          secrets: |
-            DATABASE_URL=sgg-database-url:latest
-            REDIS_URL=sgg-redis-url:latest
-            JWT_SECRET=sgg-jwt-secret:latest
-          flags: >-
-            --memory=512Mi
-            --cpu=1
-            --min-instances=0
-            --max-instances=10
-            --concurrency=80
-            --timeout=60s
-
-      - name: Deploy Frontend to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: sgg-web-${{ needs.setup.outputs.environment }}
-          image: ${{ env.FRONTEND_IMAGE }}:${{ needs.setup.outputs.version }}
-          region: ${{ env.GCP_REGION }}
-          flags: >-
-            --memory=256Mi
-            --cpu=1
-            --min-instances=0
-            --max-instances=5
-            --concurrency=200
-            --timeout=30s
-
-      - name: Summary
+      - name: Create .htaccess for SPA routing
         run: |
-          echo "## ✅ Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          cat > dist/.htaccess << 'EOF'
+          RewriteEngine On
+          RewriteBase /
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule . /index.html [L]
+          EOF
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: ./dist/
+          server-dir: ./sgg/
+          dangerous-clean-slate: true
+
+      - name: Verify deployment
+        run: |
+          sleep 5
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://sgg.ntsagui.com/)
+          echo "## 🚀 Deployment Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ **Site is live!** (HTTP $STATUS)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Site returned HTTP $STATUS" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Environment** | ${{ needs.setup.outputs.environment }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Version** | ${{ needs.setup.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Backend** | sgg-api-${{ needs.setup.outputs.environment }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Frontend** | sgg-web-${{ needs.setup.outputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **URL** | https://sgg.ntsagui.com/ |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **HTTP Status** | $STATUS |" >> $GITHUB_STEP_SUMMARY

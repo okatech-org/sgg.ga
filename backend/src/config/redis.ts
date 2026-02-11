@@ -9,7 +9,7 @@ import Redis from 'ioredis';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 // Create Redis client
-export const redis = new Redis(REDIS_URL, {
+export const redis = new (Redis as any)(REDIS_URL, {
   maxRetriesPerRequest: 3,
   retryDelayOnFailover: 100,
   enableReadyCheck: true,
@@ -244,7 +244,7 @@ export async function subscribeNotifications(
   const subscriber = redis.duplicate();
   await subscriber.subscribe(NOTIFICATION_CHANNEL);
 
-  subscriber.on('message', (channel, message) => {
+  subscriber.on('message', (channel: string, message: string) => {
     if (channel === NOTIFICATION_CHANNEL) {
       try {
         const { type, data } = JSON.parse(message);

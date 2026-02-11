@@ -8,7 +8,7 @@ import { query } from '../config/database.js';
 import { cacheGet, cacheSet, cacheDelete } from '../config/redis.js';
 
 // SECURITY: JWT_SECRET is mandatory — no fallback to prevent weak defaults
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET: string = process.env.JWT_SECRET || '';
 if (!JWT_SECRET) {
   console.error('FATAL: JWT_SECRET environment variable is required. Exiting.');
   process.exit(1);
@@ -51,14 +51,15 @@ type Permission = 'read' | 'write' | 'approve' | 'reject' | 'publish' | 'admin';
  * Generate JWT token
  */
 export function generateToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return jwt.sign(payload as object, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as any);
 }
 
 /**
  * Verify JWT token
  */
 export function verifyToken(token: string): JwtPayload {
-  return jwt.verify(token, JWT_SECRET) as JwtPayload;
+  return jwt.verify(token, JWT_SECRET) as unknown as JwtPayload;
 }
 
 /**
@@ -113,7 +114,7 @@ export async function authenticate(
       await cacheSet(cacheKey, user, 300); // Cache for 5 minutes
     }
 
-    if (!user.is_active) {
+    if (!user || !user.is_active) {
       res.status(401).json({
         success: false,
         error: {

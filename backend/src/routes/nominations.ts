@@ -217,8 +217,8 @@ router.post('/', requirePermission('nominations', 'write'), async (req: Authenti
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING id
       `, [candidat.nom, candidat.prenom, candidat.date_naissance, candidat.lieu_naissance,
-          candidat.sexe, candidat.email, candidat.telephone, candidat.corps, candidat.grade_actuel,
-          candidat.diplome_plus_eleve, candidat.photo_url, candidat.cv_url, req.user?.userId]);
+      candidat.sexe, candidat.email, candidat.telephone, candidat.corps, candidat.grade_actuel,
+      candidat.diplome_plus_eleve, candidat.photo_url, candidat.cv_url, req.user?.userId]);
       candidat_id = candidatResult.rows[0].id;
     }
 
@@ -229,7 +229,7 @@ router.post('/', requirePermission('nominations', 'write'), async (req: Authenti
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `, [candidat_id, poste_id, ministere_proposant_id, type || 'premiere_nomination',
-        motif_proposition, is_urgent || false, req.user?.userId]);
+      motif_proposition, is_urgent || false, req.user?.userId]);
 
     // Add history entry
     await query(`
@@ -272,12 +272,12 @@ router.patch('/:id/status', requirePermission('nominations', 'approve'), async (
     if (motif_rejet !== undefined) { updates.push(`motif_rejet = $${idx}`); values.push(motif_rejet); idx++; }
 
     // Add date based on status
-    const dateField = {
+    const dateField = ({
       'soumis': 'date_soumission',
       'recevabilite': 'date_recevabilite',
       'examen_sgg': 'date_examen_sgg',
       'transmis_sgpr': 'date_transmission_sgpr',
-    }[statut];
+    } as Record<string, string>)[statut];
     if (dateField) {
       updates.push(`${dateField} = NOW()`);
     }

@@ -5,7 +5,7 @@
 
 import { Router, Response } from 'express';
 import { query } from '../config/database.js';
-import { cacheGet, cacheSet } from '../config/redis.js';
+import { cacheGet, cacheSet, cacheDelete } from '../config/redis.js';
 import { authenticate, optionalAuth, requirePermission, AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
@@ -146,7 +146,7 @@ router.get('/textes/:id', optionalAuth, async (req: AuthenticatedRequest, res: R
     `, [id]);
 
     // Increment view count (async, don't wait)
-    query('UPDATE jo.textes SET nb_vues = nb_vues + 1 WHERE id = $1', [id]).catch(() => {});
+    query('UPDATE jo.textes SET nb_vues = nb_vues + 1 WHERE id = $1', [id]).catch(() => { });
 
     res.json({
       success: true,

@@ -292,7 +292,7 @@ export default function About() {
                     Découvrir SGG Digital
                   </Button>
                 </Link>
-                <Link to="/#features">
+                <Link to="/modules">
                   <Button variant="an-outline" size="lg">
                     Voir les modules
                   </Button>

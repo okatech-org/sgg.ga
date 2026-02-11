@@ -536,7 +536,7 @@ function AnimatedRoutes() {
           <Route
             path="/consolidated"
             element={
-              <ProtectedRoute requiredRoles={["admin_sgg", "sgpr"]}>
+              <ProtectedRoute requiredModule="consolidated">
                 <ConsolidatedDashboard />
               </ProtectedRoute>
             }

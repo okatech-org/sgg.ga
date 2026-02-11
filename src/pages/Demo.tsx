@@ -75,11 +75,11 @@ const demoAccounts: DemoAccount[] = [
     shortTitle: "Président",
     role: "Autorité Suprême",
     institution: "Présidence de la République",
-    description: "Destinataire des dossiers, autorité suprême. Vision globale de tous les indicateurs de performance et pilotage stratégique.",
+    description: "Destinataire final de tous les processus. Signe les décrets de nomination, promulgue les lois, préside le Conseil des Ministres, et reçoit les rapports de performance consolidés. Vision stratégique complète.",
     icon: Crown,
     flowLevel: "presidence",
     intensity: 5,
-    access: ["Tableau de Bord Exécutif", "Nominations", "Décisions"],
+    access: ["Tableau de Bord Exécutif", "Nominations", "Promulgation des lois", "Conseil des Ministres", "Rapports GAR/PAT", "Vue Consolidée", "Cycle Législatif", "Synthèse Exécutive", "Journal Officiel", "Matrice Reporting", "Données Sectorielles"],
   },
   {
     id: "vice-president",
@@ -87,11 +87,11 @@ const demoAccounts: DemoAccount[] = [
     shortTitle: "VP République",
     role: "Vice-Présidence de la République",
     institution: "Présidence de la République",
-    description: "Peut présider le Conseil des Ministres. Accès aux rapports de synthèse et suivi des priorités présidentielles.",
+    description: "Peut présider le Conseil des Ministres en l'absence du Président. Accès aux rapports de synthèse, suivi des priorités présidentielles et vue consolidée.",
     icon: Crown,
     flowLevel: "presidence",
     intensity: 5,
-    access: ["Conseil des Ministres", "Tableau de Bord"],
+    access: ["Conseil des Ministres", "Tableau de Bord", "Vue Consolidée", "Rapports GAR/PAT", "Cycle Législatif", "Synthèse Exécutive", "Nominations", "e-GOP", "Matrice Reporting", "Données Sectorielles", "Journal Officiel"],
   },
   // ═══ GOUVERNEMENT ═══
   {
@@ -104,7 +104,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Building2,
     flowLevel: "gouvernement",
     intensity: 4,
-    access: ["Conseils Interministériels", "Coordination", "Reporting", "PTM Consolidation"],
+    access: ["Nominations (contresigne)", "Suivi GAR / PAG", "Cycle Législatif", "e-GOP / Conseil des Ministres", "Matrice Reporting", "Vue Consolidée", "Synthèse Exécutive", "Données Sectorielles"],
   },
   {
     id: "ministre",
@@ -116,7 +116,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Briefcase,
     flowLevel: "gouvernement",
     intensity: 4,
-    access: ["Propositions", "Nominations", "Reporting GAR", "Matrice Reporting"],
+    access: ["Nominations (propose)", "Suivi GAR", "Cycle Législatif (rédige)", "e-GOP / Conseil des Ministres", "Matrice Reporting", "Données Sectorielles"],
   },
   // ═══ SGG (centre du processus) ═══
   {
@@ -130,7 +130,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Settings,
     flowLevel: "sgg",
     intensity: 5,
-    access: ["Configuration", "Tous Modules", "Administration", "Matrice Admin"],
+    access: ["Administration", "Nominations", "Suivi GAR", "Journal Officiel", "Cycle Législatif", "e-GOP", "Institutions", "Matrice Reporting", "Vue Consolidée", "Synthèse Exécutive", "Données Sectorielles"],
   },
   {
     id: "sgg-directeur",
@@ -143,7 +143,7 @@ const demoAccounts: DemoAccount[] = [
     icon: GraduationCap,
     flowLevel: "sgg",
     intensity: 4,
-    access: ["Lecture", "Édition Périmètre", "Validation", "Matrice Validation", "Consolidation PTM"],
+    access: ["Nominations", "Suivi GAR", "Cycle Législatif", "e-GOP", "Matrice Reporting", "Vue Consolidée", "Synthèse Exécutive", "Données Sectorielles"],
   },
   // ═══ SG MINISTÈRES ═══
   {
@@ -157,7 +157,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Users,
     flowLevel: "ministeres",
     intensity: 4,
-    access: ["Saisie GAR", "Consolidation PTM", "Suivi Nominations", "Documents"],
+    access: ["Saisie GAR", "Nominations (signale)", "Institutions", "Matrice Reporting", "Données Sectorielles"],
   },
   {
     id: "sg-ministere",
@@ -170,7 +170,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Users,
     flowLevel: "ministeres",
     intensity: 4,
-    access: ["Saisie GAR", "Suivi Nominations", "Documents", "Matrice Reporting"],
+    access: ["Saisie GAR", "Nominations (signale)", "Institutions", "Matrice Reporting", "Données Sectorielles"],
   },
   {
     id: "sg-ministere",
@@ -183,7 +183,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Users,
     flowLevel: "ministeres",
     intensity: 4,
-    access: ["Saisie GAR", "Suivi Nominations", "Documents", "Matrice Reporting"],
+    access: ["Saisie GAR", "Nominations (signale)", "Institutions", "Matrice Reporting", "Données Sectorielles"],
   },
   {
     id: "sg-ministere-fp",
@@ -196,7 +196,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Users,
     flowLevel: "ministeres",
     intensity: 4,
-    access: ["Consolidation PTM", "Saisie GAR", "Documents", "Matrice Reporting"],
+    access: ["Saisie GAR", "Nominations (signale)", "Institutions", "Matrice Reporting", "Données Sectorielles"],
   },
   // ═══ DIRECTIONS SOUS TUTELLE ═══
   {
@@ -236,7 +236,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Shield,
     flowLevel: "institutions",
     intensity: 5,
-    access: ["Lecture Complète", "Arbitrages", "Décisions Présidentielles", "Matrice SGPR"],
+    access: ["Nominations", "Suivi GAR", "e-GOP", "Matrice Reporting", "Vue Consolidée", "Synthèse Exécutive", "Données Sectorielles"],
   },
   {
     id: "assemblee",
@@ -248,7 +248,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Landmark,
     flowLevel: "institutions",
     intensity: 4,
-    access: ["Projets de Loi", "Suivi Législatif"],
+    access: ["Cycle Législatif (examen et vote)", "Journal Officiel"],
   },
   {
     id: "senat",
@@ -260,7 +260,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Landmark,
     flowLevel: "institutions",
     intensity: 4,
-    access: ["Projets de Loi", "Suivi Législatif"],
+    access: ["Cycle Législatif (examen seconde lecture)", "Journal Officiel"],
   },
   {
     id: "conseil-etat",
@@ -272,7 +272,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Gavel,
     flowLevel: "institutions",
     intensity: 4,
-    access: ["Consultation Textes", "Avis Juridiques"],
+    access: ["Cycle Législatif (avis juridique)", "Journal Officiel"],
   },
   {
     id: "cour-constitutionnelle",
@@ -284,7 +284,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Scale,
     flowLevel: "institutions",
     intensity: 3,
-    access: ["Contrôle Constitutionnel", "Textes"],
+    access: ["Cycle Législatif (contrôle constitutionnel)", "Journal Officiel"],
   },
   {
     id: "dgjo",
@@ -297,7 +297,7 @@ const demoAccounts: DemoAccount[] = [
     icon: BookOpen,
     flowLevel: "institutions",
     intensity: 5,
-    access: ["Publication JO", "Consolidation Textes", "Archives"],
+    access: ["Journal Officiel (publication)", "Archivage", "Consolidation Textes"],
   },
   // ═══ PUBLIC ═══
   {
@@ -310,7 +310,7 @@ const demoAccounts: DemoAccount[] = [
     icon: Globe,
     flowLevel: "public",
     intensity: 2,
-    access: ["Journal Officiel", "Recherche Textes"],
+    access: ["Journal Officiel (consultation publique)"],
   },
   {
     id: "professionnel-droit",
@@ -322,7 +322,7 @@ const demoAccounts: DemoAccount[] = [
     icon: FileText,
     flowLevel: "public",
     intensity: 2,
-    access: ["Journal Officiel", "Recherche Avancée", "API"],
+    access: ["Journal Officiel (consultation avancée)", "Recherche Full-text", "API"],
   },
 ];
 

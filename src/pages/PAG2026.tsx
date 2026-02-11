@@ -1,5 +1,6 @@
 
 import { Link } from "react-router-dom";
+import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
+import { useToast } from "@/hooks/use-toast";
 import {
     ArrowRight,
     TrendingUp,
@@ -54,7 +56,38 @@ const priorityColorMap: Record<string, { bg: string, text: string, border: strin
     emerald: { bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-200 dark:border-emerald-800", gradient: "from-emerald-500 to-emerald-600" },
 };
 
+// Documents available for download
+const documentsOfficiels = [
+    { title: "PAG 2026 - Version Complète", format: "PDF", size: "2.4 MB", filename: "PAG_2026_Version_Complete.pdf" },
+    { title: "Synthèse Exécutive", format: "PDF", size: "450 KB", filename: "PAG_2026_Synthese_Executive.pdf" },
+    { title: "Loi de Finances 2026", format: "PDF", size: "1.8 MB", filename: "Loi_de_Finances_2026.pdf" },
+    { title: "Matrice de Reporting GAR", format: "Excel", size: "320 KB", filename: "Matrice_Reporting_GAR_2026.xlsx" },
+    { title: "Décrets 5 Fonds Stratégiques", format: "PDF", size: "890 KB", filename: "Decrets_5_Fonds_Strategiques.pdf" },
+    { title: "Cartographie Projets Prioritaires", format: "PDF", size: "1.2 MB", filename: "Cartographie_Projets_Prioritaires.pdf" },
+];
+
 export default function PAG2026() {
+    const { toast } = useToast();
+
+    const handleDownload = useCallback((filename: string, title: string) => {
+        // Create a simulated document blob for download
+        const content = `\n===========================================\n  ${title}\n  République Gabonaise\n  Secrétariat Général du Gouvernement\n===========================================\n\nCe document est un aperçu de démonstration.\nLe document original complet sera disponible prochainement.\n\nSource: ${pag2026Config.source}\nMise à jour: ${pag2026Config.lastUpdate}\nVersion: ${pag2026Config.version}\n\n---\nGénéré depuis SGG Digital — sgg.ga\n`;
+        const blob = new Blob([content], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast({
+            title: "Téléchargement lancé",
+            description: `${title} est en cours de téléchargement.`,
+        });
+    }, [toast]);
+
     return (
         <div className="min-h-screen flex flex-col bg-background">
             <LandingHeader />
@@ -94,7 +127,11 @@ export default function PAG2026() {
                             </p>
 
                             <div className="flex flex-wrap justify-center gap-4">
-                                <Button size="lg" className="bg-an hover:bg-an-dark text-white border border-transparent hover:scale-105 transition-transform">
+                                <Button
+                                    size="lg"
+                                    className="bg-an hover:bg-an-dark text-white border border-transparent hover:scale-105 transition-transform"
+                                    onClick={() => handleDownload('PAG_2026_Version_Complete.pdf', 'PAG 2026 - Version Complète')}
+                                >
                                     <Download className="h-4 w-4 mr-2" />
                                     Télécharger le PAG 2026
                                 </Button>
@@ -540,15 +577,12 @@ export default function PAG2026() {
                         </div>
 
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
-                            {[
-                                { title: "PAG 2026 - Version Complète", format: "PDF", size: "2.4 MB" },
-                                { title: "Synthèse Exécutive", format: "PDF", size: "450 KB" },
-                                { title: "Loi de Finances 2026", format: "PDF", size: "1.8 MB" },
-                                { title: "Matrice de Reporting GAR", format: "Excel", size: "320 KB" },
-                                { title: "Décrets 5 Fonds Stratégiques", format: "PDF", size: "890 KB" },
-                                { title: "Cartographie Projets Prioritaires", format: "PDF", size: "1.2 MB" },
-                            ].map((doc, idx) => (
-                                <Card key={idx} className="hover:shadow-lg transition-shadow cursor-pointer group">
+                            {documentsOfficiels.map((doc, idx) => (
+                                <Card
+                                    key={idx}
+                                    className="hover:shadow-lg transition-shadow cursor-pointer group"
+                                    onClick={() => handleDownload(doc.filename, doc.title)}
+                                >
                                     <CardContent className="pt-6">
                                         <div className="flex items-start gap-4">
                                             <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">

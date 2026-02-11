@@ -39,27 +39,31 @@ const Modules = () => {
                     onValueChange={handleTabChange}
                     className="w-full space-y-8"
                 >
-                    <div className="flex justify-center w-full px-4 overflow-x-auto pb-4 md:pb-0">
+                    <div className="flex justify-center w-full px-4 overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
                         <TabsList className="h-auto w-auto p-1 bg-muted/50 backdrop-blur-sm border border-border/50 rounded-full flex-nowrap inline-flex min-w-max">
-                            {modules.map((module) => (
-                                <TabsTrigger
-                                    key={module.id}
-                                    value={module.id}
-                                    className="rounded-full px-4 py-2 md:px-6 md:py-3 text-sm md:text-base data-[state=active]:bg-background data-[state=active]:text-primary transition-all"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <module.icon className="h-4 w-4" />
-                                        <span>{module.title.split('(')[0].trim()}</span>
-                                    </div>
-                                </TabsTrigger>
-                            ))}
-                            {/* Manually adding Journal Officiel if it wasn't in modulesData, but it should be? 
-                                Actually JO is often treated separately but if it's in modulesData likely we want it here.
-                                Let's check modulesData structure above. It is there if we added it?
-                                Wait, modulesData.ts from previous step had: gar, nominations, cycleLegislatif, egop, institutions.
-                                Ah, wait, JO was NOT in modulesData.ts in my previous write_file step 228!
-                                I should verify this.
-                            */}
+                            {modules.map((module) => {
+                                // Shorter labels for tab display
+                                const shortTitle = module.title
+                                    .replace('Gestion Axée sur les Résultats (GAR)', 'GAR')
+                                    .replace('Portail des Nominations', 'Nominations')
+                                    .replace('La Fabrique de la Loi', 'Cycle Législatif')
+                                    .replace('e-GOP (Conseil des Ministres)', 'e-GOP')
+                                    .replace('Annuaire des Institutions', 'Institutions')
+                                    .replace('Journal Officiel (Open Data)', 'Journal Officiel')
+                                    .replace('Programme de Travail Ministériel (PTM/PTG)', 'PTM/PTG');
+                                return (
+                                    <TabsTrigger
+                                        key={module.id}
+                                        value={module.id}
+                                        className="rounded-full px-3 py-2 md:px-5 md:py-3 text-xs md:text-sm data-[state=active]:bg-background data-[state=active]:text-primary transition-all whitespace-nowrap"
+                                    >
+                                        <div className="flex items-center gap-1.5">
+                                            <module.icon className="h-4 w-4 flex-shrink-0" />
+                                            <span>{shortTitle}</span>
+                                        </div>
+                                    </TabsTrigger>
+                                );
+                            })}
                         </TabsList>
                     </div>
 
@@ -68,20 +72,6 @@ const Modules = () => {
                             <ModuleDetail module={module} />
                         </TabsContent>
                     ))}
-
-                    {/* Add content specifically for Journal Officiel if it's not in modulesData usually? 
-                        The user asked to align "Modules Applicatifs". 
-                        If JO is considered a module, it should be there.
-                        But modulesData usually contains only private apps.
-                        However, the user request implies grouping all under "Modules Applicatifs".
-                        Let's check if I should add JO to data or handle it separately.
-                        The user said "Modules Applicatifs" page.
-                        If I check modulesData, I see: gar, nominations, cycleLegislatif, egop, institutions.
-                        Wait, Modules.tsx original file HAD Journal Officiel in the list (lines 51-57 of step 224)!
-                        So I MUST include Journal Officiel in the tabs.
-                        I need to update modulesData.ts to include Journal Officiel OR handle it manually here.
-                        Better to add it to modulesData.ts for consistency.
-                    */}
                 </Tabs>
             </main>
 

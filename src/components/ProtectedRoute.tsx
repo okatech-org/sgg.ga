@@ -9,10 +9,10 @@ interface ProtectedRouteProps {
   requiredModule?: string;
 }
 
-export function ProtectedRoute({ 
-  children, 
-  requiredRoles, 
-  requiredModule 
+export function ProtectedRoute({
+  children,
+  requiredRoles,
+  requiredModule
 }: ProtectedRouteProps) {
   const { user, role, loading, canAccessModule } = useAuth();
   const { demoUser, getModuleAccess } = useDemoUser();
@@ -33,7 +33,7 @@ export function ProtectedRoute({
   // Demo mode: check module access based on demo user profile
   if (isDemoMode) {
     const moduleAccess = getModuleAccess();
-    
+
     // Check module access for demo user
     if (requiredModule) {
       const moduleKey = requiredModule as keyof typeof moduleAccess;
@@ -41,12 +41,28 @@ export function ProtectedRoute({
         return <Navigate to="/unauthorized" replace />;
       }
     }
-    
-    // Demo users cannot access admin routes unless they have admin access
-    if (requiredRoles?.includes("admin_sgg") && !moduleAccess.adminUsers) {
-      return <Navigate to="/unauthorized" replace />;
+
+    // Check requiredRoles for demo users by mapping demo IDs to AppRoles
+    if (requiredRoles && requiredRoles.length > 0) {
+      // Map demo user IDs to equivalent AppRole strings
+      const demoRoleToAppRole: Record<string, string[]> = {
+        "president": ["admin_sgg", "sgpr"],
+        "vice-president": ["admin_sgg", "sgpr"],
+        "premier-ministre": ["admin_sgg"],
+        "sgpr": ["sgpr", "admin_sgg"],
+        "sgg-admin": ["admin_sgg"],
+        "sgg-directeur": ["admin_sgg", "directeur_sgg"],
+      };
+
+      const mappedRoles = demoRoleToAppRole[demoUser!.id] || [];
+      const hasRequiredRole = requiredRoles.some(r => mappedRoles.includes(r));
+
+      // Also check if the route's module key is accessible (e.g., consolidated)
+      if (!hasRequiredRole && !moduleAccess.adminUsers) {
+        return <Navigate to="/unauthorized" replace />;
+      }
     }
-    
+
     return <>{children}</>;
   }
 

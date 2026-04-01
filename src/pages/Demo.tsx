@@ -16,6 +16,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
   Crown,
   Building2,
   Users,
@@ -36,8 +44,11 @@ import {
   Sparkles,
   ArrowDown,
   Layers,
+  Search,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getMinisteresTriesParProtocole, type MinistereEntry } from "@/config/ministeresRegistry";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────
 
@@ -110,13 +121,26 @@ const demoAccounts: DemoAccount[] = [
     id: "ministre",
     title: "Ministre Sectoriel",
     shortTitle: "Ministre",
-    role: "Membre du Gouvernement",
+    role: "Superviseur (lecture seule)",
     institution: "Ministère (ex: Économie)",
-    description: "Propose les textes et nominations. Consultation des matrices de reporting et suivi sectoriel.",
+    description: "Supervise l'action ministérielle. Consultation en lecture seule des matrices de reporting et suivi sectoriel. Ne saisit pas — c'est le SG qui saisit.",
     icon: Briefcase,
     flowLevel: "gouvernement",
     intensity: 4,
-    access: ["Nominations (propose)", "Suivi GAR", "Cycle Législatif (rédige)", "e-GOP / Conseil des Ministres", "Matrice Reporting", "Données Sectorielles"],
+    access: ["Consultation GAR", "Nominations (propose)", "Cycle Législatif (rédige)", "e-GOP / Conseil des Ministres", "Matrice Reporting (lecture)", "Données Sectorielles"],
+  },
+  {
+    id: "ministre",
+    title: "Ministre Éco. Numérique",
+    shortTitle: "Min. Numérique",
+    role: "Superviseur (tutelle CGI/DGPN)",
+    institution: "Ministère de l'Économie Numérique",
+    ministereId: "min-numerique",
+    description: "Ministre de tutelle du CGI et de la DGPN. Supervise en lecture seule. Le SG du ministère saisit les données.",
+    icon: Briefcase,
+    flowLevel: "gouvernement",
+    intensity: 4,
+    access: ["Consultation GAR", "Nominations (propose)", "Cycle Législatif (rédige)", "e-GOP / Conseil des Ministres", "Matrice Reporting (lecture)", "Données Sectorielles"],
   },
   // ═══ SGG (centre du processus) ═══
   {
@@ -193,6 +217,19 @@ const demoAccounts: DemoAccount[] = [
     institution: "Ministère de la Fonction Publique",
     ministereId: "min-fonction-publique",
     description: "SG du Ministère de la Fonction Publique — consolide les matrices des directions (DGFP, ENAP) et transmet au SGG.",
+    icon: Users,
+    flowLevel: "ministeres",
+    intensity: 4,
+    access: ["Saisie GAR", "Nominations (signale)", "Institutions", "Matrice Reporting", "Données Sectorielles"],
+  },
+  {
+    id: "sg-ministere",
+    title: "SG Min. Éco. Numérique",
+    shortTitle: "SG Numérique",
+    role: "Interface Opérationnelle",
+    institution: "Ministère de l'Économie Numérique",
+    ministereId: "min-numerique",
+    description: "SG du Ministère de l'Économie Numérique — consolide les PTM du CGI et de la DGPN (directions sous tutelle) et transmet au SGG.",
     icon: Users,
     flowLevel: "ministeres",
     intensity: 4,
@@ -416,6 +453,21 @@ const FLOW_ORDER: FlowLevel[] = [
 export default function Demo() {
   const navigate = useNavigate();
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerMode, setPickerMode] = useState<'ministre' | 'sg'>('sg');
+  const [pickerSearch, setPickerSearch] = useState('');
+
+  const allMinisteres = useMemo(() => getMinisteresTriesParProtocole(), []);
+
+  const filteredMinisteres = useMemo(() => {
+    if (!pickerSearch.trim()) return allMinisteres;
+    const q = pickerSearch.toLowerCase();
+    return allMinisteres.filter(m =>
+      m.nom.toLowerCase().includes(q) ||
+      m.sigle.toLowerCase().includes(q) ||
+      m.nomCourt.toLowerCase().includes(q)
+    );
+  }, [allMinisteres, pickerSearch]);
 
   const flowGroups = useMemo(() => {
     return FLOW_ORDER
@@ -452,6 +504,32 @@ export default function Demo() {
           navigate("/dashboard");
       }
     }, 400);
+  };
+
+  const handleMinisterePick = (ministere: MinistereEntry) => {
+    setPickerOpen(false);
+    const isMinistre = pickerMode === 'ministre';
+    const account: DemoAccount = {
+      id: isMinistre ? 'ministre' : 'sg-ministere',
+      title: isMinistre ? `Ministre — ${ministere.nomCourt}` : `SG — ${ministere.nomCourt}`,
+      role: isMinistre ? 'Superviseur (lecture seule)' : 'Interface Opérationnelle',
+      institution: ministere.nom,
+      description: '',
+      icon: isMinistre ? Briefcase : Users,
+      flowLevel: isMinistre ? 'gouvernement' : 'ministeres',
+      intensity: 4,
+      ministereId: ministere.id,
+      access: isMinistre
+        ? ['Consultation GAR', 'Nominations (propose)', 'Matrice Reporting (lecture)', 'Données Sectorielles']
+        : ['Saisie GAR', 'Nominations (signale)', 'Institutions', 'Matrice Reporting', 'Données Sectorielles'],
+    };
+    handleDemoAccess(account);
+  };
+
+  const openMinisterePicker = (mode: 'ministre' | 'sg') => {
+    setPickerMode(mode);
+    setPickerSearch('');
+    setPickerOpen(true);
   };
 
   return (
@@ -564,6 +642,54 @@ export default function Demo() {
                         />
                       );
                     })}
+                    {/* Bouton selecteur 35 ministeres pour Gouvernement */}
+                    {group.level === "gouvernement" && (
+                      <Card
+                        className="group relative overflow-hidden transition-all duration-200 cursor-pointer border border-dashed border-blue-300 dark:border-blue-700 hover:shadow-md hover:border-government-gold/40 hover:-translate-y-0.5"
+                        onClick={() => openMinisterePicker('ministre')}
+                      >
+                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-government-navy group-hover:h-1 transition-all" />
+                        <CardContent className="p-3 pt-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                              <ChevronRight className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-xs leading-tight text-foreground">Autre Ministre</h3>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">Choisir parmi les 35</p>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" className="w-full mt-2.5 h-7 text-[11px] font-medium" disabled={!!loadingId}>
+                            <Search className="h-3 w-3 mr-1.5" />
+                            Sélectionner
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {/* Bouton selecteur 35 ministeres pour SG */}
+                    {group.level === "ministeres" && (
+                      <Card
+                        className="group relative overflow-hidden transition-all duration-200 cursor-pointer border border-dashed border-sky-300 dark:border-sky-700 hover:shadow-md hover:border-government-gold/40 hover:-translate-y-0.5"
+                        onClick={() => openMinisterePicker('sg')}
+                      >
+                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-sky-600 group-hover:h-1 transition-all" />
+                        <CardContent className="p-3 pt-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-900/30">
+                              <ChevronRight className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-xs leading-tight text-foreground">Autre SG</h3>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">Choisir parmi les 35</p>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" className="w-full mt-2.5 h-7 text-[11px] font-medium" disabled={!!loadingId}>
+                            <Search className="h-3 w-3 mr-1.5" />
+                            Sélectionner
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 </div>
               </div>
@@ -576,6 +702,56 @@ export default function Demo() {
           SGG Digital — Mode Démonstration — Les données affichées sont fictives
         </p>
       </main>
+
+      {/* ── DIALOG SÉLECTEUR DE MINISTÈRE ──────────────────── */}
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-semibold">
+              {pickerMode === 'ministre' ? 'Choisir un Ministère (Ministre)' : 'Choisir un Ministère (SG)'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un ministère..."
+              value={pickerSearch}
+              onChange={(e) => setPickerSearch(e.target.value)}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+          <ScrollArea className="h-[360px] -mx-2">
+            <div className="space-y-0.5 px-2">
+              {filteredMinisteres.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => handleMinisterePick(m)}
+                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-muted transition-colors group"
+                >
+                  <div className="shrink-0 flex h-7 w-7 items-center justify-center rounded-md bg-muted group-hover:bg-background text-[10px] font-bold text-muted-foreground">
+                    {m.ordreProtocole}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{m.nomCourt}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{m.sigle}</p>
+                  </div>
+                  {m.directions.length > 0 && (
+                    <Badge variant="outline" className="text-[9px] shrink-0">
+                      {m.directions.length} dir.
+                    </Badge>
+                  )}
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+                </button>
+              ))}
+              {filteredMinisteres.length === 0 && (
+                <p className="text-center text-xs text-muted-foreground py-8">
+                  Aucun ministère trouvé
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

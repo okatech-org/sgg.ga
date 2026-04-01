@@ -1,6 +1,9 @@
 import { createRoot } from "react-dom/client";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
 import App from "./App.tsx";
 import "./index.css";
+
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 // Start frontend monitoring & analytics in production
 // NOTE: PWA/Service Workers intentionally removed (NEXUS-OMEGA directive)
@@ -20,4 +23,8 @@ if (import.meta.env.PROD) {
     }
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <ConvexProvider client={convex}>
+    <App />
+  </ConvexProvider>
+);

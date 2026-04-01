@@ -12,15 +12,19 @@ import type {
   StatutPTM,
   CadrageStrategique,
 } from '@/types/ptm';
+import {
+  MINISTERES_REGISTRY,
+  toMinistereInfo,
+  getAllDirections,
+  getDirections,
+} from '@/config/ministeresRegistry';
 
 // =============================================================================
-// MINISTÈRES & DIRECTIONS (Structure hiérarchique)
+// MINISTÈRES & DIRECTIONS — Source unifiée via ministeresRegistry
 // =============================================================================
 
-export const MINISTERES_PTM = [
-  { id: 'min-numerique', nom: 'Ministère de l\'Économie Numérique', sigle: 'MNUM' },
-  { id: 'min-fonction-publique', nom: 'Ministère de la Fonction Publique', sigle: 'MFP' },
-];
+/** Tous les 35 ministères (format compatible) */
+export const MINISTERES_PTM = toMinistereInfo();
 
 export interface DirectionPTM {
   id: string;
@@ -29,17 +33,21 @@ export interface DirectionPTM {
   ministereId: string;
 }
 
-export const DIRECTIONS_PTM: DirectionPTM[] = [
-  // Éco Numérique — 2 directions
-  { id: 'dir-cgi', nom: 'Centre Gabonais d\'Informatique', sigle: 'CGI', ministereId: 'min-numerique' },
-  { id: 'dir-dgpn', nom: 'Direction Générale de la Programmation Numérique', sigle: 'DGPN', ministereId: 'min-numerique' },
-  // Fonction Publique — 2 directions
-  { id: 'dir-dgfp', nom: 'Direction Générale de la Fonction Publique', sigle: 'DGFP', ministereId: 'min-fonction-publique' },
-  { id: 'dir-enap', nom: 'École Nationale d\'Administration Publique', sigle: 'ENAP', ministereId: 'min-fonction-publique' },
-];
+/** Toutes les directions sous tutelle à plat */
+export const DIRECTIONS_PTM: DirectionPTM[] = getAllDirections().map(d => ({
+  id: d.id,
+  nom: d.nom,
+  sigle: d.sigle,
+  ministereId: d.ministereId,
+}));
 
 export function getDirectionsByMinistere(ministereId: string): DirectionPTM[] {
-  return DIRECTIONS_PTM.filter(d => d.ministereId === ministereId);
+  return getDirections(ministereId).map(d => ({
+    id: d.id,
+    nom: d.nom,
+    sigle: d.sigle,
+    ministereId,
+  }));
 }
 
 // =============================================================================

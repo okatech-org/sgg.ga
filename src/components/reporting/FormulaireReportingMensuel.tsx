@@ -40,6 +40,7 @@ import {
 } from '@/data/reportingData';
 import { useReportingStore } from '@/stores/reportingStore';
 import { useMatricePermissions } from '@/hooks/useMatricePermissions';
+import { useDemoUser } from '@/hooks/useDemoUser';
 import type { StatutProgramme } from '@/types/reporting';
 
 interface FormulaireReportingMensuelProps {
@@ -69,9 +70,9 @@ interface FormData {
 }
 
 const STEPS = [
-  { id: 0, label: 'Opérationnel', icon: ClipboardList, description: 'Activités et calendrier' },
-  { id: 1, label: 'Financier', icon: Banknote, description: 'Budget, engagements, décaissements' },
-  { id: 2, label: 'Performance', icon: TrendingUp, description: 'KPI, avancement, statut' },
+  { id: 0, label: 'Opérationnel', icon: ClipboardList, description: 'Col. 10-12, 17 : Calendrier, activités, cadre juridique' },
+  { id: 1, label: 'Financier', icon: Banknote, description: 'Col. 13-16 : Budget, engagé, décaissé, % exéc.' },
+  { id: 2, label: 'Performance', icon: TrendingUp, description: 'Col. 18-21 : KPI, % phys., statut, observations' },
   { id: 3, label: 'Récapitulatif', icon: CheckCircle2, description: 'Vérification et soumission' },
 ];
 
@@ -93,6 +94,7 @@ export function FormulaireReportingMensuel({
 
   // Permissions
   const permissions = useMatricePermissions();
+  const { demoUser } = useDemoUser();
   const canEditOperationnel = permissions.canWrite('operationnel');
   const canEditFinancier = permissions.canWrite('financier');
   const canEditPerformance = permissions.canWrite('performance');
@@ -202,7 +204,8 @@ export function FormulaireReportingMensuel({
   const handleSaveDraft = async () => {
     setSaving(true);
     try {
-      const ministereId = gouvernance?.ministerePiloteId || '';
+      // Utiliser le ministère de l'utilisateur connecté (pas le pilote du programme)
+      const ministereId = demoUser?.ministereId || gouvernance?.ministerePiloteId || '';
       saveDraft(programmeId, ministereId, mois, annee, formData);
       toast.success('Brouillon enregistré dans le système');
     } catch {
@@ -215,7 +218,8 @@ export function FormulaireReportingMensuel({
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const ministereId = gouvernance?.ministerePiloteId || '';
+      // Utiliser le ministère de l'utilisateur connecté (pas le pilote du programme)
+      const ministereId = demoUser?.ministereId || gouvernance?.ministerePiloteId || '';
       // Créer ou mettre à jour le rapport
       const rapport = createOrUpdateRapport(programmeId, ministereId, mois, annee, formData);
       // Le soumettre
@@ -298,11 +302,11 @@ export function FormulaireReportingMensuel({
 
       {/* Step content */}
       <div className="min-h-[300px]">
-        {/* Step 0: Opérationnel */}
+        {/* Step 0: Suivi Opérationnel (Col. 10-12) + Cadre Juridique (Col. 17) */}
         {step === 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold">Suivi Opérationnel</h3>
+              <h3 className="font-semibold">Colonnes 10-12 : Suivi Opérationnel</h3>
               {operationnelDisabled && !isReadOnly && (
                 <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
                   <Lock className="h-3 w-3" /> Accès restreint
@@ -311,7 +315,10 @@ export function FormulaireReportingMensuel({
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Date Début</label>
+                <label className="text-sm font-medium">
+                  <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 10</Badge>
+                  Date Début
+                </label>
                 <Input
                   type="date"
                   value={formData.dateDebut}
@@ -320,7 +327,10 @@ export function FormulaireReportingMensuel({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Date Fin</label>
+                <label className="text-sm font-medium">
+                  <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 11</Badge>
+                  Date Fin
+                </label>
                 <Input
                   type="date"
                   value={formData.dateFin}
@@ -330,7 +340,10 @@ export function FormulaireReportingMensuel({
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Activités Réalisées (Période)</label>
+              <label className="text-sm font-medium">
+                <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 12</Badge>
+                Activités Réalisées (Période)
+              </label>
               <Textarea
                 value={formData.activitesRealisees}
                 onChange={(e) => updateField('activitesRealisees', e.target.value)}
@@ -339,9 +352,14 @@ export function FormulaireReportingMensuel({
                 disabled={operationnelDisabled}
               />
             </div>
-            <div className="space-y-2">
+
+            {/* Col. 17 — Cadre Juridique (rattaché ici pour le remplissage) */}
+            <div className="space-y-2 rounded-lg border p-3 bg-red-50/30 dark:bg-red-950/10">
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Encadrement Législatif / Réglementaire</label>
+                <label className="text-sm font-medium">
+                  <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 17</Badge>
+                  Encadrement Législatif / Réglementaire
+                </label>
                 {juridiqueDisabled && !isReadOnly && (
                   <Badge variant="outline" className="text-[10px] text-muted-foreground gap-1">
                     <Lock className="h-2.5 w-2.5" /> Restreint
@@ -359,11 +377,11 @@ export function FormulaireReportingMensuel({
           </div>
         )}
 
-        {/* Step 1: Financier */}
+        {/* Step 1: Suivi Financier (Col. 13-16) */}
         {step === 1 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold">Suivi Financier</h3>
+              <h3 className="font-semibold">Colonnes 13-16 : Suivi Financier</h3>
               {financierDisabled && !isReadOnly && (
                 <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
                   <Lock className="h-3 w-3" /> Accès restreint
@@ -372,7 +390,10 @@ export function FormulaireReportingMensuel({
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Budget (Md FCFA)</label>
+                <label className="text-sm font-medium">
+                  <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 13</Badge>
+                  Budget (Md FCFA)
+                </label>
                 <Input
                   type="number"
                   step="0.1"
@@ -382,7 +403,10 @@ export function FormulaireReportingMensuel({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Engagé (Md FCFA)</label>
+                <label className="text-sm font-medium">
+                  <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 14</Badge>
+                  Engagé (Md FCFA)
+                </label>
                 <Input
                   type="number"
                   step="0.1"
@@ -392,7 +416,10 @@ export function FormulaireReportingMensuel({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Décaissé (Md FCFA)</label>
+                <label className="text-sm font-medium">
+                  <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 15</Badge>
+                  Décaissé (Md FCFA)
+                </label>
                 <Input
                   type="number"
                   step="0.1"
@@ -403,11 +430,14 @@ export function FormulaireReportingMensuel({
               </div>
             </div>
 
-            {/* Auto-calculated gauge */}
+            {/* Col. 16 — % Exécution Financière (auto-calculé) */}
             <Card className="bg-muted/50">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">% Exécution Financière (auto-calculé)</span>
+                  <span className="text-sm font-medium">
+                    <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 16</Badge>
+                    % Exéc. Financière (auto-calculé : décaissé / budget × 100)
+                  </span>
                   <span className="text-lg font-bold tabular-nums">
                     {formData.pctExecutionFinanciere}%
                   </span>
@@ -423,11 +453,11 @@ export function FormulaireReportingMensuel({
           </div>
         )}
 
-        {/* Step 2: Performance */}
+        {/* Step 2: Performance & Évaluation (Col. 18-21) */}
         {step === 2 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold">Performance & Évaluation</h3>
+              <h3 className="font-semibold">Colonnes 18-21 : Performance & Évaluation</h3>
               {performanceDisabled && !isReadOnly && (
                 <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
                   <Lock className="h-3 w-3" /> Accès restreint
@@ -435,7 +465,10 @@ export function FormulaireReportingMensuel({
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Indicateurs de Performance (KPI)</label>
+              <label className="text-sm font-medium">
+                <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 18</Badge>
+                Indicateurs de Performance (KPI)
+              </label>
               <Textarea
                 value={formData.indicateursKpi}
                 onChange={(e) => updateField('indicateursKpi', e.target.value)}
@@ -446,7 +479,10 @@ export function FormulaireReportingMensuel({
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">% Avancement Physique</label>
+                <label className="text-sm font-medium">
+                  <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 19</Badge>
+                  % Avancement Physique
+                </label>
                 <Input
                   type="number"
                   min="0"
@@ -460,7 +496,10 @@ export function FormulaireReportingMensuel({
                 <ProgressGauge value={formData.pctAvancementPhysique} size="sm" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Statut du Programme</label>
+                <label className="text-sm font-medium">
+                  <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 20</Badge>
+                  Statut
+                </label>
                 <Select
                   value={formData.statutProgramme}
                   onValueChange={(v) => updateField('statutProgramme', v as StatutProgramme)}
@@ -480,7 +519,10 @@ export function FormulaireReportingMensuel({
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Observations / Contraintes</label>
+              <label className="text-sm font-medium">
+                <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 21</Badge>
+                Observations / Contraintes
+              </label>
               <Textarea
                 value={formData.observationsContraintes}
                 onChange={(e) => updateField('observationsContraintes', e.target.value)}
@@ -495,43 +537,49 @@ export function FormulaireReportingMensuel({
         {/* Step 3: Récapitulatif */}
         {step === 3 && (
           <div className="space-y-4">
-            <h3 className="font-semibold">Récapitulatif</h3>
+            <h3 className="font-semibold">Récapitulatif — Synthèse des 21 colonnes</h3>
             <div className="grid gap-3 md:grid-cols-2">
-              <Card>
+              <Card className="border-l-4 border-l-amber-400">
                 <CardContent className="p-4 space-y-2">
-                  <h4 className="text-sm font-semibold text-muted-foreground">Opérationnel</h4>
+                  <h4 className="text-sm font-semibold text-muted-foreground">Suivi Opérationnel <span className="text-[10px] font-normal">(Col. 10-12)</span></h4>
                   <p className="text-xs">Période: {formData.dateDebut || '—'} → {formData.dateFin || '—'}</p>
                   <p className="text-xs line-clamp-3">{formData.activitesRealisees || 'Non renseigné'}</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-l-4 border-l-purple-400">
                 <CardContent className="p-4 space-y-2">
-                  <h4 className="text-sm font-semibold text-muted-foreground">Financier</h4>
+                  <h4 className="text-sm font-semibold text-muted-foreground">Suivi Financier <span className="text-[10px] font-normal">(Col. 13-16)</span></h4>
                   <p className="text-xs">Budget: {formData.budgetMdFcfa} Md FCFA</p>
                   <p className="text-xs">Engagé: {formData.engageMdFcfa} Md | Décaissé: {formData.decaisseMdFcfa} Md</p>
-                  <p className="text-xs font-medium">Exéc. Financière: {formData.pctExecutionFinanciere}%</p>
+                  <p className="text-xs font-medium">% Exéc. Financière: {formData.pctExecutionFinanciere}%</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-l-4 border-l-red-400">
                 <CardContent className="p-4 space-y-2">
-                  <h4 className="text-sm font-semibold text-muted-foreground">Performance</h4>
-                  <p className="text-xs">Avancement: {formData.pctAvancementPhysique}%</p>
-                  <p className="text-xs">Statut: {formData.statutProgramme}</p>
-                  <p className="text-xs line-clamp-2">{formData.indicateursKpi || 'Non renseigné'}</p>
+                  <h4 className="text-sm font-semibold text-muted-foreground">Cadre Juridique <span className="text-[10px] font-normal">(Col. 17)</span></h4>
+                  <p className="text-xs line-clamp-2">{formData.encadrementJuridique || 'Non renseigné'}</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-l-4 border-l-indigo-400">
                 <CardContent className="p-4 space-y-2">
-                  <h4 className="text-sm font-semibold text-muted-foreground">Complétude</h4>
-                  <ProgressGauge value={completude} size="lg" label="Remplissage global" />
+                  <h4 className="text-sm font-semibold text-muted-foreground">Performance <span className="text-[10px] font-normal">(Col. 18-21)</span></h4>
+                  <p className="text-xs">% Phys.: {formData.pctAvancementPhysique}% | Statut: {formData.statutProgramme}</p>
+                  <p className="text-xs line-clamp-2">{formData.indicateursKpi || 'KPI non renseignés'}</p>
                 </CardContent>
               </Card>
             </div>
 
+            {/* Complétude */}
+            <Card className="bg-muted/50">
+              <CardContent className="p-4">
+                <ProgressGauge value={completude} size="lg" label="Remplissage global" />
+              </CardContent>
+            </Card>
+
             {formData.observationsContraintes && (
-              <Card className="bg-muted/50">
+              <Card className="bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
                 <CardContent className="p-4">
-                  <h4 className="text-sm font-semibold text-muted-foreground mb-1">Observations</h4>
+                  <h4 className="text-sm font-semibold text-muted-foreground mb-1">Observations / Contraintes <span className="text-[10px] font-normal">(Col. 21)</span></h4>
                   <p className="text-xs">{formData.observationsContraintes}</p>
                 </CardContent>
               </Card>

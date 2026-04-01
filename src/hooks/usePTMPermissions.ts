@@ -5,6 +5,7 @@
 
 import { useMemo } from 'react';
 import { useDemoUser } from '@/hooks/useDemoUser';
+import { normalizeRoleId } from '@/config/matricePermissions';
 import type { NiveauHierarchique } from '@/hooks/usePTMWorkflow';
 
 export type PermissionPTM = 'R' | 'W' | 'V' | 'none';
@@ -94,9 +95,9 @@ export function usePTMPermissions(): PTMPermissions {
         transmission: 'W',
         validation: 'V',
       },
-      // Ministre — même vue que SG
+      // Ministre — superviseur, lecture seule (seuls les SG saisissent)
       'ministre': {
-        saisie: 'W',
+        saisie: 'R',
         consolidation: 'R',
         transmission: 'R',
         validation: 'R',
@@ -153,7 +154,8 @@ export function usePTMPermissions(): PTMPermissions {
     const getPermission = (
       action: 'saisie' | 'consolidation' | 'transmission' | 'validation'
     ): PermissionPTM => {
-      return permMatrix[currentRole]?.[action] || defaultPerms[action];
+      const normalized = normalizeRoleId(currentRole);
+      return permMatrix[currentRole]?.[action] || permMatrix[normalized]?.[action] || defaultPerms[action];
     };
 
     const canSaisir = (): boolean => getPermission('saisie') === 'W';

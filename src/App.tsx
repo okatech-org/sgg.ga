@@ -148,6 +148,13 @@ const HousingDashboardPage = lazy(() => import("./pages/HousingDashboardPage"));
 const SportsDashboardPage = lazy(() => import("./pages/SportsDashboardPage"));
 const SocialProtectionPage = lazy(() => import("./pages/SocialProtectionPage"));
 
+// ── New pages (menu restructuring) ──────────────────────────────────────────
+const MonReportingDashboard = lazy(() => import("./pages/MonReportingDashboard"));
+const MonSecteurDashboard = lazy(() => import("./pages/MonSecteurDashboard"));
+const EcheancierPage = lazy(() => import("./pages/EcheancierPage"));
+const ModelesPage = lazy(() => import("./pages/ModelesPage"));
+const PerformanceMinisterePage = lazy(() => import("./pages/PerformanceMinisterePage"));
+
 // ── Lazy-loaded profil pages ──────────────────────────────────────────────────
 import { ProfilLayout } from "@/components/profil/ProfilLayout";
 const MonProfil = lazy(() => import("./pages/profil/MonProfil"));
@@ -391,6 +398,56 @@ function AnimatedRoutes() {
             element={
               <ProtectedRoute requiredModule="ptmptg">
                 <PTMCoherence />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Mon Reporting Dashboard */}
+          <Route
+            path="/reporting/dashboard"
+            element={
+              <ProtectedRoute requiredModule="matriceReporting">
+                <MonReportingDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Mon Secteur Dashboard */}
+          <Route
+            path="/mon-secteur"
+            element={
+              <ProtectedRoute requiredModule="dashboard">
+                <MonSecteurDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Échéancier Ministère */}
+          <Route
+            path="/echeancier"
+            element={
+              <ProtectedRoute>
+                <EcheancierPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Modèles & Templates */}
+          <Route
+            path="/modeles"
+            element={
+              <ProtectedRoute>
+                <ModelesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Performance Ministère */}
+          <Route
+            path="/performance"
+            element={
+              <ProtectedRoute requiredModule="analysis">
+                <PerformanceMinisterePage />
               </ProtectedRoute>
             }
           />

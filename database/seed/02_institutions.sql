@@ -173,10 +173,28 @@ WHERE sgg.code = 'SGG' AND min.type = 'ministere'
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
+-- INTERACTIONS DE TUTELLE (Directions/Entités sous tutelle → Ministère)
+-- ============================================================================
+
+-- CGI et DGPN sous tutelle du Ministère de l'Économie Numérique (MIN-NUM)
+-- NOTE: Ces directions sont créées dans ministeresRegistry.ts côté frontend
+-- et doivent correspondre aux institutions en base.
+
+-- Exemple: si des directions sont ajoutées en base, créer les interactions tutelle:
+-- INSERT INTO institutions.interactions (institution_source_id, institution_cible_id, type_interaction, description, frequence, is_active)
+-- SELECT dir.id, min.id, 'tutelle', 'Direction sous tutelle ministérielle', 'permanent', true
+-- FROM institutions.institutions dir, institutions.institutions min
+-- WHERE dir.code = 'CGI' AND min.code = 'MIN-NUM'
+-- ON CONFLICT DO NOTHING;
+
+-- Pour le moment, la tutelle est gérée via le registre unifié (ministeresRegistry.ts)
+-- qui définit les directions rattachées à chaque ministère.
+
+-- ============================================================================
 -- VÉRIFICATION
 -- ============================================================================
 
-SELECT type, COUNT(*) as nb_institutions 
-FROM institutions.institutions 
-GROUP BY type 
+SELECT type, COUNT(*) as nb_institutions
+FROM institutions.institutions
+GROUP BY type
 ORDER BY nb_institutions DESC;

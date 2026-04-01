@@ -29,16 +29,16 @@ import {
 import { useDemoUser } from "@/hooks/useDemoUser";
 import { usePTMPermissions } from "@/hooks/usePTMPermissions";
 import { InfoButton } from "@/components/reporting/InfoButton";
-import { usePTMInitiatives } from "@/hooks/useApiData";
 import { DEADLINES_PTM } from "@/hooks/usePTMWorkflow";
 import {
   RUBRIQUE_SHORT_LABELS,
   STATUT_PTM_LABELS,
   CADRAGE_SHORT_LABELS,
 } from "@/types/ptm";
-import type { InitiativePTM, StatutPTM } from "@/types/ptm";
+import type { StatutPTM } from "@/types/ptm";
 import { FormulairePTM } from "@/components/ptm/FormulairePTM";
 import { toast } from "sonner";
+import { usePTMStore } from "@/stores/ptmStore";
 
 export default function PTMSaisie() {
   const { demoUser } = useDemoUser();
@@ -46,17 +46,43 @@ export default function PTMSaisie() {
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | null>(null);
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
 
-  // Récupérer les initiatives via l'API backend
-  const { data: apiData, isLoading, isError } = usePTMInitiatives();
-  const apiInitiatives = apiData?.data || [];
+  // Lire les initiatives depuis le store Zustand (pas l'API)
+  const storeInitiatives = usePTMStore((s) => s.initiatives);
+  const storeSubmitToSG = usePTMStore((s) => s.submitToSG);
+  const storeBatchSubmitToSG = usePTMStore((s) => s.batchSubmitToSG);
 
-  // Mapper les initiatives API vers le format UI et calculer la complétude
+  // Mapper les initiatives store vers le format UI (avec snake_case compat) et calculer complétude
   const initiatives = useMemo(() => {
-    return apiInitiatives.map((init) => {
-      const completude = calculateCompletude(init);
-      return { ...init, completude };
+    return storeInitiatives.map((init) => {
+      const completude = calculateCompletude({
+        ...init,
+        // snake_case aliases for calculateCompletude compatibility
+        cadrage_detail: init.cadrageDetail,
+        services_porteurs: init.servicesPorteurs,
+        incidence_financiere: init.incidenceFinanciere,
+        loi_finance: init.loiFinance,
+        programme_pag_id: init.programmePAGId,
+        date_soumission: init.dateSoumission,
+        ministere_sigle: init.ministereSigle,
+      });
+      return {
+        ...init,
+        completude,
+        // snake_case aliases for template compatibility
+        cadrage_detail: init.cadrageDetail,
+        services_porteurs: init.servicesPorteurs,
+        incidence_financiere: init.incidenceFinanciere,
+        loi_finance: init.loiFinance,
+        programme_pag_id: init.programmePAGId,
+        date_soumission: init.dateSoumission,
+        ministere_sigle: init.ministereSigle,
+      };
     });
-  }, [apiInitiatives]);
+  }, [storeInitiatives]);
+
+  // Plus besoin de loading/error states puisque le store est synchrone
+  const isLoading = false;
+  const isError = false;
 
   // Statistiques
   const stats = useMemo(() => {
@@ -88,6 +114,9 @@ export default function PTMSaisie() {
 
   // Handle "Transmettre au SG" for a single initiative
   const handleTransmettre = (initiativeId: string, intitule: string) => {
+    const userId = demoUser?.id || 'anonymous';
+    const userName = demoUser?.title || 'Utilisateur';
+    storeSubmitToSG(initiativeId, userId, userName);
     toast.success(
       `Initiative "${intitule.substring(0, 40)}..." transmise au Secrétaire Général du Ministère`,
       { description: 'La matrice a été poussée au niveau SG pour consolidation.' }
@@ -101,6 +130,10 @@ export default function PTMSaisie() {
 
   // Handle bulk "Transmettre tout au SG"
   const handleTransmettreTout = () => {
+    const userId = demoUser?.id || 'anonymous';
+    const userName = demoUser?.title || 'Utilisateur';
+    const ids = brouillonsReady.map((i) => i.id);
+    storeBatchSubmitToSG(ids, userId, userName);
     toast.success(
       `${brouillonsReady.length} initiative(s) transmise(s) au SG du Ministère`,
       { description: 'Les matrices ont été poussées au niveau SG pour consolidation.' }

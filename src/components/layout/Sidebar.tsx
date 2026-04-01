@@ -138,9 +138,11 @@ interface NavSection {
 
 // ── Navigation Structure ──────────────────────────────────────────────────────
 //
-// Organisation par DOMAINE FONCTIONNEL, pas par technique.
+// Organisation optimisée pour les SG des ministères (utilisateurs principaux).
+// Ordre : Mon espace → Reporting → Données sectorielles → Outils → Analyse
+//         → Pilotage → Processus SGG → Administration → Aide
 // Règle : max 7±2 éléments visibles par section.
-// Sous-catégories repliables pour les données sectorielles.
+// Sous-catégories repliables pour Reporting et Données sectorielles.
 //
 
 const navigation: NavSection[] = [
@@ -161,7 +163,147 @@ const navigation: NavSection[] = [
   },
 
   // ──────────────────────────────────────────────────────
-  // 2. PILOTAGE GOUVERNEMENTAL — suivi des politiques
+  // 2. REPORTING — cœur de métier SG (subsections GAR + PTM)
+  // ──────────────────────────────────────────────────────
+  {
+    titleKey: "nav.reporting",
+    label: "Reporting",
+    icon: Table2,
+    tooltip: "Saisie et suivi des rapports ministériels et du programme de travail",
+    collapsible: true,
+    defaultOpen: true,
+    items: [
+      { nameKey: "sidebar.monReporting", label: "Mon reporting", href: "/reporting/dashboard", icon: Gauge, moduleKey: "matriceReporting", tooltip: "Vue d'ensemble de la situation de votre ministère", isNew: true },
+    ],
+    subsections: [
+      {
+        title: "📊 Reporting mensuel (GAR/PAG)",
+        icon: Calendar,
+        items: [
+          { nameKey: "sidebar.matriceGarPag", label: "Matrice GAR/PAG", href: "/matrice-reporting", icon: Table2, moduleKey: "matriceReporting", tooltip: "Tableau croisé de suivi des résultats par programme" },
+          { nameKey: "sidebar.monthlyEntry", label: "Saisie mensuelle", href: "/matrice-reporting/saisie", icon: FileEdit, moduleKey: "matriceReporting", tooltip: "Remplissez les indicateurs de votre ministère chaque mois" },
+          { nameKey: "sidebar.validationSGG", label: "Validation SGG", href: "/matrice-reporting/validation", icon: CheckCircle2, moduleKey: "matriceReporting", tooltip: "Le SGG vérifie et valide les rapports soumis" },
+          { nameKey: "sidebar.validationSGPR", label: "Validation SGPR", href: "/matrice-reporting/validation-sgpr", icon: ShieldCheck, moduleKey: "matriceReporting", tooltip: "La Présidence valide les rapports stratégiques" },
+          { nameKey: "sidebar.completionTracking", label: "Suivi de complétude", href: "/matrice-reporting/suivi", icon: ClipboardList, moduleKey: "matriceReporting", tooltip: "Quels ministères ont soumis leurs rapports ?" },
+          { nameKey: "sidebar.exports", label: "Exports", href: "/matrice-reporting/exports", icon: Download, moduleKey: "matriceReporting", tooltip: "Télécharger les données en Excel ou PDF" },
+        ],
+      },
+      {
+        title: "📋 PTM/PTG (Programme de Travail)",
+        icon: FileSpreadsheet,
+        items: [
+          { nameKey: "sidebar.matricePTM", label: "Matrice PTM/PTG", href: "/ptm/matrice", icon: FileSpreadsheet, moduleKey: "ptmptg", tooltip: "Programme de Travail Ministériel et Gouvernemental" },
+          { nameKey: "sidebar.ptmSaisie", label: "Saisie initiatives", href: "/ptm/saisie", icon: FileEdit, moduleKey: "ptmptg", tooltip: "Créer et compléter les initiatives du programme de travail" },
+          { nameKey: "sidebar.ptmConsolidation", label: "Consolidation SG", href: "/ptm/consolidation", icon: Layers, moduleKey: "ptmptg", tooltip: "Le SG consolide les initiatives de son ministère" },
+          { nameKey: "sidebar.ptmValidation", label: "Validation SGG", href: "/ptm/validation", icon: ShieldCheck, moduleKey: "ptmptg", tooltip: "Le SGG valide les programmes de travail ministériels" },
+          { nameKey: "sidebar.ptmSuivi", label: "Suivi PTM/PTG", href: "/ptm/suivi", icon: ClipboardList, moduleKey: "ptmptg", tooltip: "Tableau de bord de suivi de l'avancement des PTM" },
+          { nameKey: "sidebar.ptmCoherence", label: "Cohérence PTM/PAG", href: "/ptm/coherence", icon: GitCompareArrows, moduleKey: "ptmptg", tooltip: "Vérifier l'alignement entre PTM et priorités PAG" },
+        ],
+      },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────────
+  // 3. DONNÉES SECTORIELLES — simplifiées (3 sous-catégories)
+  // ──────────────────────────────────────────────────────
+  {
+    titleKey: "nav.sectors",
+    label: "Données sectorielles",
+    icon: PieChart,
+    tooltip: "Tableaux de bord par secteur d'activité du pays",
+    collapsible: true,
+    items: [
+      { nameKey: "sidebar.monSecteur", label: "Mon secteur", href: "/mon-secteur", icon: Building2, moduleKey: "dashboard", tooltip: "Données et indicateurs de votre secteur ministériel", isNew: true },
+    ],
+    subsections: [
+      {
+        title: "📌 Données transversales",
+        icon: Wallet,
+        items: [
+          { nameKey: "sidebar.budgetDashboard", label: "Budget de l'État", href: "/budget", icon: Wallet, moduleKey: "pilotage", tooltip: "Recettes, dépenses, et exécution du budget national" },
+          { nameKey: "sidebar.workforceDashboard", label: "Effectifs publics", href: "/effectifs", icon: UsersRound, moduleKey: "pilotage", tooltip: "Nombre d'agents de la fonction publique par ministère" },
+          { nameKey: "sidebar.procurement", label: "Marchés publics", href: "/marches-publics", icon: Gavel, moduleKey: "sector.economy", tooltip: "Appels d'offres, contrats et exécution des marchés de l'État" },
+          { nameKey: "sidebar.publicDebt", label: "Dette publique", href: "/dette-publique", icon: Landmark, moduleKey: "sector.economy", tooltip: "Montant, créanciers et soutenabilité de la dette nationale" },
+          { nameKey: "sidebar.demography", label: "Démographie", href: "/demographie", icon: Users, moduleKey: "sector.social", tooltip: "Population, naissances, espérance de vie, pyramide des âges" },
+          { nameKey: "sidebar.employmentDashboard", label: "Emploi & Formation", href: "/emploi", icon: Briefcase, moduleKey: "sector.social", tooltip: "Taux de chômage, offres d'emploi, formation professionnelle" },
+        ],
+      },
+      {
+        title: "💰 Économie & Infrastructure",
+        icon: Wallet,
+        items: [
+          { nameKey: "sidebar.businessRegistry", label: "Commerce & Entreprises", href: "/entreprises", icon: Briefcase, moduleKey: "sector.economy", tooltip: "Registre du commerce — entreprises créées au Gabon" },
+          { nameKey: "sidebar.miningDashboard", label: "Mines & Géologie", href: "/mines", icon: Mountain, moduleKey: "sector.economy", tooltip: "Production minière : manganèse, or, permis d'exploitation" },
+          { nameKey: "sidebar.energyDashboard", label: "Énergie", href: "/energie", icon: Zap, moduleKey: "sector.economy", tooltip: "Production électrique, barrages, pétrole, énergies renouvelables" },
+          { nameKey: "sidebar.telecomDashboard", label: "Télécommunications", href: "/telecom", icon: Wifi, moduleKey: "sector.economy", tooltip: "Opérateurs, couverture réseau, fibre optique, projets numériques" },
+          { nameKey: "sidebar.transportDashboard", label: "Transports", href: "/transports", icon: Truck, moduleKey: "sector.economy", tooltip: "Routes, ports, aéroports, réseau de transport national" },
+          { nameKey: "sidebar.intellectualProperty", label: "Propriété intellectuelle", href: "/propriete-intellectuelle", icon: Lightbulb, moduleKey: "sector.economy", tooltip: "Brevets, marques et droits d'auteur déposés (OAPI)" },
+          { nameKey: "sidebar.agricultureDashboard", label: "Agriculture", href: "/agriculture", icon: Wheat, moduleKey: "sector.territory", tooltip: "Production agricole, sécurité alimentaire, cultures vivrières" },
+        ],
+      },
+      {
+        title: "🏛️ Social, Territoire & Souveraineté",
+        icon: Shield,
+        items: [
+          { nameKey: "sidebar.publicHealth", label: "Santé publique", href: "/sante", icon: HeartPulse, moduleKey: "sector.social", tooltip: "Hôpitaux, médecins, maladies, vaccination — santé de la population" },
+          { nameKey: "sidebar.educationDashboard", label: "Éducation nationale", href: "/education", icon: GraduationCap, moduleKey: "sector.social", tooltip: "Écoles, élèves, enseignants, taux de réussite" },
+          { nameKey: "sidebar.socialProtection", label: "Protection sociale", href: "/protection-sociale", icon: HeartHandshake, moduleKey: "sector.social", tooltip: "CNAMGS, pensions, aides sociales — qui est protégé ?" },
+          { nameKey: "sidebar.forestry", label: "Eaux & Forêts", href: "/eaux-forets", icon: TreePine, moduleKey: "sector.territory", tooltip: "Gestion forestière, biodiversité, exploitation du bois" },
+          { nameKey: "sidebar.landRegistry", label: "Registre foncier", href: "/foncier", icon: MapPinned, moduleKey: "sector.territory", tooltip: "Qui possède quoi ? Titres fonciers et parcelles cadastrées" },
+          { nameKey: "sidebar.housingDashboard", label: "Habitat & Urbanisme", href: "/habitat", icon: Home, moduleKey: "sector.territory", tooltip: "Permis de construire, logements sociaux, aménagement urbain" },
+          { nameKey: "sidebar.civilRegistry", label: "État civil", href: "/etat-civil", icon: FileText, moduleKey: "sector.sovereignty", tooltip: "Naissances, mariages, décès — registre officiel des citoyens" },
+          { nameKey: "sidebar.electoralRegistry", label: "Registre électoral", href: "/elections", icon: Vote, moduleKey: "sector.sovereignty", tooltip: "Listes électorales, bureaux de vote, résultats" },
+          { nameKey: "sidebar.fisheryDashboard", label: "Pêche & Aquaculture", href: "/peche", icon: Fish, moduleKey: "sector.territory", tooltip: "Production halieutique, zones de pêche, licences" },
+          { nameKey: "sidebar.tourismDashboard", label: "Tourisme & Culture", href: "/tourisme", icon: Palmtree, moduleKey: "sector.society", tooltip: "Parcs nationaux, hôtels, visiteurs, sites touristiques" },
+          { nameKey: "sidebar.associationsRegistry", label: "Associations & ONG", href: "/associations", icon: Heart, moduleKey: "sector.society", tooltip: "Registre des organisations de la société civile" },
+          { nameKey: "sidebar.internationalCoop", label: "Coopération internationale", href: "/cooperation", icon: Handshake, moduleKey: "sector.society", tooltip: "Accords, partenariats et aide au développement" },
+        ],
+      },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────────
+  // 4. OUTILS & PRODUCTIVITÉ — priorisés pour SG
+  // ──────────────────────────────────────────────────────
+  {
+    titleKey: "nav.tools",
+    label: "Outils",
+    icon: Wrench,
+    tooltip: "Outils de travail quotidien : agenda, messagerie, documents",
+    collapsible: true,
+    items: [
+      { nameKey: "sidebar.calendar", label: "Calendrier", href: "/calendar", icon: Calendar, moduleKey: "dashboard", tooltip: "Votre agenda et les événements gouvernementaux" },
+      { nameKey: "sidebar.messaging", label: "Messagerie", href: "/messagerie", icon: MessageSquare, moduleKey: "dashboard", tooltip: "Messagerie sécurisée entre agents de l'État" },
+      { nameKey: "sidebar.documents", label: "Documents", href: "/documents/app", icon: FileText, moduleKey: "documents", tooltip: "Bibliothèque de documents officiels" },
+      { nameKey: "sidebar.contacts", label: "Annuaire", href: "/contacts", icon: Contact2, moduleKey: "dashboard", tooltip: "Coordonnées des institutions et responsables" },
+      { nameKey: "sidebar.echeancier", label: "Échéancier ministère", href: "/echeancier", icon: CalendarClock, moduleKey: "dashboard", tooltip: "Deadlines de reporting, jalons PTM et Conseil des ministres", isNew: true },
+      { nameKey: "sidebar.modeles", label: "Modèles & Templates", href: "/modeles", icon: Download, moduleKey: "dashboard", tooltip: "Templates officiels : reporting, PTM, notes, courriers", isNew: true },
+      { nameKey: "sidebar.kanban", label: "Tableau de tâches", href: "/kanban", icon: Kanban, moduleKey: "dashboard", tooltip: "Organisez vos tâches en colonnes (à faire, en cours, terminé)" },
+      { nameKey: "sidebar.archives", label: "Archives", href: "/archives", icon: Archive, moduleKey: "dashboard", tooltip: "Documents historiques et dossiers archivés" },
+      { nameKey: "sidebar.geoMap", label: "Carte du Gabon", href: "/carte", icon: Globe, moduleKey: "dashboard", tooltip: "Visualisation géographique des projets et données" },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────────
+  // 5. ANALYSE & STRATÉGIE — allégé pour SG (5 items)
+  // ──────────────────────────────────────────────────────
+  {
+    titleKey: "nav.analysis",
+    label: "Analyse",
+    icon: PieChart,
+    tooltip: "Outils d'analyse et de performance ministérielle",
+    collapsible: true,
+    items: [
+      { nameKey: "sidebar.execSummary", label: "Synthèse exécutive", href: "/synthese", icon: Crown, moduleKey: "analysis", tooltip: "Résumé pour les décideurs — chiffres clés en une page" },
+      { nameKey: "sidebar.performanceMinistere", label: "Performance ministère", href: "/performance", icon: Target, moduleKey: "analysis", tooltip: "Score de performance de votre ministère vs objectifs", isNew: true },
+      { nameKey: "sidebar.comparison", label: "Comparatif ministères", href: "/comparatif", icon: GitCompareArrows, moduleKey: "analysis", tooltip: "Comparer les performances entre ministères ou périodes" },
+      { nameKey: "sidebar.reportCenter", label: "Centre de rapports", href: "/rapports", icon: FileBarChart, moduleKey: "analysis", tooltip: "Générer des rapports PDF automatiques" },
+      { nameKey: "sidebar.strategicWatch", label: "Veille stratégique", href: "/veille", icon: Eye, moduleKey: "analysis", tooltip: "Surveillance de l'environnement international et régional" },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────────
+  // 6. PILOTAGE GOUVERNEMENTAL — déplacé après les 4 volets
   // ──────────────────────────────────────────────────────
   {
     titleKey: "nav.pilotage",
@@ -169,11 +311,8 @@ const navigation: NavSection[] = [
     icon: BarChart3,
     tooltip: "Suivi de l'exécution des politiques et programmes du gouvernement",
     collapsible: true,
-    defaultOpen: true,
     items: [
       { nameKey: "sidebar.garTracking", label: "Suivi GAR / PAG", href: "/gar/app", icon: BarChart3, moduleKey: "gar", tooltip: "Gestion Axée sur les Résultats — suivez l'avancement des projets gouvernementaux" },
-      { nameKey: "sidebar.budgetDashboard", label: "Budget de l'État", href: "/budget", icon: Wallet, moduleKey: "pilotage", tooltip: "Recettes, dépenses, et exécution du budget national" },
-      { nameKey: "sidebar.workforceDashboard", label: "Effectifs publics", href: "/effectifs", icon: UsersRound, moduleKey: "pilotage", tooltip: "Nombre d'agents de la fonction publique par ministère" },
       { nameKey: "sidebar.scorecard", label: "Tableau de bord stratégique", href: "/scorecard", icon: Target, moduleKey: "pilotage", tooltip: "Balanced Scorecard — mesure la performance globale du gouvernement" },
       { nameKey: "sidebar.sdgDashboard", label: "Objectifs de Développement (ODD)", href: "/odd", icon: Globe2, moduleKey: "pilotage", tooltip: "Suivi des 17 Objectifs de Développement Durable de l'ONU" },
       { nameKey: "sidebar.provinces", label: "Tableau des provinces", href: "/provinces", icon: MapPin, moduleKey: "pilotage", tooltip: "Indicateurs par province : population, budget, projets" },
@@ -182,7 +321,7 @@ const navigation: NavSection[] = [
   },
 
   // ──────────────────────────────────────────────────────
-  // 3. PROCESSUS INSTITUTIONNELS — le métier du SGG
+  // 7. PROCESSUS INSTITUTIONNELS — déplacé après Pilotage
   // ──────────────────────────────────────────────────────
   {
     titleKey: "nav.processes",
@@ -190,7 +329,6 @@ const navigation: NavSection[] = [
     icon: Scale,
     tooltip: "Les procédures officielles gérées par le Secrétariat Général du Gouvernement",
     collapsible: true,
-    defaultOpen: true,
     items: [
       { nameKey: "sidebar.legislativeCycle", label: "Cycle législatif", href: "/cycle-legislatif/app", icon: Scale, moduleKey: "cycleLegislatif", tooltip: "Suivi des projets de loi, de leur rédaction à leur promulgation" },
       { nameKey: "sidebar.nominations", label: "Nominations", href: "/nominations/app", icon: Users, moduleKey: "nominations", badge: 5, tooltip: "Propositions et validation des nominations en Conseil des ministres" },
@@ -202,147 +340,7 @@ const navigation: NavSection[] = [
   },
 
   // ──────────────────────────────────────────────────────
-  // 4. REPORTING & PROGRAMMATION
-  // ──────────────────────────────────────────────────────
-  {
-    titleKey: "nav.reporting",
-    label: "Reporting",
-    icon: Table2,
-    tooltip: "Saisie et validation des rapports ministériels",
-    collapsible: true,
-    items: [
-      { nameKey: "sidebar.matriceGarPag", label: "Matrice GAR/PAG", href: "/matrice-reporting", icon: Table2, moduleKey: "matriceReporting", tooltip: "Tableau croisé de suivi des résultats par programme" },
-      { nameKey: "sidebar.monthlyEntry", label: "Saisie mensuelle", href: "/matrice-reporting/saisie", icon: FileEdit, moduleKey: "matriceReporting", tooltip: "Remplissez les indicateurs de votre ministère chaque mois" },
-      { nameKey: "sidebar.validationSGG", label: "Validation SGG", href: "/matrice-reporting/validation", icon: CheckCircle2, moduleKey: "matriceReporting", tooltip: "Le SGG vérifie et valide les rapports soumis" },
-      { nameKey: "sidebar.validationSGPR", label: "Validation SGPR", href: "/matrice-reporting/validation-sgpr", icon: ShieldCheck, moduleKey: "matriceReporting", tooltip: "La Présidence valide les rapports stratégiques" },
-      { nameKey: "sidebar.completionTracking", label: "Suivi de complétude", href: "/matrice-reporting/suivi", icon: ClipboardList, moduleKey: "matriceReporting", tooltip: "Quels ministères ont soumis leurs rapports ?" },
-      { nameKey: "sidebar.exports", label: "Exports", href: "/matrice-reporting/exports", icon: Download, moduleKey: "matriceReporting", tooltip: "Télécharger les données en Excel ou PDF" },
-      { nameKey: "sidebar.matricePTM", label: "Matrice PTM/PTG", href: "/ptm/matrice", icon: FileSpreadsheet, moduleKey: "ptmptg", tooltip: "Programme de Travail Ministériel et Gouvernemental" },
-    ],
-  },
-
-  // ──────────────────────────────────────────────────────
-  // 5. DONNÉES SECTORIELLES — avec sous-catégories
-  // ──────────────────────────────────────────────────────
-  {
-    titleKey: "nav.sectors",
-    label: "Données sectorielles",
-    icon: PieChart,
-    tooltip: "Tableaux de bord par secteur d'activité du pays",
-    collapsible: true,
-    subsections: [
-      {
-        title: "💰 Économie & Finance",
-        icon: Wallet,
-        items: [
-          { nameKey: "sidebar.procurement", label: "Marchés publics", href: "/marches-publics", icon: Gavel, moduleKey: "sector.economy", tooltip: "Appels d'offres, contrats et exécution des marchés de l'État" },
-          { nameKey: "sidebar.publicDebt", label: "Dette publique", href: "/dette-publique", icon: Landmark, moduleKey: "sector.economy", tooltip: "Montant, créanciers et soutenabilité de la dette nationale" },
-          { nameKey: "sidebar.businessRegistry", label: "Commerce & Entreprises", href: "/entreprises", icon: Briefcase, moduleKey: "sector.economy", tooltip: "Registre du commerce — entreprises créées au Gabon" },
-          { nameKey: "sidebar.miningDashboard", label: "Mines & Géologie", href: "/mines", icon: Mountain, moduleKey: "sector.economy", tooltip: "Production minière : manganèse, or, permis d'exploitation" },
-          { nameKey: "sidebar.intellectualProperty", label: "Propriété intellectuelle", href: "/propriete-intellectuelle", icon: Lightbulb, moduleKey: "sector.economy", tooltip: "Brevets, marques et droits d'auteur déposés (OAPI)" },
-          { nameKey: "sidebar.telecomDashboard", label: "Télécommunications", href: "/telecom", icon: Wifi, moduleKey: "sector.economy", tooltip: "Opérateurs, couverture réseau, fibre optique, projets numériques", isNew: true },
-        ],
-      },
-      {
-        title: "🏥 Social & Humain",
-        icon: HeartPulse,
-        items: [
-          { nameKey: "sidebar.publicHealth", label: "Santé publique", href: "/sante", icon: HeartPulse, moduleKey: "sector.social", tooltip: "Hôpitaux, médecins, maladies, vaccination — santé de la population" },
-          { nameKey: "sidebar.educationDashboard", label: "Éducation nationale", href: "/education", icon: GraduationCap, moduleKey: "sector.social", tooltip: "Écoles, élèves, enseignants, taux de réussite" },
-          { nameKey: "sidebar.employmentDashboard", label: "Emploi & Formation", href: "/emploi", icon: Briefcase, moduleKey: "sector.social", tooltip: "Taux de chômage, offres d'emploi, formation professionnelle" },
-          { nameKey: "sidebar.socialProtection", label: "Protection sociale", href: "/protection-sociale", icon: HeartHandshake, moduleKey: "sector.social", tooltip: "CNAMGS, pensions, aides sociales — qui est protégé ?", isNew: true },
-          { nameKey: "sidebar.sportsDashboard", label: "Sports & Jeunesse", href: "/sports", icon: Trophy, moduleKey: "sector.social", tooltip: "Fédérations sportives, stades, programmes jeunesse", isNew: true },
-          { nameKey: "sidebar.diplomaRegistry", label: "Diplômes", href: "/diplomes", icon: Award, moduleKey: "sector.social", tooltip: "Registre des diplômes délivrés par les universités gabonaises" },
-          { nameKey: "sidebar.demography", label: "Démographie", href: "/demographie", icon: Users, moduleKey: "sector.social", tooltip: "Population, naissances, espérance de vie, pyramide des âges" },
-        ],
-      },
-      {
-        title: "🌳 Territoire & Environnement",
-        icon: TreePine,
-        items: [
-          { nameKey: "sidebar.landRegistry", label: "Registre foncier", href: "/foncier", icon: MapPinned, moduleKey: "sector.territory", tooltip: "Qui possède quoi ? Titres fonciers et parcelles cadastrées" },
-          { nameKey: "sidebar.housingDashboard", label: "Habitat & Urbanisme", href: "/habitat", icon: Home, moduleKey: "sector.territory", tooltip: "Permis de construire, logements sociaux, aménagement urbain", isNew: true },
-          { nameKey: "sidebar.agricultureDashboard", label: "Agriculture", href: "/agriculture", icon: Wheat, moduleKey: "sector.territory", tooltip: "Production agricole, sécurité alimentaire, cultures vivrières" },
-          { nameKey: "sidebar.forestry", label: "Eaux & Forêts", href: "/eaux-forets", icon: TreePine, moduleKey: "sector.territory", tooltip: "Gestion forestière, biodiversité, exploitation du bois" },
-          { nameKey: "sidebar.fisheryDashboard", label: "Pêche & Aquaculture", href: "/peche", icon: Fish, moduleKey: "sector.territory", tooltip: "Production halieutique, zones de pêche, licences" },
-          { nameKey: "sidebar.energyDashboard", label: "Énergie", href: "/energie", icon: Zap, moduleKey: "sector.territory", tooltip: "Production électrique, barrages, pétrole, énergies renouvelables" },
-          { nameKey: "sidebar.meteorologyCenter", label: "Météorologie", href: "/meteo", icon: CloudRain, moduleKey: "sector.territory", tooltip: "Prévisions météo, pluviométrie, alertes climatiques" },
-          { nameKey: "sidebar.transportDashboard", label: "Transports", href: "/transports", icon: Truck, moduleKey: "sector.territory", tooltip: "Routes, ports, aéroports, réseau de transport national" },
-          { nameKey: "sidebar.publicProperty", label: "Patrimoine public", href: "/patrimoine", icon: Building, moduleKey: "sector.territory", tooltip: "Bâtiments et biens appartenant à l'État gabonais" },
-        ],
-      },
-      {
-        title: "🛡️ Souveraineté & Sécurité",
-        icon: Shield,
-        items: [
-          { nameKey: "sidebar.electoralRegistry", label: "Registre électoral", href: "/elections", icon: Vote, moduleKey: "sector.sovereignty", tooltip: "Listes électorales, bureaux de vote, résultats" },
-          { nameKey: "sidebar.civilRegistry", label: "État civil", href: "/etat-civil", icon: FileText, moduleKey: "sector.sovereignty", tooltip: "Naissances, mariages, décès — registre officiel des citoyens" },
-          { nameKey: "sidebar.migrationDashboard", label: "Migrations & Réfugiés", href: "/migrations", icon: Globe, moduleKey: "sector.sovereignty", tooltip: "Immigration, titres de séjour, postes frontières", isNew: true },
-          { nameKey: "sidebar.cyberSecurity", label: "Cybersécurité", href: "/cybersecurite", icon: ShieldCheck, moduleKey: "sector.sovereignty", tooltip: "Protection des systèmes informatiques de l'État" },
-          { nameKey: "sidebar.disasterManagement", label: "Catastrophes naturelles", href: "/catastrophes", icon: AlertTriangle, moduleKey: "sector.sovereignty", tooltip: "Inondations, séismes — gestion des urgences" },
-          { nameKey: "sidebar.riskManagement", label: "Gestion des risques", href: "/gestion-risques", icon: Siren, moduleKey: "sector.sovereignty", tooltip: "Identification et prévention des risques pour le pays" },
-        ],
-      },
-      {
-        title: "🎭 Société & Culture",
-        icon: Heart,
-        items: [
-          { nameKey: "sidebar.associationsRegistry", label: "Associations & ONG", href: "/associations", icon: Heart, moduleKey: "sector.society", tooltip: "Registre des organisations de la société civile" },
-          { nameKey: "sidebar.religiousRegistry", label: "Cultes & Confessions", href: "/cultes", icon: Church, moduleKey: "sector.society", tooltip: "Églises, mosquées, temples — liberté de culte", isNew: true },
-          { nameKey: "sidebar.tourismDashboard", label: "Tourisme & Culture", href: "/tourisme", icon: Palmtree, moduleKey: "sector.society", tooltip: "Parcs nationaux, hôtels, visiteurs, sites touristiques" },
-          { nameKey: "sidebar.mediaRegistry", label: "Médias", href: "/medias", icon: Newspaper, moduleKey: "sector.society", tooltip: "Chaînes TV, radios, journaux — paysage médiatique" },
-          { nameKey: "sidebar.govCommunication", label: "Communication", href: "/communication", icon: Megaphone, moduleKey: "sector.society", tooltip: "Communication officielle du gouvernement" },
-          { nameKey: "sidebar.internationalCoop", label: "Coopération internationale", href: "/cooperation", icon: Handshake, moduleKey: "sector.society", tooltip: "Accords, partenariats et aide au développement" },
-        ],
-      },
-    ],
-  },
-
-  // ──────────────────────────────────────────────────────
-  // 6. OUTILS & PRODUCTIVITÉ
-  // ──────────────────────────────────────────────────────
-  {
-    titleKey: "nav.tools",
-    label: "Outils",
-    icon: Wrench,
-    tooltip: "Outils de travail quotidien : agenda, messagerie, documents",
-    collapsible: true,
-    items: [
-      { nameKey: "sidebar.calendar", label: "Calendrier", href: "/calendar", icon: Calendar, moduleKey: "dashboard", tooltip: "Votre agenda et les événements gouvernementaux" },
-      { nameKey: "sidebar.kanban", label: "Tableau de tâches", href: "/kanban", icon: Kanban, moduleKey: "dashboard", tooltip: "Organisez vos tâches en colonnes (à faire, en cours, terminé)" },
-      { nameKey: "sidebar.messaging", label: "Messagerie", href: "/messagerie", icon: MessageSquare, moduleKey: "dashboard", tooltip: "Messagerie sécurisée entre agents de l'État" },
-      { nameKey: "sidebar.contacts", label: "Annuaire", href: "/contacts", icon: Contact2, moduleKey: "dashboard", tooltip: "Coordonnées des institutions et responsables" },
-      { nameKey: "sidebar.archives", label: "Archives", href: "/archives", icon: Archive, moduleKey: "dashboard", tooltip: "Documents historiques et dossiers archivés" },
-      { nameKey: "sidebar.documents", label: "Documents", href: "/documents/app", icon: FileText, moduleKey: "documents", tooltip: "Bibliothèque de documents officiels" },
-      { nameKey: "sidebar.reports", label: "Rapports", href: "/rapports/app", icon: ClipboardCheck, moduleKey: "rapports", tooltip: "Rapports ministériels et gouvernementaux" },
-      { nameKey: "sidebar.geoMap", label: "Carte du Gabon", href: "/carte", icon: Globe, moduleKey: "dashboard", tooltip: "Visualisation géographique des projets et données" },
-    ],
-  },
-
-  // ──────────────────────────────────────────────────────
-  // 7. ANALYSE & STRATÉGIE (rôles avancés)
-  // ──────────────────────────────────────────────────────
-  {
-    titleKey: "nav.analysis",
-    label: "Analyse",
-    icon: PieChart,
-    tooltip: "Outils d'analyse avancée et stratégie",
-    collapsible: true,
-    items: [
-      { nameKey: "sidebar.analytics", label: "Analytique", href: "/analytics", icon: PieChart, moduleKey: "analysis", tooltip: "Tableaux de bord avancés et analyses de données" },
-      { nameKey: "sidebar.execSummary", label: "Synthèse exécutive", href: "/synthese", icon: Crown, moduleKey: "analysis", tooltip: "Résumé pour les décideurs — chiffres clés en une page" },
-      { nameKey: "sidebar.strategicWatch", label: "Veille stratégique", href: "/veille", icon: Eye, moduleKey: "analysis", tooltip: "Surveillance de l'environnement international et régional" },
-      { nameKey: "sidebar.comparison", label: "Comparatif", href: "/comparatif", icon: GitCompareArrows, moduleKey: "analysis", tooltip: "Comparer les performances entre ministères ou périodes" },
-      { nameKey: "sidebar.riskRegister", label: "Registre des risques", href: "/risques", icon: ShieldAlert, moduleKey: "analysis", tooltip: "Cartographie des risques et plans de mitigation" },
-      { nameKey: "sidebar.kpiBuilder", label: "Constructeur d'indicateurs", href: "/kpi-builder", icon: Target, moduleKey: "analysis", tooltip: "Créez vos propres indicateurs de performance personnalisés" },
-      { nameKey: "sidebar.reportCenter", label: "Centre de rapports", href: "/rapports", icon: FileBarChart, moduleKey: "analysis", tooltip: "Générer des rapports PDF automatiques" },
-      { nameKey: "sidebar.autoReports", label: "Rapports automatiques", href: "/auto-reports", icon: Clock, moduleKey: "analysis", tooltip: "Rapports générés et envoyés automatiquement chaque semaine" },
-      { nameKey: "sidebar.benchmark", label: "Comparaison internationale", href: "/benchmark", icon: Trophy, moduleKey: "analysis", tooltip: "Comparer le Gabon avec d'autres pays de la sous-région" },
-    ],
-  },
-
-  // ──────────────────────────────────────────────────────
-  // 8. ADMINISTRATION SYSTÈME (SGG Admin uniquement)
+  // 8. ADMINISTRATION SYSTÈME (+ items récupérés d'Analyse)
   // ──────────────────────────────────────────────────────
   {
     titleKey: "nav.admin",
@@ -361,6 +359,12 @@ const navigation: NavSection[] = [
       { nameKey: "sidebar.systemStats", label: "Système", href: "/system-stats", icon: Server, moduleKey: "adminUsers", tooltip: "Performances serveur, espace disque, santé technique" },
       { nameKey: "sidebar.apiDocs", label: "Centre API", href: "/api-docs", icon: Code2, moduleKey: "adminUsers", tooltip: "Documentation technique pour les développeurs" },
       { nameKey: "sidebar.adminAdvanced", label: "Admin. avancée", href: "/admin/advanced", icon: Wrench, moduleKey: "adminUsers", tooltip: "Configuration système avancée" },
+      // Items récupérés du volet Analyse (outils admin-level)
+      { nameKey: "sidebar.analytics", label: "Analytique avancée", href: "/analytics", icon: PieChart, moduleKey: "adminUsers", tooltip: "Tableaux de bord avancés et analyses de données" },
+      { nameKey: "sidebar.riskRegister", label: "Registre des risques", href: "/risques", icon: ShieldAlert, moduleKey: "adminUsers", tooltip: "Cartographie des risques et plans de mitigation" },
+      { nameKey: "sidebar.kpiBuilder", label: "Constructeur d'indicateurs", href: "/kpi-builder", icon: Target, moduleKey: "adminUsers", tooltip: "Créez vos propres indicateurs de performance personnalisés" },
+      { nameKey: "sidebar.autoReports", label: "Rapports automatiques", href: "/auto-reports", icon: Clock, moduleKey: "adminUsers", tooltip: "Rapports générés et envoyés automatiquement chaque semaine" },
+      { nameKey: "sidebar.benchmark", label: "Comparaison internationale", href: "/benchmark", icon: Trophy, moduleKey: "adminUsers", tooltip: "Comparer le Gabon avec d'autres pays de la sous-région" },
     ],
   },
 

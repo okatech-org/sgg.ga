@@ -1,6 +1,7 @@
 /**
  * SGG Digital — Saisie Mensuelle du Reporting
  * Page de saisie par les SG Ministères — Branchée au Store Zustand
+ * Affiche les programmes directs (pilote/co-resp.) ET les programmes connexes (indirects).
  */
 
 import { useState, useMemo } from "react";
@@ -34,18 +35,23 @@ import {
   Building2,
   Shield,
   Users2,
+  Layers,
+  Handshake,
+  Link2,
+  Eye,
 } from "lucide-react";
 import { InfoButton } from "@/components/reporting/InfoButton";
+import { ProgrammeInfoButton } from "@/components/reporting/ProgrammeInfoButton";
 import { StatutBadge } from "@/components/reporting/StatutBadge";
 import { FormulaireReportingMensuel } from "@/components/reporting/FormulaireReportingMensuel";
 import {
   PROGRAMMES,
   GOUVERNANCES,
   PILIERS,
-  getProgrammesForMinistere,
+  getAllProgrammesForMinistere,
   getMinistereById,
 } from "@/data/reportingData";
-import type { RoleMinistereProgramme } from "@/data/reportingData";
+import type { RoleLienProgramme } from "@/data/reportingData";
 import { useReportingStore } from "@/stores/reportingStore";
 import { useMatricePermissions } from "@/hooks/useMatricePermissions";
 import { useDemoUser } from "@/hooks/useDemoUser";
@@ -55,9 +61,44 @@ const MOIS_LABELS = [
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
 ];
 
+// Configuration visuelle des badges de rôle/lien
+const ROLE_BADGE_CONFIG: Record<string, {
+  label: string;
+  icon: React.ElementType;
+  className: string;
+}> = {
+  pilote: {
+    label: 'Pilote',
+    icon: Shield,
+    className: 'text-[10px] bg-government-navy/10 text-government-navy border-government-navy/20 dark:bg-government-gold/10 dark:text-government-gold dark:border-government-gold/20',
+  },
+  'co-responsable': {
+    label: 'Co-resp.',
+    icon: Users2,
+    className: 'text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
+  },
+  meme_pilier: {
+    label: 'Même pilier',
+    icon: Layers,
+    className: 'text-[10px] bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-800',
+  },
+  tutelle_directions: {
+    label: 'Tutelle',
+    icon: Building2,
+    className: 'text-[10px] bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-800',
+  },
+  partenaire_technique: {
+    label: 'Partenaire',
+    icon: Handshake,
+    className: 'text-[10px] bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/30 dark:text-teal-400 dark:border-teal-800',
+  },
+};
+
 export default function SaisieReporting() {
-  const [mois, setMois] = useState("1");
-  const [annee, setAnnee] = useState("2026");
+  // Mois courant par défaut (ex: Février 2026 → mois="2", annee="2026")
+  const today = new Date();
+  const [mois, setMois] = useState(String(today.getMonth() + 1));
+  const [annee, setAnnee] = useState(String(today.getFullYear()));
   const [selectedProgrammeId, setSelectedProgrammeId] = useState<string | null>(null);
 
   // Store Zustand — lectures réactives
@@ -72,33 +113,53 @@ export default function SaisieReporting() {
   const userMinistereId = demoUser?.ministereId || null;
   const userMinistere = userMinistereId ? getMinistereById(userMinistereId) : null;
 
-  // Programmes disponibles pour ce ministère (pilote + co-responsable)
-  const programmesMinistere = useMemo(() => {
+  // Tous les programmes (directs + indirects) pour ce ministère
+  const allProgrammes = useMemo(() => {
     if (!userMinistereId || !canSaisir) {
-      // Admin SGG, directeur, ou rôle non-ministère → tous les programmes
+      // Admin SGG, directeur, ou rôle non-ministère → tous les programmes (mode admin)
       return null;
     }
-    return getProgrammesForMinistere(userMinistereId);
+    return getAllProgrammesForMinistere(userMinistereId);
   }, [userMinistereId, canSaisir]);
 
-  // Programmes enrichis avec rapport depuis le store
-  const programmesList = useMemo(() => {
+  // Enrichir avec rapport depuis le store + séparer directs / indirects
+  const { directProgrammes, indirectProgrammes } = useMemo(() => {
     // Déterminer la source de programmes
-    const sourceProgrammes = programmesMinistere
-      ? programmesMinistere.map((pm) => ({
-        ...pm.programme,
-        _role: pm.role as RoleMinistereProgramme,
-      }))
-      : PROGRAMMES.map((p) => ({ ...p, _role: undefined as RoleMinistereProgramme | undefined }));
+    type EnrichedProgramme = {
+      programme: typeof PROGRAMMES[0];
+      gouvernance: typeof GOUVERNANCES[0] | undefined;
+      pilier: typeof PILIERS[0] | undefined;
+      rapport: ReturnType<typeof rapports.find>;
+      completude: number;
+      role: RoleLienProgramme | undefined;
+      isDirect: boolean;
+      justification?: string;
+    };
 
-    return sourceProgrammes.map((programme) => {
+    const sourceProgrammes = allProgrammes
+      ? allProgrammes.map((pm) => ({
+          ...pm.programme,
+          _role: pm.role as RoleLienProgramme,
+          _isDirect: pm.isDirect,
+          _justification: pm.justification,
+        }))
+      : PROGRAMMES.map((p) => ({
+          ...p,
+          _role: undefined as RoleLienProgramme | undefined,
+          _isDirect: true,
+          _justification: undefined as string | undefined,
+        }));
+
+    const enriched: EnrichedProgramme[] = sourceProgrammes.map((programme) => {
       const gouvernance = GOUVERNANCES.find((g) => g.programmeId === programme.id);
       const pilier = PILIERS.find((p) => p.id === programme.pilierId);
+      // Chercher le rapport de CE ministère pour ce programme/mois/année
       const rapport = rapports.find(
         (r) =>
           r.programmeId === programme.id &&
           r.periodeMois === parseInt(mois) &&
-          r.periodeAnnee === parseInt(annee),
+          r.periodeAnnee === parseInt(annee) &&
+          (!userMinistereId || r.ministereId === userMinistereId),
       );
 
       // Calcul de complétude
@@ -123,64 +184,85 @@ export default function SaisieReporting() {
         pilier,
         rapport,
         completude,
-        roleMinistere: programme._role,
+        role: programme._role,
+        isDirect: programme._isDirect,
+        justification: programme._justification,
       };
     });
-  }, [rapports, mois, annee, programmesMinistere]);
 
-  // Stats rapides
+    return {
+      directProgrammes: enriched.filter((p) => p.isDirect),
+      indirectProgrammes: enriched.filter((p) => !p.isDirect),
+    };
+  }, [rapports, mois, annee, allProgrammes, userMinistereId]);
+
+  // Stats rapides (uniquement programmes directs)
   const stats = useMemo(() => {
-    const total = programmesList.length;
-    const saisis = programmesList.filter((p) => p.rapport).length;
-    const soumis = programmesList.filter((p) => p.rapport?.statutValidation === 'soumis').length;
-    const valides = programmesList.filter(
+    const total = directProgrammes.length;
+    const saisis = directProgrammes.filter((p) => p.rapport).length;
+    const soumis = directProgrammes.filter((p) => p.rapport?.statutValidation === 'soumis').length;
+    const valides = directProgrammes.filter(
       (p) =>
         p.rapport?.statutValidation === 'valide_sgg' ||
         p.rapport?.statutValidation === 'valide_sgpr',
     ).length;
-    const rejetes = programmesList.filter((p) => p.rapport?.statutValidation === 'rejete').length;
-    return { total, saisis, soumis, valides, rejetes };
-  }, [programmesList]);
+    const rejetes = directProgrammes.filter((p) => p.rapport?.statutValidation === 'rejete').length;
+    return { total, saisis, soumis, valides, rejetes, connexes: indirectProgrammes.length };
+  }, [directProgrammes, indirectProgrammes]);
 
-  const getButtonConfig = (programme: typeof programmesList[0]) => {
+  const getButtonConfig = (isDirect: boolean, rapport: typeof directProgrammes[0]['rapport']) => {
+    if (!isDirect) {
+      return {
+        label: 'Voir les infos',
+        icon: Eye,
+        variant: 'ghost' as const,
+        disabled: false,
+        isInfoOnly: true,
+      };
+    }
     if (!canSaisir) {
       return {
         label: 'Accès restreint',
         icon: Lock,
         variant: 'outline' as const,
         disabled: true,
+        isInfoOnly: false,
       };
     }
-    if (!programme.rapport) {
+    if (!rapport) {
       return {
         label: 'Remplir le rapport',
         icon: Edit,
         variant: 'default' as const,
         disabled: false,
+        isInfoOnly: false,
       };
     }
-    if (programme.rapport.statutValidation === 'brouillon') {
+    if (rapport.statutValidation === 'brouillon') {
       return {
         label: 'Continuer la saisie',
         icon: Edit,
         variant: 'default' as const,
         disabled: false,
+        isInfoOnly: false,
       };
     }
-    if (programme.rapport.statutValidation === 'rejete') {
+    if (rapport.statutValidation === 'rejete') {
       return {
         label: 'Corriger et resoumettre',
         icon: AlertTriangle,
         variant: 'destructive' as const,
         disabled: false,
+        isInfoOnly: false,
       };
     }
-    if (programme.rapport.statutValidation === 'soumis') {
+    if (rapport.statutValidation === 'soumis') {
       return {
         label: 'En attente de validation',
         icon: Clock,
         variant: 'outline' as const,
         disabled: true,
+        isInfoOnly: false,
       };
     }
     return {
@@ -188,7 +270,103 @@ export default function SaisieReporting() {
       icon: CheckCircle2,
       variant: 'outline' as const,
       disabled: false,
+      isInfoOnly: false,
     };
+  };
+
+  // Rendu d'une carte programme (réutilisé pour directs ET indirects)
+  const renderProgrammeCard = (item: typeof directProgrammes[0]) => {
+    const { programme, gouvernance, pilier, rapport, completude, role, isDirect, justification } = item;
+    const btnConfig = getButtonConfig(isDirect, rapport);
+    const BtnIcon = btnConfig.icon;
+    const badgeConfig = role ? ROLE_BADGE_CONFIG[role] : null;
+    const BadgeIcon = badgeConfig?.icon;
+
+    return (
+      <Card
+        key={programme.id}
+        className={
+          isDirect
+            ? 'transition-all hover:shadow-gov-lg hover:border-government-gold/30'
+            : 'transition-all border-dashed opacity-75 hover:opacity-100'
+        }
+      >
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className="h-3 w-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: pilier?.couleur }}
+              />
+              <CardTitle className="text-sm">{programme.codeProgramme}</CardTitle>
+              {/* Bouton info programme */}
+              <ProgrammeInfoButton
+                programmeId={programme.id}
+                role={role}
+                justification={justification}
+              />
+              {/* Badge rôle / type de lien */}
+              {badgeConfig && BadgeIcon && (
+                <Badge variant="outline" className={badgeConfig.className}>
+                  <BadgeIcon className="h-2.5 w-2.5 mr-0.5" />
+                  {badgeConfig.label}
+                </Badge>
+              )}
+            </div>
+            {rapport && isDirect && (
+              <StatutBadge type="validation" statut={rapport.statutValidation} size="sm" />
+            )}
+          </div>
+          <CardDescription className="text-xs line-clamp-2">
+            {programme.libelleProgramme}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {gouvernance && (
+            <p className="text-xs text-muted-foreground">
+              Pilote : {gouvernance.ministerePiloteNom}
+            </p>
+          )}
+
+          {/* Justification du lien indirect */}
+          {!isDirect && justification && (
+            <p className="text-[11px] text-muted-foreground italic">
+              {justification}
+            </p>
+          )}
+
+          {rapport && isDirect && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[10px]">
+                <span className="text-muted-foreground">Complétude</span>
+                <span className="font-medium">{completude}%</span>
+              </div>
+              <Progress value={completude} className="h-1.5" />
+            </div>
+          )}
+
+          {rapport?.statutValidation === 'rejete' && rapport.motifRejet && isDirect && (
+            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20 text-xs text-red-700 dark:text-red-400">
+              <span className="font-medium">Motif de rejet :</span> {rapport.motifRejet}
+            </div>
+          )}
+
+          {/* Bouton d'action (saisie pour directs, info pour indirects) */}
+          {isDirect && (
+            <Button
+              size="sm"
+              variant={btnConfig.variant}
+              className="w-full"
+              disabled={btnConfig.disabled}
+              onClick={() => !btnConfig.disabled && setSelectedProgrammeId(programme.id)}
+            >
+              <BtnIcon className="h-4 w-4 mr-2" />
+              {btnConfig.label}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -236,32 +414,33 @@ export default function SaisieReporting() {
         </div>
 
         {/* Bandeau ministère connecté */}
-        {userMinistere && programmesMinistere && (
+        {userMinistere && allProgrammes && (
           <div className="flex items-center gap-3 p-3 rounded-lg bg-government-navy/5 dark:bg-government-navy/10 border border-government-navy/10">
             <Building2 className="h-5 w-5 text-government-navy dark:text-government-gold flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">{userMinistere.nom}</p>
               <p className="text-xs text-muted-foreground">
-                {programmesMinistere.filter((p) => p.role === 'pilote').length} programme(s) pilote
-                {programmesMinistere.filter((p) => p.role === 'co-responsable').length > 0 &&
-                  ` · ${programmesMinistere.filter((p) => p.role === 'co-responsable').length} en co-responsabilité`
+                {directProgrammes.filter((p) => p.role === 'pilote').length} programme(s) pilote
+                {directProgrammes.filter((p) => p.role === 'co-responsable').length > 0 &&
+                  ` · ${directProgrammes.filter((p) => p.role === 'co-responsable').length} en co-responsabilité`
                 }
+                {stats.connexes > 0 && ` · ${stats.connexes} connexe(s)`}
               </p>
             </div>
           </div>
         )}
 
-        {/* Stats rapides */}
+        {/* Stats rapides (directs uniquement) */}
         <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">{stats.total} programmes</Badge>
-          <Badge variant="outline">{stats.saisis} saisis</Badge>
+          <Badge variant="secondary">{stats.total} programme(s) direct(s)</Badge>
+          <Badge variant="outline">{stats.saisis} saisi(s)</Badge>
           <Badge variant="outline" className="text-status-info border-status-info">
             <Send className="h-3 w-3 mr-1" />
             {stats.soumis} soumis
           </Badge>
           <Badge variant="outline" className="text-status-success border-status-success">
             <CheckCircle2 className="h-3 w-3 mr-1" />
-            {stats.valides} validés
+            {stats.valides} validé(s)
           </Badge>
           {stats.rejetes > 0 && (
             <Badge variant="destructive">
@@ -271,88 +450,36 @@ export default function SaisieReporting() {
           )}
         </div>
 
-        {/* Grille des programmes */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {programmesList.map(({ programme, gouvernance, pilier, rapport, completude, roleMinistere }) => {
-            const btnConfig = getButtonConfig({ programme, gouvernance, pilier, rapport, completude, roleMinistere });
-            const BtnIcon = btnConfig.icon;
+        {/* Section 1 : Programmes directs (pilote / co-responsable) */}
+        {directProgrammes.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold flex items-center gap-2 text-government-navy dark:text-government-gold">
+              <FileEdit className="h-4 w-4" />
+              Vos programmes (saisie mensuelle)
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {directProgrammes.map(renderProgrammeCard)}
+            </div>
+          </div>
+        )}
 
-            return (
-              <Card
-                key={programme.id}
-                className="transition-all hover:shadow-gov-lg hover:border-government-gold/30"
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="h-3 w-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: pilier?.couleur }}
-                      />
-                      <CardTitle className="text-sm">{programme.codeProgramme}</CardTitle>
-                      {/* Badge rôle du ministère */}
-                      {roleMinistere && (
-                        <Badge
-                          variant="outline"
-                          className={roleMinistere === 'pilote'
-                            ? 'text-[10px] bg-government-navy/10 text-government-navy border-government-navy/20 dark:bg-government-gold/10 dark:text-government-gold dark:border-government-gold/20'
-                            : 'text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800'
-                          }
-                        >
-                          {roleMinistere === 'pilote' ? (
-                            <><Shield className="h-2.5 w-2.5 mr-0.5" /> Pilote</>
-                          ) : (
-                            <><Users2 className="h-2.5 w-2.5 mr-0.5" /> Co-resp.</>
-                          )}
-                        </Badge>
-                      )}
-                    </div>
-                    {rapport && (
-                      <StatutBadge type="validation" statut={rapport.statutValidation} size="sm" />
-                    )}
-                  </div>
-                  <CardDescription className="text-xs line-clamp-2">
-                    {programme.libelleProgramme}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {gouvernance && (
-                    <p className="text-xs text-muted-foreground">
-                      Pilote : {gouvernance.ministerePiloteNom}
-                    </p>
-                  )}
-
-                  {rapport && (
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-muted-foreground">Complétude</span>
-                        <span className="font-medium">{completude}%</span>
-                      </div>
-                      <Progress value={completude} className="h-1.5" />
-                    </div>
-                  )}
-
-                  {rapport?.statutValidation === 'rejete' && rapport.motifRejet && (
-                    <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20 text-xs text-red-700 dark:text-red-400">
-                      <span className="font-medium">Motif de rejet :</span> {rapport.motifRejet}
-                    </div>
-                  )}
-
-                  <Button
-                    size="sm"
-                    variant={btnConfig.variant}
-                    className="w-full"
-                    disabled={btnConfig.disabled}
-                    onClick={() => !btnConfig.disabled && setSelectedProgrammeId(programme.id)}
-                  >
-                    <BtnIcon className="h-4 w-4 mr-2" />
-                    {btnConfig.label}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {/* Section 2 : Programmes connexes (indirects) */}
+        {indirectProgrammes.length > 0 && (
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+                <Link2 className="h-4 w-4" />
+                Programmes connexes (contexte interministériel)
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Programmes PAG liés à votre ministère par tutelle, partenariat technique ou même pilier présidentiel
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {indirectProgrammes.map(renderProgrammeCard)}
+            </div>
+          </div>
+        )}
 
         {/* Dialog Formulaire */}
         <Dialog
@@ -377,6 +504,6 @@ export default function SaisieReporting() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout >
+    </DashboardLayout>
   );
 }

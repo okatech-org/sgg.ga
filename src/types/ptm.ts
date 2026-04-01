@@ -52,10 +52,10 @@ export interface InitiativePTM {
   /** Col 3 — Intitulé / Titre initiative */
   intitule: string;
 
-  /** Col 4 — Cadrage Stratégique */
+  /** Col 4a — Cadrage Stratégique (enum: 7 Priorités, PAG, PNCD, PAP) */
   cadrage: CadrageStrategique;
 
-  /** Col 4 détail — Spécification du cadrage */
+  /** Col 4b — Programme / Axe PAG (sous-colonne du cadrage stratégique) */
   cadrageDetail: string;
 
   /** Col 5 — Incidence Financière (true/false) */

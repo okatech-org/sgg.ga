@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { logger } from '@/services/logger';
 import { useAuth, AppRole } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -61,17 +63,33 @@ interface UserWithRole {
   created_at: string;
 }
 
-const roleLabels: Record<AppRole, string> = {
+const roleLabels: Partial<Record<AppRole, string>> = {
   admin_sgg: "Admin SGG",
+  directeur_sgg: "Directeur SGG",
   sg_ministere: "SG Ministère",
   sgpr: "SGPR",
+  premier_ministre: "Premier Ministre",
+  ministre: "Ministre",
+  assemblee: "Assemblée",
+  senat: "Sénat",
+  conseil_etat: "Conseil d'État",
+  cour_constitutionnelle: "Cour Const.",
+  dgjo: "DGJO",
   citoyen: "Citoyen",
 };
 
-const roleBadgeColors: Record<AppRole, string> = {
+const roleBadgeColors: Partial<Record<AppRole, string>> = {
   admin_sgg: "bg-red-100 text-red-800 border-red-200",
+  directeur_sgg: "bg-orange-100 text-orange-800 border-orange-200",
   sg_ministere: "bg-blue-100 text-blue-800 border-blue-200",
   sgpr: "bg-purple-100 text-purple-800 border-purple-200",
+  premier_ministre: "bg-amber-100 text-amber-800 border-amber-200",
+  ministre: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  assemblee: "bg-teal-100 text-teal-800 border-teal-200",
+  senat: "bg-cyan-100 text-cyan-800 border-cyan-200",
+  conseil_etat: "bg-sky-100 text-sky-800 border-sky-200",
+  cour_constitutionnelle: "bg-violet-100 text-violet-800 border-violet-200",
+  dgjo: "bg-emerald-100 text-emerald-800 border-emerald-200",
   citoyen: "bg-gray-100 text-gray-800 border-gray-200",
 };
 
@@ -88,61 +106,35 @@ export default function AdminUsers() {
 
   const isAdmin = hasRole("admin_sgg");
 
+  // Convex reactive queries handle loading - no manual fetch needed
+
+  // Use Convex reactive query instead of manual fetch
+  const convexUsers = useQuery(api.auth.listUsers, {});
+  const convexRoles = useQuery(api.auth.listUsers, {}); // roles are returned with users
+
   useEffect(() => {
-    if (isAdmin) {
-      fetchUsers();
-    }
-  }, [isAdmin]);
-
-  const fetchUsers = async () => {
-    try {
-      // Fetch profiles with their roles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, institution, created_at");
-
-      if (profilesError) throw profilesError;
-
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
-
-      if (rolesError) throw rolesError;
-
-      const usersWithRoles: UserWithRole[] = (profiles || []).map((profile) => {
-        const userRole = roles?.find((r) => r.user_id === profile.user_id);
-        return {
-          user_id: profile.user_id,
-          full_name: profile.full_name,
-          institution: profile.institution,
-          role: (userRole?.role as AppRole) || "citoyen",
-          created_at: profile.created_at,
-        };
-      });
-
+    if (convexUsers) {
+      const usersWithRoles: UserWithRole[] = convexUsers.map((u: any) => ({
+        user_id: u._id,
+        full_name: u.fullName ?? null,
+        institution: u.institution ?? null,
+        role: (u.role as AppRole) || "citoyen",
+        created_at: u._creationTime ? new Date(u._creationTime).toISOString() : new Date().toISOString(),
+      }));
       setUsers(usersWithRoles);
-    } catch (error) {
-      logger.error('Erreur chargement utilisateurs', { error: String(error) });
-      toast.error("Erreur lors du chargement des utilisateurs");
-    } finally {
       setLoading(false);
     }
-  };
+  }, [convexUsers]);
+
+  const assignRoleMutation = useMutation(api.auth.assignRole);
 
   const updateUserRole = async (userId: string, newRole: AppRole) => {
     setUpdating(userId);
     try {
-      const { error } = await supabase
-        .from("user_roles")
-        .update({ role: newRole })
-        .eq("user_id", userId);
-
-      if (error) throw error;
-
+      await assignRoleMutation({ userId: userId as Id<"users">, role: newRole, isPrimary: true });
       setUsers((prev) =>
         prev.map((u) => (u.user_id === userId ? { ...u, role: newRole } : u))
       );
-
       toast.success(`Rôle mis à jour: ${roleLabels[newRole]}`);
     } catch (error) {
       logger.error('Erreur mise à jour rôle', { error: String(error) });
@@ -152,20 +144,15 @@ export default function AdminUsers() {
     }
   };
 
+  const updateUserMutation = useMutation(api.auth.updateUser);
+
   const updateUserInstitution = async (userId: string, institution: string) => {
     setUpdating(userId);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ institution })
-        .eq("user_id", userId);
-
-      if (error) throw error;
-
+      await updateUserMutation({ userId: userId as Id<"users">, institution });
       setUsers((prev) =>
         prev.map((u) => (u.user_id === userId ? { ...u, institution } : u))
       );
-
       setDialogOpen(false);
       setEditingUser(null);
       setInstitutionValue("");

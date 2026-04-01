@@ -29,7 +29,6 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ProgressGauge } from '@/components/reporting/ProgressGauge';
 import type {
-  InitiativePTM,
   RubriquePTM,
   CadrageStrategique,
 } from '@/types/ptm';
@@ -37,8 +36,11 @@ import {
   RUBRIQUE_LABELS,
   CADRAGE_LABELS,
 } from '@/types/ptm';
-import { INITIATIVES_PTM, MINISTERES_PTM } from '@/data/ptmData';
+import { MINISTERES_PTM } from '@/data/ptmData';
 import { PROGRAMMES } from '@/data/reportingData';
+import { usePTMStore } from '@/stores/ptmStore';
+import type { FormDataPTM } from '@/stores/ptmStore';
+import { useDemoUser } from '@/hooks/useDemoUser';
 
 interface FormulairePTMProps {
   initiativeId?: string;
@@ -62,32 +64,38 @@ interface FormData {
 }
 
 const STEPS = [
-  { id: 0, label: 'Cadrage', icon: Settings, description: 'Rubrique, intitulé et cadrage' },
-  { id: 1, label: 'Détails', icon: FileText, description: 'Financement et services porteurs' },
+  { id: 0, label: 'Cadrage', icon: Settings, description: 'Col. 1-4 : Rubrique, intitulé, cadrage stratégique' },
+  { id: 1, label: 'Opérationnel', icon: FileText, description: 'Col. 5-9 : Finance, services, date, observations' },
 ];
 
 const STORAGE_KEY = (id?: string) => `ptm-form-${id || 'new'}`;
 
 export function FormulairePTM({
-  initiativeId,
+  initiativeId: initialInitiativeId,
   onClose,
   onSave,
 }: FormulairePTMProps) {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Track current initiative ID (may change from null → real ID after first save)
+  const [currentInitiativeId, setCurrentInitiativeId] = useState<string | undefined>(initialInitiativeId);
 
-  // Charger initiative existante si applicable
+  // Store PTM
+  const { saveDraft: storeSaveDraft, submitToSG, getInitiative } = usePTMStore();
+  const { demoUser } = useDemoUser();
+
+  // Charger initiative existante depuis le STORE (pas depuis les mock statiques)
   const existingInitiative = useMemo(() => {
-    if (!initiativeId) return null;
-    return INITIATIVES_PTM.find((i) => i.id === initiativeId);
-  }, [initiativeId]);
+    if (!currentInitiativeId) return null;
+    return getInitiative(currentInitiativeId) || null;
+  }, [currentInitiativeId, getInitiative]);
 
   // Initialiser formData
   const [formData, setFormData] = useState<FormData>(() => {
     // Essayer sessionStorage d'abord
     try {
-      const saved = sessionStorage.getItem(STORAGE_KEY(initiativeId));
+      const saved = sessionStorage.getItem(STORAGE_KEY(currentInitiativeId));
       if (saved) return JSON.parse(saved);
     } catch { /* ignore */ }
 
@@ -125,9 +133,9 @@ export function FormulairePTM({
   // Auto-save to sessionStorage
   useEffect(() => {
     try {
-      sessionStorage.setItem(STORAGE_KEY(initiativeId), JSON.stringify(formData));
+      sessionStorage.setItem(STORAGE_KEY(currentInitiativeId), JSON.stringify(formData));
     } catch { /* ignore */ }
-  }, [formData, initiativeId]);
+  }, [formData, currentInitiativeId]);
 
   const updateField = useCallback(
     <K extends keyof FormData>(field: K, value: FormData[K]) => {
@@ -155,9 +163,43 @@ export function FormulairePTM({
 
   const handleSaveDraft = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
-    toast.success('Brouillon enregistré');
+    try {
+      const ministereId = demoUser?.ministereId || 'MIN-ECO';
+      const directionId = demoUser?.id || 'direction-default';
+
+      const storeFormData: FormDataPTM = {
+        rubrique: formData.rubrique,
+        intitule: formData.intitule,
+        cadrage: formData.cadrage,
+        cadrageDetail: formData.cadrageDetail,
+        programmePAGId: formData.programmePAGId,
+        incidenceFinanciere: formData.incidenceFinanciere,
+        loiFinance: formData.loiFinance,
+        servicesPorteurs: formData.servicesPorteurs,
+        dateTransmissionSGG: formData.dateTransmissionSGG,
+        observations: formData.observations,
+      };
+
+      const saved = storeSaveDraft(
+        currentInitiativeId || null,
+        ministereId,
+        directionId,
+        storeFormData,
+      );
+
+      // Si c'est une création, mémoriser l'ID pour passer en mode édition
+      if (!currentInitiativeId) {
+        setCurrentInitiativeId(saved.id);
+      }
+
+      toast.success('Brouillon enregistré', {
+        description: `Initiative ${saved.id} sauvegardée.`,
+      });
+    } catch (err) {
+      toast.error('Erreur lors de la sauvegarde');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -167,17 +209,51 @@ export function FormulairePTM({
     }
 
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setSubmitting(false);
-
-    // Effacer sessionStorage
     try {
-      sessionStorage.removeItem(STORAGE_KEY(initiativeId));
-    } catch { /* ignore */ }
+      const ministereId = demoUser?.ministereId || 'MIN-ECO';
+      const directionId = demoUser?.id || 'direction-default';
+      const userId = demoUser?.id || 'anonymous';
+      const userName = demoUser?.title || 'Utilisateur';
 
-    toast.success('Initiative soumise au SGG');
-    onSave?.();
-    onClose();
+      const storeFormData: FormDataPTM = {
+        rubrique: formData.rubrique,
+        intitule: formData.intitule,
+        cadrage: formData.cadrage,
+        cadrageDetail: formData.cadrageDetail,
+        programmePAGId: formData.programmePAGId,
+        incidenceFinanciere: formData.incidenceFinanciere,
+        loiFinance: formData.loiFinance,
+        servicesPorteurs: formData.servicesPorteurs,
+        dateTransmissionSGG: formData.dateTransmissionSGG,
+        observations: formData.observations,
+      };
+
+      // 1. Sauvegarder d'abord
+      const saved = storeSaveDraft(
+        currentInitiativeId || null,
+        ministereId,
+        directionId,
+        storeFormData,
+      );
+
+      // 2. Soumettre au SG
+      submitToSG(saved.id, userId, userName);
+
+      // 3. Nettoyer sessionStorage
+      try {
+        sessionStorage.removeItem(STORAGE_KEY(currentInitiativeId));
+      } catch { /* ignore */ }
+
+      toast.success('Initiative soumise au SG du Ministère', {
+        description: 'La matrice a été transmise pour consolidation.',
+      });
+      onSave?.();
+      onClose();
+    } catch (err) {
+      toast.error('Erreur lors de la soumission');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const canSubmit = completude >= 60 && formData.intitule.length >= 20;
@@ -229,13 +305,14 @@ export function FormulairePTM({
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              Cadrage de l'Initiative
+              Colonnes 1-4 : Cadrage de l'Initiative
             </h3>
 
-            {/* Rubrique */}
+            {/* Col 1 — Rubrique */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Rubrique PTM <span className="text-status-danger">*</span>
+                <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 1</Badge>
+                Rubrique <span className="text-status-danger">*</span>
               </label>
               <Select
                 value={formData.rubrique}
@@ -258,11 +335,15 @@ export function FormulairePTM({
               </Select>
             </div>
 
-            {/* Intitulé */}
+            {/* Col 3 — Intitulé de l'affaire (Col 2 = N° auto-incrémenté) */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Intitulé / Titre <span className="text-status-danger">*</span>
+                <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 3</Badge>
+                Intitulé de l'affaire <span className="text-status-danger">*</span>
               </label>
+              <p className="text-[11px] text-muted-foreground -mt-1">
+                Le N° d'ordre (Col. 2) est attribué automatiquement par rubrique
+              </p>
               <Textarea
                 value={formData.intitule}
                 onChange={(e) => updateField('intitule', e.target.value)}
@@ -277,117 +358,128 @@ export function FormulairePTM({
               </div>
             </div>
 
-            {/* Cadrage Stratégique */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Cadrage Stratégique <span className="text-status-danger">*</span>
+            {/* Col 4 — Cadrage Stratégique (2 sous-colonnes) */}
+            <div className="space-y-3 rounded-lg border p-3 bg-muted/30">
+              <label className="text-sm font-semibold flex items-center gap-1.5">
+                <Badge variant="outline" className="mr-1 text-[10px]">Col. 4</Badge>
+                Cadrage Stratégique
+                <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                  (7 Priorités présidentielles, PAG, PNCD, PAP)
+                </span>
               </label>
-              <Select
-                value={formData.cadrage}
-                onValueChange={(v) => updateField('cadrage', v as CadrageStrategique)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sept_priorites">{CADRAGE_LABELS.sept_priorites}</SelectItem>
-                  <SelectItem value="pag">{CADRAGE_LABELS.pag}</SelectItem>
-                  <SelectItem value="pncd">{CADRAGE_LABELS.pncd}</SelectItem>
-                  <SelectItem value="pap">{CADRAGE_LABELS.pap}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            {/* Cadrage Detail */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Détail du Cadrage <span className="text-status-danger">*</span>
-              </label>
-              <Input
-                value={formData.cadrageDetail}
-                onChange={(e) => updateField('cadrageDetail', e.target.value)}
-                placeholder="Ex: 'Transformation numérique et modernisation gouvernance'"
-              />
-            </div>
+              {/* Sous-colonne A: Cadrage */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Cadrage <span className="text-status-danger">*</span>
+                </label>
+                <Select
+                  value={formData.cadrage}
+                  onValueChange={(v) => updateField('cadrage', v as CadrageStrategique)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sept_priorites">{CADRAGE_LABELS.sept_priorites}</SelectItem>
+                    <SelectItem value="pag">{CADRAGE_LABELS.pag}</SelectItem>
+                    <SelectItem value="pncd">{CADRAGE_LABELS.pncd}</SelectItem>
+                    <SelectItem value="pap">{CADRAGE_LABELS.pap}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Programme PAG */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Programme PAG (optionnel)</label>
-              <Select
-                value={formData.programmePAGId || 'none'}
-                onValueChange={(v) =>
-                  updateField('programmePAGId', v === 'none' ? null : v)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Aucun</SelectItem>
-                  {PROGRAMMES.map((prog) => (
-                    <SelectItem key={prog.id} value={prog.id}>
-                      {prog.codeProgramme} — {prog.libelleProgramme}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Sous-colonne B: Programme */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Programme / Axe PAG
+                </label>
+                <Select
+                  value={formData.programmePAGId || 'none'}
+                  onValueChange={(v) =>
+                    updateField('programmePAGId', v === 'none' ? null : v)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Aucun programme lié</SelectItem>
+                    {PROGRAMMES.map((prog) => (
+                      <SelectItem key={prog.id} value={prog.id}>
+                        {prog.codeProgramme} — {prog.libelleProgramme}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Étape 1: Détails */}
+        {/* Étape 1: Opérationnel (Col. 5-9) */}
         {step === 1 && (
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Détails de l'Initiative
+              Colonnes 5-9 : Détails Opérationnels
             </h3>
 
-            {/* Incidence Financière */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Incidence Financière</label>
-              <div className="flex gap-2">
-                <Button
-                  variant={formData.incidenceFinanciere ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => updateField('incidenceFinanciere', true)}
-                >
-                  Oui
-                </Button>
-                <Button
-                  variant={!formData.incidenceFinanciere ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => updateField('incidenceFinanciere', false)}
-                >
-                  Non
-                </Button>
+            {/* Col 5 & 6 — Incidence Financière + Loi de Finance (côte à côte) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Col 5 — Incidence Financière */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 5</Badge>
+                  Incidence Financière
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={formData.incidenceFinanciere ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => updateField('incidenceFinanciere', true)}
+                  >
+                    Oui
+                  </Button>
+                  <Button
+                    variant={!formData.incidenceFinanciere ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => updateField('incidenceFinanciere', false)}
+                  >
+                    Non
+                  </Button>
+                </div>
+              </div>
+
+              {/* Col 6 — Loi de Finance */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 6</Badge>
+                  Loi de Finance (LF)
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={formData.loiFinance ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => updateField('loiFinance', true)}
+                  >
+                    Oui
+                  </Button>
+                  <Button
+                    variant={!formData.loiFinance ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => updateField('loiFinance', false)}
+                  >
+                    Non
+                  </Button>
+                </div>
               </div>
             </div>
 
-            {/* Loi de Finance */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Loi de Finance</label>
-              <div className="flex gap-2">
-                <Button
-                  variant={formData.loiFinance ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => updateField('loiFinance', true)}
-                >
-                  Oui
-                </Button>
-                <Button
-                  variant={!formData.loiFinance ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => updateField('loiFinance', false)}
-                >
-                  Non
-                </Button>
-              </div>
-            </div>
-
-            {/* Services Porteurs */}
+            {/* Col 7 — Services Porteurs */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
+                <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 7</Badge>
                 Services Porteurs <span className="text-status-danger">*</span>
               </label>
               <div className="space-y-2 bg-muted/50 p-3 rounded-lg max-h-[200px] overflow-y-auto">
@@ -421,10 +513,11 @@ export function FormulairePTM({
               </div>
             </div>
 
-            {/* Date Transmission SGG */}
+            {/* Col 8 — Date Transmission SGG */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Date Transmission SGG <span className="text-status-danger">*</span>
+                <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 8</Badge>
+                Date de Transmission au SGG <span className="text-status-danger">*</span>
               </label>
               <Input
                 type="date"
@@ -433,9 +526,12 @@ export function FormulairePTM({
               />
             </div>
 
-            {/* Observations */}
+            {/* Col 9 — Observations */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Observations</label>
+              <label className="text-sm font-medium">
+                <Badge variant="outline" className="mr-1.5 text-[10px]">Col. 9</Badge>
+                Observations
+              </label>
               <Textarea
                 value={formData.observations}
                 onChange={(e) => updateField('observations', e.target.value)}

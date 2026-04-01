@@ -57,11 +57,18 @@ INSERT INTO auth.users (id, email, password_hash, full_name, phone, is_active, i
 ('11111111-1111-1111-1111-111111111113', 'direction@jo.ga', 
  crypt('Demo2026!', gen_salt('bf')), 'Directeur Général Journal Officiel', '+241 01 00 00 13', true, true),
 
+-- ========== MINISTÈRE ÉCONOMIE NUMÉRIQUE (2 comptes) ==========
+('11111111-1111-1111-1111-111111111116', 'ministre@numerique.gouv.ga',
+ crypt('Demo2026!', gen_salt('bf')), 'Ministre de l''Économie Numérique', '+241 01 00 00 16', true, true),
+
+('11111111-1111-1111-1111-111111111117', 'sg@numerique.gouv.ga',
+ crypt('Demo2026!', gen_salt('bf')), 'SG Ministère Économie Numérique', '+241 01 00 00 17', true, true),
+
 -- ========== PUBLIC (2 comptes) ==========
-('11111111-1111-1111-1111-111111111114', 'citoyen@gmail.com', 
+('11111111-1111-1111-1111-111111111114', 'citoyen@gmail.com',
  crypt('Demo2026!', gen_salt('bf')), 'Jean MOUSSAVOU', '+241 07 00 00 14', true, true),
 
-('11111111-1111-1111-1111-111111111115', 'avocat@barreau.ga', 
+('11111111-1111-1111-1111-111111111115', 'avocat@barreau.ga',
  crypt('Demo2026!', gen_salt('bf')), 'Me Paul NDONG, Avocat', '+241 07 00 00 15', true, true)
 
 ON CONFLICT (email) DO NOTHING;
@@ -94,11 +101,39 @@ INSERT INTO auth.user_roles (user_id, role, is_primary) VALUES
 ('11111111-1111-1111-1111-111111111112', 'directeur_sgg', true),
 ('11111111-1111-1111-1111-111111111113', 'dgjo', true),
 
+-- Ministère Économie Numérique
+('11111111-1111-1111-1111-111111111116', 'ministre', true),
+('11111111-1111-1111-1111-111111111117', 'sg_ministere', true),
+
 -- Public
 ('11111111-1111-1111-1111-111111111114', 'citoyen', true),
 ('11111111-1111-1111-1111-111111111115', 'citoyen', true)
 
 ON CONFLICT DO NOTHING;
+
+-- ============================================================================
+-- LIAISON UTILISATEURS ↔ INSTITUTIONS (institution_id)
+-- ============================================================================
+
+-- Ministre Économie → MIN-ECO
+UPDATE auth.user_roles SET institution_id = (
+  SELECT id FROM institutions.institutions WHERE code = 'MIN-ECO'
+) WHERE user_id = '11111111-1111-1111-1111-111111111104';
+
+-- SG Économie → MIN-ECO
+UPDATE auth.user_roles SET institution_id = (
+  SELECT id FROM institutions.institutions WHERE code = 'MIN-ECO'
+) WHERE user_id = '11111111-1111-1111-1111-111111111105';
+
+-- Ministre Éco Numérique → MIN-NUM
+UPDATE auth.user_roles SET institution_id = (
+  SELECT id FROM institutions.institutions WHERE code = 'MIN-NUM'
+) WHERE user_id = '11111111-1111-1111-1111-111111111116';
+
+-- SG Éco Numérique → MIN-NUM
+UPDATE auth.user_roles SET institution_id = (
+  SELECT id FROM institutions.institutions WHERE code = 'MIN-NUM'
+) WHERE user_id = '11111111-1111-1111-1111-111111111117';
 
 -- ============================================================================
 -- PERMISSIONS PAR RÔLE (Matrice d'accès)

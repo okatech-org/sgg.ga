@@ -1,6 +1,6 @@
 /**
  * SGG Digital — Hook Securite Compte (mot de passe, 2FA, sessions)
- * Compatible mode Demo + Supabase production
+ * Compatible mode Demo + Convex production
  */
 
 import { useState, useMemo } from 'react';
@@ -47,7 +47,6 @@ const MOCK_SESSIONS: UserSession[] = [
 
 export function useUserSecurity() {
   const { demoUser } = useDemoUser();
-  const { supabase } = useAuth();
   const isDemo = !!demoUser;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -62,15 +61,11 @@ export function useUserSecurity() {
         toast.success('Mode Demo : mot de passe simule');
         return true;
       }
-      // Production: Supabase password update
-      const { error } = await supabase.auth.updateUser({
-        password: data.newPassword,
-      });
-      if (error) throw error;
-      toast.success('Mot de passe modifie avec succes');
+      // TODO: Implement password change via Convex Auth HTTP action
+      toast.info('Changement de mot de passe sera disponible bientôt');
       return true;
-    } catch (e: any) {
-      toast.error(e.message || 'Erreur lors du changement de mot de passe');
+    } catch (e: unknown) {
+      toast.error((e as Error).message || 'Erreur lors du changement de mot de passe');
       return false;
     } finally {
       setIsLoading(false);

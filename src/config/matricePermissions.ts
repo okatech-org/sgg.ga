@@ -66,11 +66,28 @@ const PERMISSIONS_MAP: Record<string, PermRow> = {
 };
 
 // =============================================================================
+// NORMALISATION DES ROLES
+// =============================================================================
+
+/**
+ * Normalise un ID de role demo vers sa cle canonique dans PERMISSIONS_MAP.
+ * Permet de gerer tous les SG ministeriels avec une seule entree.
+ * Ex: "sg-ministere-fp", "sg-ministere-sante" → "sg-ministere"
+ * Ex: "ministre-numerique" → "ministre"
+ */
+export function normalizeRoleId(roleId: string): string {
+  if (roleId.startsWith('sg-ministere')) return 'sg-ministere';
+  if (roleId.startsWith('ministre') && roleId !== 'ministre') return 'ministre';
+  return roleId;
+}
+
+// =============================================================================
 // FONCTIONS UTILITAIRES
 // =============================================================================
 
 export function getPermission(roleId: string, bloc: BlocReporting): PermissionReporting {
-  const row = PERMISSIONS_MAP[roleId];
+  const normalized = normalizeRoleId(roleId);
+  const row = PERMISSIONS_MAP[normalized];
   if (!row) return 'R';
   const idx = BLOCS.indexOf(bloc);
   return idx >= 0 ? row[idx] : 'none';

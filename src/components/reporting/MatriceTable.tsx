@@ -379,15 +379,44 @@ export function MatriceTable({ data, loading, onRowClick }: MatriceTableProps) {
       {/* ── Table compacte ─────────────────────────────────────────────── */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          {/* Header */}
+          {/* Header — 6 groupes colorés Excel + colonnes individuelles */}
           <thead>
+            {/* Ligne 1: Groupes de colonnes (6 blocs Excel) */}
+            <tr className="border-b border-border/50">
+              <th className="py-1 pl-3 pr-1 w-[44px]" rowSpan={2}></th>
+              <th colSpan={2} className="text-center py-1 px-1 text-[9px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-950/20 border-r border-border/30">
+                Cadrage (1-6)
+              </th>
+              <th className="text-center py-1 px-1 text-[9px] font-bold uppercase tracking-wider text-green-700 dark:text-green-400 bg-green-50/60 dark:bg-green-950/20 border-r border-border/30">
+                Gouv. (7-9)
+              </th>
+              <th className="text-center py-1 px-1 text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-950/20 border-r border-border/30">
+                Opér. (10-12)
+              </th>
+              <th colSpan={2} className="text-center py-1 px-1 text-[9px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 bg-purple-50/60 dark:bg-purple-950/20 border-r border-border/30">
+                Financier (13-16)
+              </th>
+              <th className="text-center py-1 px-1 text-[9px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 bg-indigo-50/60 dark:bg-indigo-950/20">
+                Perf. (18-21)
+              </th>
+              <th className="w-[36px] py-1 px-1" rowSpan={2}></th>
+            </tr>
+            {/* Ligne 2: Colonnes individuelles */}
             <tr className="border-b-2 border-border bg-muted/40">
-              <th className="text-left py-2 pl-3 pr-1 w-[44px]"></th>
               <th className="text-left py-2 px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Programme
               </th>
               <th className="text-left py-2 px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Ministère Pilote
+                Mesure Prés.
+              </th>
+              <th className="text-left py-2 px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Pilote
+              </th>
+              <th className="text-center py-2 px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Statut Valid.
+              </th>
+              <th className="text-right py-2 px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Budget
               </th>
               <th className="text-center py-2 px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 % Fin.
@@ -395,13 +424,6 @@ export function MatriceTable({ data, loading, onRowClick }: MatriceTableProps) {
               <th className="text-center py-2 px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 % Phys.
               </th>
-              <th className="text-right py-2 px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Budget
-              </th>
-              <th className="text-center py-2 px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Statut
-              </th>
-              <th className="w-[36px] py-2 px-1"></th>
             </tr>
           </thead>
 
@@ -434,8 +456,8 @@ export function MatriceTable({ data, loading, onRowClick }: MatriceTableProps) {
                         />
                       </td>
 
-                      {/* Programme */}
-                      <td className="py-2 px-2 max-w-[280px]">
+                      {/* Cadrage: Programme (Col 3) */}
+                      <td className="py-2 px-2 max-w-[240px]">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-[11px] font-bold text-muted-foreground bg-muted/60 dark:bg-muted/30 px-1.5 py-0.5 rounded">
                             {row.programme.codeProgramme}
@@ -446,30 +468,29 @@ export function MatriceTable({ data, loading, onRowClick }: MatriceTableProps) {
                         </div>
                       </td>
 
-                      {/* Ministère */}
-                      <td className="py-2 px-2 text-xs text-muted-foreground max-w-[200px]">
+                      {/* Cadrage: Mesure Présidentielle (Col 2) */}
+                      <td className="py-2 px-2 text-xs text-muted-foreground max-w-[180px]">
+                        <span className="truncate block line-clamp-2">{row.programme.mesurePresidentielle}</span>
+                      </td>
+
+                      {/* Gouvernance: Ministère Pilote (Col 7) */}
+                      <td className="py-2 px-2 text-xs text-muted-foreground max-w-[160px]">
                         <span className="truncate block">{row.gouvernance.ministerePiloteNom}</span>
                       </td>
 
-                      {/* % Exec Fin. */}
+                      {/* Opérationnel: Statut validation */}
                       <td className="py-2 px-2 text-center">
                         {r ? (
-                          <MiniGauge value={r.pctExecutionFinanciere} className="justify-center" />
+                          <ValidationDot statut={r.statutValidation} />
                         ) : (
-                          <span className="text-[11px] text-muted-foreground/50">—</span>
+                          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 px-1.5 py-0.5 rounded-md bg-muted/40">
+                            <FileText className="h-2.5 w-2.5" />
+                            <span className="hidden sm:inline">Vide</span>
+                          </span>
                         )}
                       </td>
 
-                      {/* % Physique */}
-                      <td className="py-2 px-2 text-center">
-                        {r ? (
-                          <MiniGauge value={r.pctAvancementPhysique} className="justify-center" />
-                        ) : (
-                          <span className="text-[11px] text-muted-foreground/50">—</span>
-                        )}
-                      </td>
-
-                      {/* Budget */}
+                      {/* Financier: Budget (Col 13) */}
                       <td className="py-2 px-2 text-right">
                         {r ? (
                           <span className="font-mono text-xs font-semibold tabular-nums">
@@ -481,15 +502,21 @@ export function MatriceTable({ data, loading, onRowClick }: MatriceTableProps) {
                         )}
                       </td>
 
-                      {/* Statut validation */}
+                      {/* Financier: % Exec Fin. (Col 16) */}
                       <td className="py-2 px-2 text-center">
                         {r ? (
-                          <ValidationDot statut={r.statutValidation} />
+                          <MiniGauge value={r.pctExecutionFinanciere} className="justify-center" />
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 px-1.5 py-0.5 rounded-md bg-muted/40">
-                            <FileText className="h-2.5 w-2.5" />
-                            <span className="hidden sm:inline">Vide</span>
-                          </span>
+                          <span className="text-[11px] text-muted-foreground/50">—</span>
+                        )}
+                      </td>
+
+                      {/* Performance: % Physique (Col 19) */}
+                      <td className="py-2 px-2 text-center">
+                        {r ? (
+                          <MiniGauge value={r.pctAvancementPhysique} className="justify-center" />
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground/50">—</span>
                         )}
                       </td>
 

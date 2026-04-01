@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { logger } from '@/services/logger';
+import { normalizeRoleId } from '@/config/matricePermissions';
 
 // Types pour les catégories de rôles
 export type DemoCategory =
@@ -105,7 +106,7 @@ const roleCapabilitiesMap: Record<string, RoleCapabilities> = {
   "ministre": {
     canValidateNominations: false,
     canSignDecrees: false,
-    canSubmitGAR: true,
+    canSubmitGAR: false,
     canPublishJO: false,
     canManageUsers: false,
     canViewArbitrages: false,
@@ -325,13 +326,13 @@ export function useDemoUser() {
   // Obtenir la catégorie du rôle actuel
   const getRoleCategory = (): DemoCategory | null => {
     if (!demoUser) return null;
-    return roleCategoryMap[demoUser.id] || null;
+    return roleCategoryMap[demoUser.id] || roleCategoryMap[normalizeRoleId(demoUser.id)] || null;
   };
 
   // Obtenir les capacités du rôle actuel
   const getRoleCapabilities = (): RoleCapabilities => {
     if (!demoUser) return defaultCapabilities;
-    return roleCapabilitiesMap[demoUser.id] || defaultCapabilities;
+    return roleCapabilitiesMap[demoUser.id] || roleCapabilitiesMap[normalizeRoleId(demoUser.id)] || defaultCapabilities;
   };
 
   // Vérifier si le rôle est un rôle exécutif de haut niveau
@@ -407,7 +408,7 @@ export function useDemoUser() {
       "professionnel-droit": { dashboard: false, gar: false, nominations: false, egop: false, journalOfficiel: true, documents: true, rapports: false, formation: true, parametres: false, institutions: false, cycleLegislatif: false, adminUsers: false, matriceReporting: false, ptmptg: false },
     };
 
-    return accessMap[id] || accessMap["citoyen"];
+    return accessMap[id] || accessMap[normalizeRoleId(id)] || accessMap["citoyen"];
   };
 
   return {

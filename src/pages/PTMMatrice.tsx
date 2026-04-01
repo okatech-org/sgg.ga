@@ -348,58 +348,117 @@ export default function PTMMatrice() {
           </CardContent>
         </Card>
 
-        {/* Tableau */}
+        {/* Tableau — 10 colonnes DOCX PTM */}
         <Card className="shadow-gov overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
+                  {/* Ligne 1: Groupes de colonnes */}
+                  <TableRow className="border-b-2">
+                    <TableHead colSpan={3} className="text-center text-xs font-bold bg-blue-50/60 dark:bg-blue-950/20 border-r">
+                      Identification
+                    </TableHead>
+                    <TableHead colSpan={2} className="text-center text-xs font-bold bg-green-50/60 dark:bg-green-950/20 border-r">
+                      Col. 4 — Cadrage Stratégique
+                    </TableHead>
+                    <TableHead colSpan={2} className="text-center text-xs font-bold bg-amber-50/60 dark:bg-amber-950/20 border-r">
+                      Finance
+                    </TableHead>
+                    <TableHead colSpan={3} className="text-center text-xs font-bold bg-purple-50/60 dark:bg-purple-950/20">
+                      Suivi
+                    </TableHead>
+                    <TableHead className="text-center text-xs font-bold bg-muted/50">
+                      Workflow
+                    </TableHead>
+                  </TableRow>
+                  {/* Ligne 2: Colonnes individuelles */}
                   <TableRow>
-                    <TableHead>Rubrique</TableHead>
-                    <TableHead>Intitulé</TableHead>
-                    <TableHead>Ministère</TableHead>
-                    <TableHead>Cadrage</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-center">Fin. ?</TableHead>
-                    <TableHead className="text-center">LF ?</TableHead>
-                    <TableHead>Observations</TableHead>
-                    <TableHead className="text-right">Date Subm.</TableHead>
+                    <TableHead className="text-xs w-[60px]">
+                      <span className="text-[10px] text-muted-foreground block">Col. 1</span>
+                      Rubrique
+                    </TableHead>
+                    <TableHead className="text-xs w-[40px] text-center">
+                      <span className="text-[10px] text-muted-foreground block">Col. 2</span>
+                      N°
+                    </TableHead>
+                    <TableHead className="text-xs">
+                      <span className="text-[10px] text-muted-foreground block">Col. 3</span>
+                      Intitulé de l'affaire
+                    </TableHead>
+                    <TableHead className="text-xs">
+                      <span className="text-[10px] text-muted-foreground block">Col. 4a</span>
+                      Cadrage
+                    </TableHead>
+                    <TableHead className="text-xs">
+                      <span className="text-[10px] text-muted-foreground block">Col. 4b</span>
+                      Programme
+                    </TableHead>
+                    <TableHead className="text-xs text-center w-[60px]">
+                      <span className="text-[10px] text-muted-foreground block">Col. 5</span>
+                      Inc. Fin.
+                    </TableHead>
+                    <TableHead className="text-xs text-center w-[50px]">
+                      <span className="text-[10px] text-muted-foreground block">Col. 6</span>
+                      LF
+                    </TableHead>
+                    <TableHead className="text-xs">
+                      <span className="text-[10px] text-muted-foreground block">Col. 7</span>
+                      Services Porteurs
+                    </TableHead>
+                    <TableHead className="text-xs w-[90px]">
+                      <span className="text-[10px] text-muted-foreground block">Col. 8</span>
+                      Date SGG
+                    </TableHead>
+                    <TableHead className="text-xs">
+                      <span className="text-[10px] text-muted-foreground block">Col. 9</span>
+                      Observations
+                    </TableHead>
+                    <TableHead className="text-xs text-center">
+                      Statut
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                         Aucune initiative ne correspond aux filtres
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredData.map((initiative) => (
                       <TableRow key={initiative.id} className="hover:bg-muted/30">
+                        {/* Col 1 — Rubrique */}
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs whitespace-nowrap">
                             {RUBRIQUE_SHORT_LABELS[initiative.rubrique]}
                           </Badge>
                         </TableCell>
+                        {/* Col 2 — N° */}
+                        <TableCell className="text-center font-mono text-sm">
+                          {initiative.numero}
+                        </TableCell>
+                        {/* Col 3 — Intitulé */}
                         <TableCell className="max-w-[250px]">
                           <div className="truncate text-sm font-medium">{initiative.intitule}</div>
                           <div className="text-xs text-muted-foreground truncate">
-                            {initiative.id}
+                            {initiative.ministereSigle}
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">
-                          <span className="font-mono">{initiative.ministereSigle}</span>
-                        </TableCell>
+                        {/* Col 4a — Cadrage */}
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
                             {CADRAGE_SHORT_LABELS[initiative.cadrage]}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={`text-xs ${STATUT_PTM_COLORS[initiative.statut]}`}>
-                            {STATUT_PTM_LABELS[initiative.statut]}
-                          </Badge>
+                        {/* Col 4b — Programme */}
+                        <TableCell className="text-xs text-muted-foreground max-w-[120px]">
+                          <div className="truncate">
+                            {initiative.programmePAGNom || "—"}
+                          </div>
                         </TableCell>
+                        {/* Col 5 — Incidence Financière */}
                         <TableCell className="text-center">
                           {initiative.incidenceFinanciere ? (
                             <Badge variant="secondary" className="text-xs">Oui</Badge>
@@ -407,6 +466,7 @@ export default function PTMMatrice() {
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
                         </TableCell>
+                        {/* Col 6 — Loi de Finance */}
                         <TableCell className="text-center">
                           {initiative.loiFinance ? (
                             <Badge variant="secondary" className="text-xs">Oui</Badge>
@@ -414,15 +474,42 @@ export default function PTMMatrice() {
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="max-w-[200px]">
+                        {/* Col 7 — Services Porteurs */}
+                        <TableCell className="max-w-[150px]">
+                          <div className="flex flex-wrap gap-1">
+                            {initiative.servicesPorteursNoms.length > 0 ? (
+                              initiative.servicesPorteursNoms.slice(0, 2).map((nom, idx) => (
+                                <Badge key={idx} variant="outline" className="text-[10px]">
+                                  {nom}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                            {initiative.servicesPorteursNoms.length > 2 && (
+                              <Badge variant="outline" className="text-[10px]">
+                                +{initiative.servicesPorteursNoms.length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        {/* Col 8 — Date SGG */}
+                        <TableCell className="text-xs font-mono">
+                          {initiative.dateTransmissionSGG
+                            ? new Date(initiative.dateTransmissionSGG).toLocaleDateString("fr-FR")
+                            : "—"}
+                        </TableCell>
+                        {/* Col 9 — Observations */}
+                        <TableCell className="max-w-[180px]">
                           <div className="text-xs text-muted-foreground truncate">
                             {initiative.observations || "—"}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right text-xs font-mono">
-                          {initiative.dateSoumission
-                            ? new Date(initiative.dateSoumission).toLocaleDateString("fr-FR")
-                            : "—"}
+                        {/* Statut (workflow, hors colonnes DOCX) */}
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className={`text-xs ${STATUT_PTM_COLORS[initiative.statut]}`}>
+                            {STATUT_PTM_LABELS[initiative.statut]}
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     ))

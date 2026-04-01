@@ -556,46 +556,12 @@ export const RAPPORTS_MENSUELS: RapportMensuel[] = [
 ];
 
 // =============================================================================
-// 35 MINISTÈRES
+// 35 MINISTÈRES — Source unifiée via ministeresRegistry
 // =============================================================================
 
-export const MINISTERES: MinistereInfo[] = [
-  { id: 'min-energie', nom: 'Ministère de l\'Énergie et de l\'Eau', sigle: 'MEE' },
-  { id: 'min-education', nom: 'Ministère de l\'Éducation Nationale', sigle: 'MEN' },
-  { id: 'min-sante', nom: 'Ministère de la Santé', sigle: 'MSAS' },
-  { id: 'min-habitat', nom: 'Ministère de l\'Habitat et de l\'Urbanisme', sigle: 'MHU' },
-  { id: 'min-infrastructures', nom: 'Ministère des Infrastructures', sigle: 'MITP' },
-  { id: 'min-numerique', nom: 'Ministère de l\'Économie Numérique', sigle: 'MEN' },
-  { id: 'min-agriculture', nom: 'Ministère de l\'Agriculture', sigle: 'MAGR' },
-  { id: 'min-fonction-publique', nom: 'Ministère de la Fonction Publique', sigle: 'MFP' },
-  { id: 'min-justice', nom: 'Ministère de la Justice', sigle: 'MJ' },
-  { id: 'min-defense', nom: 'Ministère de la Défense Nationale', sigle: 'MDN' },
-  { id: 'min-interieur', nom: 'Ministère de l\'Intérieur', sigle: 'MI' },
-  { id: 'min-affaires-etrangeres', nom: 'Ministère des Affaires Étrangères', sigle: 'MAE' },
-  { id: 'min-economie', nom: 'Ministère de l\'Économie et des Finances', sigle: 'MEF' },
-  { id: 'min-budget', nom: 'Ministère du Budget', sigle: 'MB' },
-  { id: 'min-commerce', nom: 'Ministère du Commerce', sigle: 'MC' },
-  { id: 'min-transports', nom: 'Ministère des Transports', sigle: 'MT' },
-  { id: 'min-communication', nom: 'Ministère de la Communication', sigle: 'MCOM' },
-  { id: 'min-culture', nom: 'Ministère de la Culture et des Arts', sigle: 'MCA' },
-  { id: 'min-sport', nom: 'Ministère des Sports', sigle: 'MS' },
-  { id: 'min-emploi', nom: 'Ministère de l\'Emploi', sigle: 'MEMPL' },
-  { id: 'min-eaux-forets', nom: 'Ministère des Eaux et Forêts', sigle: 'MEFC' },
-  { id: 'min-environnement', nom: 'Ministère de l\'Environnement', sigle: 'ME' },
-  { id: 'min-mines', nom: 'Ministère des Mines', sigle: 'MM' },
-  { id: 'min-petrole', nom: 'Ministère du Pétrole et du Gaz', sigle: 'MPG' },
-  { id: 'min-tourisme', nom: 'Ministère du Tourisme', sigle: 'MTOUR' },
-  { id: 'min-affaires-sociales', nom: 'Ministère des Affaires Sociales', sigle: 'MAS' },
-  { id: 'min-promotion-femme', nom: 'Ministère de la Promotion de la Femme', sigle: 'MPF' },
-  { id: 'min-jeunesse', nom: 'Ministère de la Jeunesse', sigle: 'MJ' },
-  { id: 'min-formation-pro', nom: 'Ministère de la Formation Professionnelle', sigle: 'MFPRO' },
-  { id: 'min-enseignement-sup', nom: 'Ministère de l\'Enseignement Supérieur', sigle: 'MES' },
-  { id: 'min-amenagement', nom: 'Ministère de l\'Aménagement du Territoire', sigle: 'MAT' },
-  { id: 'min-travail', nom: 'Ministère du Travail', sigle: 'MTRAV' },
-  { id: 'min-reforme', nom: 'Ministère de la Réforme des Institutions', sigle: 'MRI' },
-  { id: 'min-relations-parlement', nom: 'Ministère des Relations avec le Parlement', sigle: 'MRP' },
-  { id: 'min-decentralisation', nom: 'Ministère de la Décentralisation', sigle: 'MDEC' },
-];
+import { toMinistereInfo } from '@/config/ministeresRegistry';
+
+export const MINISTERES: MinistereInfo[] = toMinistereInfo();
 
 // =============================================================================
 // SUIVI REMPLISSAGE (Heatmap data — Janvier 2026 pour 10 ministères pilotes)
@@ -832,5 +798,173 @@ export function getRoleInProgramme(
  */
 export function isMinistereInProgramme(ministereId: string, programmeId: string): boolean {
   return getRoleInProgramme(ministereId, programmeId) !== null;
+}
+
+// =============================================================================
+// LIENS INDIRECTS — Programmes connexes (tutelle / partenaire technique)
+// =============================================================================
+
+export type LienIndirectType = 'meme_pilier' | 'tutelle_directions' | 'partenaire_technique';
+export type RoleLienProgramme = RoleMinistereProgramme | LienIndirectType;
+
+export interface ProgrammeMinistereComplet {
+  programme: ProgrammePAG;
+  gouvernance: GouvernanceProgramme;
+  role: RoleLienProgramme;
+  isDirect: boolean;
+  justification?: string;
+}
+
+interface LienIndirectProgramme {
+  programmeId: string;
+  ministereId: string;
+  type: LienIndirectType;
+  justification: string;
+}
+
+/**
+ * Mapping explicite des liens indirects entre ministères et programmes PAG.
+ * Complète les liens directs (pilote/co-responsable) définis dans GOUVERNANCES.
+ * Types : tutelle_directions (direction sous tutelle contributrice) et partenaire_technique.
+ */
+export const LIENS_INDIRECTS: LienIndirectProgramme[] = [
+  // ── prog-001 : Accès Universel Électricité (pilote: min-energie) ──
+  { programmeId: 'prog-001', ministereId: 'min-budget', type: 'partenaire_technique', justification: 'Gestion des crédits FNEE et suivi de l\'exécution budgétaire' },
+  { programmeId: 'prog-001', ministereId: 'min-mines', type: 'tutelle_directions', justification: 'Direction Générale de l\'Énergie contribue au volet production électrique' },
+  { programmeId: 'prog-001', ministereId: 'min-decentralisation', type: 'partenaire_technique', justification: 'Collectivités locales impliquées dans le raccordement dernier kilomètre' },
+  { programmeId: 'prog-001', ministereId: 'min-environnement', type: 'partenaire_technique', justification: 'Études d\'impact environnemental des mini-centrales solaires' },
+
+  // ── prog-002 : Sécurisation Adductions Eau Potable (pilote: min-energie) ──
+  { programmeId: 'prog-002', ministereId: 'min-environnement', type: 'tutelle_directions', justification: 'Direction des Ressources en Eau rattachée au suivi qualité' },
+  { programmeId: 'prog-002', ministereId: 'min-budget', type: 'partenaire_technique', justification: 'Suivi budgétaire des investissements SEEG' },
+  { programmeId: 'prog-002', ministereId: 'min-habitat', type: 'partenaire_technique', justification: 'Coordination urbanisme et réseau d\'adduction en zones nouvelles' },
+  { programmeId: 'prog-002', ministereId: 'min-decentralisation', type: 'partenaire_technique', justification: 'Mairies gèrent les forages ruraux' },
+
+  // ── prog-003 : Formation Technique & Professionnelle (pilote: min-education) ──
+  { programmeId: 'prog-003', ministereId: 'min-travail', type: 'tutelle_directions', justification: 'Direction de l\'Emploi oriente les filières de formation vers les métiers porteurs' },
+  { programmeId: 'prog-003', ministereId: 'min-enseignement-sup', type: 'partenaire_technique', justification: 'Passerelles enseignement supérieur / formation professionnelle' },
+  { programmeId: 'prog-003', ministereId: 'min-jeunesse', type: 'partenaire_technique', justification: 'Programmes d\'insertion des jeunes non-scolarisés' },
+  { programmeId: 'prog-003', ministereId: 'min-numerique', type: 'partenaire_technique', justification: 'Formation aux métiers du numérique et plateformes e-learning' },
+
+  // ── prog-004 : Couverture Santé Universelle (pilote: min-sante) ──
+  { programmeId: 'prog-004', ministereId: 'min-budget', type: 'partenaire_technique', justification: 'Financement de la CSU et gestion des cotisations' },
+  { programmeId: 'prog-004', ministereId: 'min-travail', type: 'tutelle_directions', justification: 'Affiliation des travailleurs au régime d\'assurance maladie' },
+  { programmeId: 'prog-004', ministereId: 'min-interieur', type: 'partenaire_technique', justification: 'Sécurisation des formations sanitaires en zone sensible' },
+  { programmeId: 'prog-004', ministereId: 'min-decentralisation', type: 'partenaire_technique', justification: 'Centres de santé communaux et dispensaires' },
+
+  // ── prog-005 : Logements Sociaux (pilote: min-habitat) ──
+  { programmeId: 'prog-005', ministereId: 'min-infrastructures', type: 'tutelle_directions', justification: 'Direction des BTP contribue à la viabilisation des zones' },
+  { programmeId: 'prog-005', ministereId: 'min-budget', type: 'partenaire_technique', justification: 'Gestion du Fonds de Garantie Habitat (FGHL)' },
+  { programmeId: 'prog-005', ministereId: 'min-decentralisation', type: 'partenaire_technique', justification: 'Affectation foncière par les collectivités locales' },
+  { programmeId: 'prog-005', ministereId: 'min-environnement', type: 'partenaire_technique', justification: 'Normes environnementales pour les constructions neuves' },
+
+  // ── prog-006 : Désenclavement Routes (pilote: min-infrastructures) ──
+  { programmeId: 'prog-006', ministereId: 'min-budget', type: 'partenaire_technique', justification: 'Financement FNI et suivi des marchés publics routiers' },
+  { programmeId: 'prog-006', ministereId: 'min-mines', type: 'partenaire_technique', justification: 'Fourniture de matériaux et coordination exploitation minière' },
+  { programmeId: 'prog-006', ministereId: 'min-environnement', type: 'partenaire_technique', justification: 'Études d\'impact environnemental des tracés routiers' },
+  { programmeId: 'prog-006', ministereId: 'min-planification', type: 'tutelle_directions', justification: 'Schéma National d\'Aménagement intégrant le réseau routier' },
+
+  // ── prog-007 : Numérique & Télécommunications (pilote: min-numerique) ──
+  { programmeId: 'prog-007', ministereId: 'min-budget', type: 'partenaire_technique', justification: 'Financement du déploiement fibre optique et data center' },
+  { programmeId: 'prog-007', ministereId: 'min-fonction-publique', type: 'tutelle_directions', justification: 'Dématérialisation des procédures administratives' },
+  { programmeId: 'prog-007', ministereId: 'min-education', type: 'partenaire_technique', justification: 'Connectivité des établissements scolaires et e-éducation' },
+  { programmeId: 'prog-007', ministereId: 'min-commerce', type: 'partenaire_technique', justification: 'Plateforme e-commerce et digitalisation des PME' },
+
+  // ── prog-008 : Intensification Agricole (pilote: min-agriculture) ──
+  { programmeId: 'prog-008', ministereId: 'min-planification', type: 'tutelle_directions', justification: 'Planification spatiale des agropoles (SNAT)' },
+  { programmeId: 'prog-008', ministereId: 'min-budget', type: 'partenaire_technique', justification: 'Gestion du Fonds National de Développement Agricole (FNDA)' },
+  { programmeId: 'prog-008', ministereId: 'min-peche', type: 'partenaire_technique', justification: 'Volet pêche et aquaculture de la souveraineté alimentaire' },
+  { programmeId: 'prog-008', ministereId: 'min-environnement', type: 'partenaire_technique', justification: 'Gestion durable des terres et forêts en zone agricole' },
+
+  // ── prog-009 : Modernisation Administration Publique (pilote: min-fonction-publique) ──
+  { programmeId: 'prog-009', ministereId: 'min-budget', type: 'partenaire_technique', justification: 'Dématérialisation de la chaîne budgétaire et finances publiques' },
+  { programmeId: 'prog-009', ministereId: 'min-reforme', type: 'tutelle_directions', justification: 'Direction de la Réforme pilote la modernisation institutionnelle' },
+  { programmeId: 'prog-009', ministereId: 'min-justice', type: 'partenaire_technique', justification: 'Dématérialisation des procédures judiciaires' },
+  { programmeId: 'prog-009', ministereId: 'min-planification', type: 'partenaire_technique', justification: 'Interconnexion des systèmes d\'information ministériels' },
+
+  // ── prog-010 : Accès à la Justice & Sécurité (pilote: min-justice) ──
+  { programmeId: 'prog-010', ministereId: 'min-budget', type: 'partenaire_technique', justification: 'Financement de la réhabilitation des tribunaux et commissariats' },
+  { programmeId: 'prog-010', ministereId: 'min-decentralisation', type: 'partenaire_technique', justification: 'Juridictions de proximité dans les collectivités' },
+  { programmeId: 'prog-010', ministereId: 'min-numerique', type: 'partenaire_technique', justification: 'Vidéosurveillance et systèmes d\'information sécurité' },
+  { programmeId: 'prog-010', ministereId: 'min-affaires-sociales', type: 'partenaire_technique', justification: 'Aide juridictionnelle et accès au droit pour les populations vulnérables' },
+];
+
+/**
+ * Retourne TOUS les programmes pour un ministère : directs (pilote/co-resp.)
+ * + indirects (même pilier, tutelle, partenaire technique).
+ * Les indirects sont en lecture seule (isDirect: false).
+ */
+export function getAllProgrammesForMinistere(ministereId: string): ProgrammeMinistereComplet[] {
+  // 1. Programmes directs (existants)
+  const directs: ProgrammeMinistereComplet[] = getProgrammesForMinistere(ministereId).map((pm) => ({
+    ...pm,
+    isDirect: true,
+  }));
+
+  const directProgrammeIds = new Set(directs.map((d) => d.programme.id));
+  const directPilierIds = new Set(directs.map((d) => d.programme.pilierId));
+
+  // 2. Programmes du même pilier (calculé dynamiquement)
+  const memePilier: ProgrammeMinistereComplet[] = PROGRAMMES
+    .filter((p) => directPilierIds.has(p.pilierId) && !directProgrammeIds.has(p.id))
+    .map((programme) => {
+      const gouvernance = GOUVERNANCES.find((g) => g.programmeId === programme.id)!;
+      const pilier = PILIERS.find((pl) => pl.id === programme.pilierId);
+      return {
+        programme,
+        gouvernance,
+        role: 'meme_pilier' as const,
+        isDirect: false,
+        justification: `Même pilier présidentiel : ${pilier?.nom || ''}`,
+      };
+    });
+
+  // 3. Liens indirects explicites (tutelle + partenaire technique)
+  const explicits: ProgrammeMinistereComplet[] = LIENS_INDIRECTS
+    .filter((l) => l.ministereId === ministereId && !directProgrammeIds.has(l.programmeId))
+    .map((lien) => {
+      const programme = PROGRAMMES.find((p) => p.id === lien.programmeId);
+      const gouvernance = GOUVERNANCES.find((g) => g.programmeId === lien.programmeId);
+      if (!programme || !gouvernance) return null;
+      return {
+        programme,
+        gouvernance,
+        role: lien.type as RoleLienProgramme,
+        isDirect: false,
+        justification: lien.justification,
+      };
+    })
+    .filter(Boolean) as ProgrammeMinistereComplet[];
+
+  // 4. Dédupliquer les indirects (priorité : partenaire > tutelle > meme_pilier)
+  const PRIORITY: Record<string, number> = {
+    partenaire_technique: 3,
+    tutelle_directions: 2,
+    meme_pilier: 1,
+  };
+
+  const indirectMap = new Map<string, ProgrammeMinistereComplet>();
+  for (const item of [...explicits, ...memePilier]) {
+    const existing = indirectMap.get(item.programme.id);
+    if (!existing || (PRIORITY[item.role] || 0) > (PRIORITY[existing.role] || 0)) {
+      indirectMap.set(item.programme.id, item);
+    }
+  }
+
+  // 5. Ajouter les programmes restants (aucun lien) en tant que "meme_pilier" contextuel
+  for (const programme of PROGRAMMES) {
+    if (directProgrammeIds.has(programme.id) || indirectMap.has(programme.id)) continue;
+    const gouvernance = GOUVERNANCES.find((g) => g.programmeId === programme.id)!;
+    const pilier = PILIERS.find((pl) => pl.id === programme.pilierId);
+    indirectMap.set(programme.id, {
+      programme,
+      gouvernance,
+      role: 'meme_pilier',
+      isDirect: false,
+      justification: `Programme du pilier « ${pilier?.nom || ''} » — contexte interministériel`,
+    });
+  }
+
+  return [...directs, ...Array.from(indirectMap.values())];
 }
 
